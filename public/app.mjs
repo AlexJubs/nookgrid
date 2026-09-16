@@ -441,14 +441,14 @@ async function init() {
       document.querySelector('.puzzle-instruction').setAttribute('role','status');
       $('completion-title').textContent = 'Nice work!';
       $('share').hidden = true;
-      $('play-today').classList.replace('secondary','primary');
+      $('play-today').classList.replace('text-button','primary');
     }
     $('board-title').textContent = {daily:"Today's puzzle",archive:'Archived puzzle',practice:'The tutorial puzzle'}[mode];
     document.title = `NookGrid | ${mode === 'daily' ? 'Free daily spatial logic puzzle' : mode === 'practice' ? 'Tutorial logic puzzle' : `Logic puzzle ${number}`}`;
     $('archive').replaceChildren();
     for (const item of [...bank.puzzles.filter(item => item.date <= today).reverse(),{date:'practice'}]) {
       const option = document.createElement('option'); option.value = item.date;
-      option.textContent = item.date === 'practice' ? 'Tutorial' : `${item.date}${item.date === today ? ' (today)' : ''}`;
+      option.textContent = item.date === 'practice' ? 'Tutorial' : `${new Date(`${item.date}T12:00:00Z`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'})}${item.date === today ? ' (today)' : ''}`;
       option.selected = item.date === (mode === 'practice' ? 'practice' : puzzle.date);
       $('archive').append(option);
     }

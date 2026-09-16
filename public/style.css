@@ -60,7 +60,8 @@
 .game-page .lot.locked:hover{background:#e7f0e4}
 .game-page .lot .hint-lock{position:absolute;top:6px;right:6px;width:12px;height:12px;color:var(--blue)}
 .game-page .is-solved:not(.has-selection) .play-controls,.game-page .is-solved.has-selection .completion{display:none}
-.game-page .completion{grid-column:1;grid-row:1;display:grid;grid-template-columns:1fr;align-items:center;justify-items:center;gap:12px;margin:0;padding:16px 12px;border:0;border-radius:10px;background:#f0f5ec;text-align:center}
+.game-page .completion{grid-column:1;grid-row:1;display:grid;grid-template-columns:1fr;align-items:center;justify-items:center;gap:4px;margin:0;padding:0;border:0;border-radius:0;background:none;text-align:center}
+.completion-summary{display:grid;justify-items:center;gap:16px;width:100%;padding:20px 12px 16px;border-radius:10px;background:#f0f5ec}
 .game-page .completion h2{font-size:22px;margin-bottom:3px}
 .game-page .completion p{font-size:12px;line-height:1.4}
 .game-page #completion-detail{color:#5c685d}
@@ -70,16 +71,14 @@
 @media(prefers-reduced-motion:reduce){.confetti{display:none}}
 .game-page .completion .primary{margin:0;width:100%;font-size:12px;padding:10px 4px}
 .game-page .completion-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}
-.game-page .completion-actions button{min-width:44px;padding:6px 0;font-size:12px;font-weight:500;line-height:1.4;border-radius:6px}
-.game-page .completion-actions .secondary{background:transparent;border-color:#83907e;color:var(--ink)}
-.game-page .completion-actions .secondary:hover:not(:disabled){background:#e3ebdf}
-.game-page .completion-actions .text-button{color:#526057;text-decoration:underline;text-underline-offset:3px}
-.game-page .completion-actions .text-button:hover{color:var(--ink);background:#e3ebdf}
+.game-page .completion-actions button{min-width:44px;padding:6px 0;font-size:12px;font-weight:500;line-height:1.4;border-radius:6px;color:#526057}
+.game-page .completion-actions button:hover:not(:disabled){color:var(--ink);background:#f3f5f2}
+.game-page .completion-summary>.text-button{display:flex;align-items:center;justify-content:center;width:100%;font-size:12px;font-weight:500;text-decoration:underline}
 #share-status:empty{display:none}
 #share-status{grid-column:1/-1}
 #next-puzzle{width:100%;margin:0;padding:0}
-#next-puzzle span{display:block;font-size:11px;color:var(--muted)}
-#next-puzzle-time{display:block;font-size:21px;font-variant-numeric:tabular-nums;letter-spacing:.5px;margin-top:2px}
+#next-puzzle span{display:block;font-size:11px;color:#5c685d}
+#next-puzzle-time{display:block;font-size:16px;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:.5px;margin-top:4px}
 .game-page dialog{border:1px solid var(--line);border-radius:12px;padding:24px;max-height:calc(100svh - 24px);overflow:auto;box-shadow:0 16px 60px #202b2526}
 .game-page dialog::backdrop{background:#25302966}
 .game-page dialog h2{font-size:24px;margin-bottom:10px}
@@ -122,10 +121,14 @@
 .game-page #settings-dialog .check-label{min-height:44px;margin:12px 0 4px}
 .game-page #settings-dialog>a{display:inline-flex;align-items:center;min-height:44px;font-size:13px}
 .game-page .primary:hover{background:#2b513e}
-.game-page .menu-links{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px}
-.game-page .menu-links a,.game-page .menu-links .text-button{display:flex;align-items:center;min-height:44px;margin:0;padding:8px 0;font-size:14px;font-weight:500;color:var(--ink);text-align:left;text-decoration:none}
-.game-page .menu-links a:hover,.game-page .menu-links button:hover{text-decoration:underline}
-.game-page .archive-picker{display:grid;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.game-page #menu-dialog{width:min(360px,calc(100% - 32px))}
+.game-page #menu-title{font-size:20px;margin-bottom:12px}
+.game-page .menu-links{display:grid;grid-template-columns:1fr;gap:0}
+.game-page .menu-links a,.game-page .menu-links .text-button{display:flex;align-items:center;min-height:44px;margin:0;padding:8px;font-size:14px;font-weight:600;color:var(--ink);text-align:left;text-decoration:none;border-radius:6px}
+.game-page .menu-links a:hover,.game-page .menu-links button:hover{background:#f3f5f2}
+.game-page .menu-utilities{margin-top:24px}
+.game-page .menu-utilities a,.game-page .menu-utilities .text-button{font-size:13px;font-weight:400;color:#526057}
+.game-page .archive-picker{display:grid;gap:8px;margin:12px 8px 0}
 .game-page .archive-picker label{font-size:12px;color:var(--muted)}
 .game-page .archive-picker select{width:100%;min-height:44px;padding:8px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);font-size:14px}
 .game-page .notice{padding:12px;margin-bottom:12px;line-height:1.5;background:#f4f6f2;border:0;color:var(--ink)}
@@ -156,7 +159,8 @@
   .game-page .place svg{width:36px;height:30px}
   .game-page .place .place-name{font-size:10px}
   .game-page .board-actions{grid-column:1/-1;grid-row:3;width:100%;margin:0}
-  .game-page .completion{grid-column:1;grid-row:1;grid-template-columns:1fr;gap:12px;margin:0;padding:12px 8px}
+  .game-page .completion{grid-column:1;grid-row:1;grid-template-columns:1fr;margin:0}
+  .completion-summary{gap:12px;padding:16px 8px 12px}
   .game-page .completion h2{font-size:20px}
   .game-page .completion .primary{font-size:12px;padding:8px 4px}
   .game-page .completion p{font-size:11px}

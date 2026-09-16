@@ -8,15 +8,17 @@ The board and neighborhood plan are the main task. Puzzle number, date, coordina
 
 | Surface | Primary action | Quieter actions |
 | --- | --- | --- |
-| Daily completion | Share result | Reset, then Feedback |
-| Tutorial completion | Play today's puzzle | Reset, then Feedback |
+| Daily completion | Share result | Reset and Feedback as peers |
+| Tutorial completion | Play today's puzzle | Reset and Feedback as peers |
 | Archived completion | Share result | Today's puzzle, Reset and Feedback |
 | Hint confirmation | Reveal | Cancel |
 | Feedback | Send | Close |
 | Share fallback | Select/copy the existing result | Close |
 | Load failure | Try again | Normal header navigation |
 
-Use a solid accent for the main button, a restrained outline or surface for a secondary button, and a recognizable link treatment for a tertiary action. A state-changing action does not automatically need a red, heavy button. Avoid redundant actions that do the same thing. Keep button labels concise and specific.
+Choose emphasis from the player's task, not from a mandatory primary/secondary/tertiary template. One solid primary action can sit alongside several equally quiet controls. Reset and Feedback are peer utilities: use matching borderless styling, target sizes, hover and focus treatment. An outline or secondary surface is useful only when an action genuinely needs intermediate emphasis. A state-changing action does not automatically need a red, heavy button. Avoid redundant actions and keep labels concise.
+
+Keep the outcome, main action and supporting countdown together on the completion surface, with the utility row beneath it. Share stays above the countdown; the countdown is smaller and lighter than the outcome. In the menu, group Today's puzzle, Tutorial and Archive together, then separate the quieter help/settings links. A navigation menu needs a clear reading order, not a promotional headline or a filled button.
 
 ## Spacing and proportions
 
@@ -48,6 +50,6 @@ The Tutorial must stay optional and easy to find. Its short introduction explain
 3. Inspect actual content at desktop, laptop, phone and narrow-phone sizes, including long text and solved states.
 4. Check keyboard focus, labels, relevant color contrast and touch targets. For dialogs, test Escape, outside dismissal and focus restoration.
 5. Verify affected behavior with isolated `?test=1` previews and blocked external telemetry. Do not count QA as growth.
-6. Record findings, fixes and deliberate exceptions. Review the actual rendered result before publishing.
+6. Record findings, fixes and deliberate exceptions. Review the actual rendered result before publishing. Passing geometry and contrast checks does not by itself establish coherent grouping or visual hierarchy.
 
 Refactoring UI provides design principles, not a conformance certificate. Name the specific issue and the player benefit rather than claiming universal compliance.
