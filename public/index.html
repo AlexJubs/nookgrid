@@ -18,8 +18,8 @@
   <meta property="og:image:height" content="750">
   <meta property="og:image:alt" content="NookGrid gameplay with three places on a nine-lot neighborhood board, a tray of places, and the neighborhood plan alongside.">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=20260916-starter-flow1">
-  <script type="module" src="./app.mjs?v=20260916-starter-flow1"></script>
+  <link rel="stylesheet" href="./style.css?v=20260916-tutorial-copy1">
+  <script type="module" src="./app.mjs?v=20260916-tutorial-copy1"></script>
 </head>
 <body class="game-page">
   <a class="skip-link" href="#game" data-track="index-a-1">Skip to puzzle</a>
@@ -36,7 +36,7 @@
     <noscript><p class="notice">NookGrid needs JavaScript to play. Enable it, then reload this page.</p></noscript>
     <section class="game-layout" id="game" aria-label="Neighborhood puzzle" aria-busy="true" inert>
       <p class="puzzle-instruction">Arrange the places to match the plan.</p>
-      <section class="clue-panel" id="clue-list" aria-labelledby="clues-title"><div class="clues-header"><h2 id="clues-title">Neighborhood plan</h2><a class="puzzle-switch" id="puzzle-switch" href="?date=practice" data-track="puzzle-switch">Starter</a></div><ol class="clues" id="clues" aria-label="Neighborhood plan"></ol></section>
+      <section class="clue-panel" id="clue-list" aria-labelledby="clues-title"><p id="tutorial-intro" hidden>Learn to read the plan. This practice puzzle guides your first three moves, then lets you finish on your own. You can return to today’s puzzle anytime; your progress stays saved.</p><div class="clues-header"><h2 id="clues-title">Neighborhood plan</h2><a class="puzzle-switch" id="puzzle-switch" href="?date=practice" data-track="puzzle-switch">Tutorial</a></div><ol class="clues" id="clues" aria-label="Neighborhood plan"></ol></section>
       <div class="play-area">
         <div class="play-controls"><div class="place-tray" id="tray" role="group" aria-label="Places to arrange"></div></div>
         <div class="board-wrap"><div class="board" id="board" role="group" aria-label="Neighborhood lots, three rows and three columns"></div></div>
@@ -60,7 +60,7 @@
     </section>
   </main>
 
-  <dialog id="menu-dialog" aria-labelledby="menu-title"><button class="close-dialog" data-close aria-label="Close menu" data-track="menu-close">×</button><h2 id="menu-title">NookGrid</h2><nav class="menu-links" aria-label="More options"><a href="./" data-track="index-a-8">Today's puzzle</a><a href="?date=practice" data-track="index-a-6">Starter</a><button class="text-button" id="settings-open">Preferences</button><button class="text-button" id="feedback-open">Give feedback</button><a href="./about.html" data-track="index-a-3">Rules and worked example</a><a href="./privacy.html" data-track="index-a-9">Privacy</a></nav><div class="archive-picker"><label for="archive">Puzzle archive</label><select id="archive"><option>Loading puzzles…</option></select></div></dialog>
+  <dialog id="menu-dialog" aria-labelledby="menu-title"><button class="close-dialog" data-close aria-label="Close menu" data-track="menu-close">×</button><h2 id="menu-title">NookGrid</h2><nav class="menu-links" aria-label="More options"><a href="./" data-track="index-a-8">Today's puzzle</a><a href="?date=practice" data-track="index-a-6">Tutorial</a><button class="text-button" id="settings-open">Preferences</button><button class="text-button" id="feedback-open">Give feedback</button><a href="./about.html" data-track="index-a-3">Rules and worked example</a><a href="./privacy.html" data-track="index-a-9">Privacy</a></nav><div class="archive-picker"><label for="archive">Puzzle archive</label><select id="archive"><option>Loading puzzles…</option></select></div></dialog>
 
   <dialog id="help-dialog" aria-labelledby="help-title">
     <button class="close-dialog" data-close aria-label="Close how to play" data-track="index-button-1">×</button><h2 id="help-title">How to play</h2>
@@ -74,7 +74,7 @@
       <p><strong>Hints:</strong> Fix a place in its correct square, even after Reset. Each counts in your result.</p>
       <p><strong>Keyboard:</strong> Tab to move focus, Enter or Space to select, Escape to cancel.</p>
     </details>
-    <nav class="help-links" aria-label="More help"><a href="?date=practice" data-track="index-a-10">Try the starter</a><a href="./about.html#worked-example" data-track="help-example">Worked example</a></nav>
+    <nav class="help-links" aria-label="More help"><a href="?date=practice" data-track="index-a-10">Try the tutorial</a><a href="./about.html#worked-example" data-track="help-example">Worked example</a></nav>
   </dialog>
   <dialog id="share-dialog" aria-labelledby="share-title"><button class="close-dialog" data-close aria-label="Close share result" data-track="share-close">×</button><h2 id="share-title">Share your result</h2><p>Copy this result and send it to a friend.</p><label class="sr-only" for="share-text">Result text</label><textarea id="share-text" rows="6" readonly></textarea><button class="text-button" data-close data-track="share-done">Done</button></dialog>
   <dialog id="hint-dialog" aria-labelledby="hint-title" aria-describedby="hint-description">

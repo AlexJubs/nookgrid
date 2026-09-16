@@ -22,6 +22,7 @@
 .game-page .play-area{grid-column:1;grid-row:2;display:grid;grid-template-columns:192px minmax(0,1fr);gap:0 12px;align-items:start;max-width:none;width:100%;margin:0}
 .game-page .puzzle-instruction{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;color:#526057;text-align:center}
 .game-page .clue-panel{grid-column:2;grid-row:2;width:100%;justify-self:start;border:0;margin:0;padding:0}
+.game-page #tutorial-intro{font-size:13px;line-height:1.5;color:var(--muted);margin:0 0 20px}
 .game-page .clues-header{min-height:44px;margin:-10px 0 6px}
 .puzzle-switch{display:inline-flex;align-items:center;justify-content:flex-end;min-width:44px;min-height:44px;flex-shrink:0;font-size:12px;color:var(--muted)}
 .puzzle-switch:hover{color:var(--ink)}

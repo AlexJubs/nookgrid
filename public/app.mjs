@@ -269,18 +269,19 @@ function render() {
   if (!puzzle) return;
   const board = progress.board;
   const solved = isSolved(puzzle, board);
-  // ponytail: this lesson follows the fixed Starter's first four rules; update it if that puzzle changes.
+  // ponytail: this lesson follows the fixed tutorial's first four rules; update it if that puzzle changes.
   const starterPlaces = puzzle.solution.slice(0,3);
   const nextStarterIndex = starterPlaces.findIndex((id,index) => board[index] !== id);
   const starterStep = mode !== 'practice' ? -1 : nextStarterIndex < 0 || board.some(id => id && !starterPlaces.includes(id)) ? 3 : nextStarterIndex;
   const isLearning = starterStep >= 0 && starterStep < 3;
+  $('tutorial-intro').hidden = !isLearning;
   const shouldFocusCompletion = solved && (!wasSolved || (!selected && Boolean(document.activeElement?.closest('.play-controls'))));
   $('game').classList.toggle('has-guidance', shouldShowGuidance);
   const instruction = mode === 'practice' && solved ? 'Your neighborhood is complete.' : starterStep >= 0 ? [
     'Place Bakery in A1, the top-left square.',
     'Bakery fits. Place Cafe directly to its right.',
     'Cafe fits. Use the plan to place Books.',
-    'Use the plan to finish the neighborhood.'
+    'Now all nine places are available. Use the full plan to finish.'
   ][starterStep] : shouldShowGuidance ? 'Which column fits Park? Start with the ★ items.' : 'Arrange the places to match the plan.';
   const instructionLabel = document.querySelector('.puzzle-instruction');
   if (instructionLabel.textContent !== instruction) instructionLabel.textContent = instruction;
@@ -432,7 +433,7 @@ async function init() {
     $('feedback-unavailable').hidden = config.feedbackEnabled;
     $('feedback-form').hidden = !config.feedbackEnabled;
     const number = bank.puzzles.findIndex(item => item.date === puzzle.date) + 1;
-    $('puzzle-label').textContent = mode === 'practice' ? 'Starter' : `Puzzle #${number}`;
+    $('puzzle-label').textContent = mode === 'practice' ? 'Tutorial' : `Puzzle #${number}`;
     $('puzzle-date').textContent = mode === 'practice' ? 'Learn by playing' : new Date(`${puzzle.date}T12:00:00Z`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
     if (mode === 'practice') {
       $('puzzle-switch').textContent = "Today's puzzle";
@@ -442,12 +443,12 @@ async function init() {
       $('share').hidden = true;
       $('play-today').classList.replace('secondary','primary');
     }
-    $('board-title').textContent = {daily:"Today's puzzle",archive:'Archived puzzle',practice:'The starter puzzle'}[mode];
-    document.title = `NookGrid | ${mode === 'daily' ? 'Free daily spatial logic puzzle' : mode === 'practice' ? 'Starter logic puzzle' : `Logic puzzle ${number}`}`;
+    $('board-title').textContent = {daily:"Today's puzzle",archive:'Archived puzzle',practice:'The tutorial puzzle'}[mode];
+    document.title = `NookGrid | ${mode === 'daily' ? 'Free daily spatial logic puzzle' : mode === 'practice' ? 'Tutorial logic puzzle' : `Logic puzzle ${number}`}`;
     $('archive').replaceChildren();
     for (const item of [...bank.puzzles.filter(item => item.date <= today).reverse(),{date:'practice'}]) {
       const option = document.createElement('option'); option.value = item.date;
-      option.textContent = item.date === 'practice' ? 'Starter puzzle' : `${item.date}${item.date === today ? ' (today)' : ''}`;
+      option.textContent = item.date === 'practice' ? 'Tutorial' : `${item.date}${item.date === today ? ' (today)' : ''}`;
       option.selected = item.date === (mode === 'practice' ? 'practice' : puzzle.date);
       $('archive').append(option);
     }
