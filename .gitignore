@@ -2,6 +2,8 @@
 !/.gitignore
 !/README.md
 !/AGENTS.md
+!/CLAUDE.md
+!/DESIGN.md
 !/public/
 !/scripts/
 /scripts/*

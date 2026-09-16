@@ -464,8 +464,12 @@ async function init() {
   } catch {
     analytics.track('app_error',{action:'puzzle_load'});
     $('load-error').hidden = false;
+    $('puzzle-date').textContent = 'Unavailable';
     $('game').hidden = true;
+    $('game').setAttribute('aria-busy','false');
     $('archive').disabled = true;
+  } finally {
+    $('load-status').hidden = true;
   }
 }
 

@@ -18,8 +18,8 @@
   <meta property="og:image:height" content="750">
   <meta property="og:image:alt" content="NookGrid gameplay with three places on a nine-lot neighborhood board, a tray of places, and the neighborhood plan alongside.">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=20260916-tutorial-copy1">
-  <script type="module" src="./app.mjs?v=20260916-tutorial-copy1"></script>
+  <link rel="stylesheet" href="./style.css?v=20260916-design1">
+  <script type="module" src="./app.mjs?v=20260916-design1"></script>
 </head>
 <body class="game-page">
   <a class="skip-link" href="#game" data-track="index-a-1">Skip to puzzle</a>
@@ -31,8 +31,9 @@
   <main>
     <h2 id="board-title" class="sr-only">Today's puzzle</h2>
     <div id="new-day" class="notice" hidden>A new neighborhood is ready. <a href="./" data-track="index-a-4">Play today's puzzle</a>. Your current board stays saved.</div>
-    <p id="save-warning" class="notice" hidden>Progress can’t be saved in this browser. You can still play, but keep this tab open.</p>
-    <div id="load-error" class="notice error" hidden>The neighborhood couldn't load. Check your connection, then <a href="./" data-track="index-a-5">try again</a>.</div>
+    <p id="save-warning" class="notice" role="status" hidden>Progress can’t be saved in this browser. You can still play, but keep this tab open.</p>
+    <p id="load-status" class="empty-state" role="status">Loading the neighborhood…</p>
+    <div id="load-error" class="empty-state" role="alert" hidden><h2>Couldn't load the puzzle</h2><p>Check your connection and try again.</p><a class="primary inline-button" href="" data-track="index-a-5">Try again</a></div>
     <noscript><p class="notice">NookGrid needs JavaScript to play. Enable it, then reload this page.</p></noscript>
     <section class="game-layout" id="game" aria-label="Neighborhood puzzle" aria-busy="true" inert>
       <p class="puzzle-instruction">Arrange the places to match the plan.</p>
@@ -54,7 +55,7 @@
           <p id="share-status" role="status"></p>
           <div id="next-puzzle" hidden><span>Next puzzle in</span><strong id="next-puzzle-time" role="timer" aria-live="off">00:00:00</strong></div>
           <a class="secondary inline-button" id="play-today" href="./" hidden>Play today's puzzle</a>
-          <div class="completion-actions"><button class="text-button" id="clear-win">Reset</button><button class="text-button" id="feedback-win">Feedback</button></div>
+          <div class="completion-actions"><button class="secondary" id="clear-win">Reset</button><button class="text-button" id="feedback-win">Feedback</button></div>
         </section>
       </div>
     </section>
@@ -76,7 +77,7 @@
     </details>
     <nav class="help-links" aria-label="More help"><a href="?date=practice" data-track="index-a-10">Try the tutorial</a><a href="./about.html#worked-example" data-track="help-example">Worked example</a></nav>
   </dialog>
-  <dialog id="share-dialog" aria-labelledby="share-title"><button class="close-dialog" data-close aria-label="Close share result" data-track="share-close">×</button><h2 id="share-title">Share your result</h2><p>Copy this result and send it to a friend.</p><label class="sr-only" for="share-text">Result text</label><textarea id="share-text" rows="6" readonly></textarea><button class="text-button" data-close data-track="share-done">Done</button></dialog>
+  <dialog id="share-dialog" aria-labelledby="share-title"><button class="close-dialog" data-close aria-label="Close share result" data-track="share-close">×</button><h2 id="share-title">Share your result</h2><p>Copy this result and send it to a friend.</p><label class="sr-only" for="share-text">Result text</label><textarea id="share-text" rows="6" readonly></textarea></dialog>
   <dialog id="hint-dialog" aria-labelledby="hint-title" aria-describedby="hint-description">
     <h2 id="hint-title">Reveal a place?</h2>
     <p id="hint-description">One place stays fixed in its correct lot, even after Reset. Adds 1 hint to your result.</p>

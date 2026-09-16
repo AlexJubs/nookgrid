@@ -1,0 +1,53 @@
+# NookGrid design standard
+
+Use Adam Wathan and Steve Schoger's **Refactoring UI** as the design reference for every NookGrid interface, page and visual asset. Apply its principles to this compact puzzle game rather than copying the book's sample screens. The supplied book stays private; this file contains our own practical interpretation.
+
+## Hierarchy before decoration
+
+The board and neighborhood plan are the main task. Puzzle number, date, coordinates, help and countdown support that task. Reduce competing weight and contrast before making important content larger. Use correct semantic headings without letting their HTML level dictate visual size. Reference: pages 36–47 and 54–62.
+
+| Surface | Primary action | Quieter actions |
+| --- | --- | --- |
+| Daily completion | Share result | Reset, then Feedback |
+| Tutorial completion | Play today's puzzle | Reset, then Feedback |
+| Archived completion | Share result | Today's puzzle, Reset and Feedback |
+| Hint confirmation | Reveal | Cancel |
+| Feedback | Send | Close |
+| Share fallback | Select/copy the existing result | Close |
+| Load failure | Try again | Normal header navigation |
+
+Use a solid accent for the main button, a restrained outline or surface for a secondary button, and a recognizable link treatment for a tertiary action. A state-changing action does not automatically need a red, heavy button. Avoid redundant actions that do the same thing. Keep button labels concise and specific.
+
+## Spacing and proportions
+
+- Put related text closer together than separate groups. Result title, time and hint count form one group; actions form another. Reference: pages 96–99.
+- Fit panels to real content. Preserve the compact board and bounded plan width instead of stretching them into unused space. Reference: pages 76–82.
+- Prefer existing spacing choices: 4, 8, 12, 16, 24 and 32px. Existing board geometry and 44px interaction targets are functional exceptions, not a reason to scale everything uniformly.
+- Preserve the established desktop 400px board, 192px tray/result panel and 248px plan unless a real layout problem calls for a change.
+- Desktop, regular laptop and normal phone game states should fit without page scrolling. Very small screens, expanded disclosures and text-heavy supporting pages may scroll. Never hide necessary content to force a fit.
+- Adapt widths, type and panel order independently on mobile. Long labels may wrap; controls must not collide. Reference: pages 92–95.
+
+## Typography, color and surfaces
+
+- Reuse the current system body font and heading family. Use weight and contrast for hierarchy before introducing another font or size. Keep supporting copy quieter without making it unreadable.
+- Reuse the forest accent, dark ink and green-tinted neutrals. Avoid unrelated palettes in different dialogs. Reserve warning treatment for an actual warning, such as unavailable local saving.
+- Small text must remain readable. Aim for at least 4.5:1 contrast for ordinary text, including actionable placed-piece labels and board coordinates. Keep status icons/text alongside colors.
+- Use spacing or a subtle surface before adding borders and shadows. Borders may still identify controls; shadows should indicate layers or movement. Reference: pages 142–168, 180–184 and 238–241.
+- Every action needs visible keyboard focus. Preserve accessible names, minimum 44px standalone touch targets, native controls, reduced-motion behavior and Escape/backdrop dialog dismissal.
+
+## Every state is part of the design
+
+Check loading, empty, selected, dragging, disabled, hint-locked, completed, unavailable, error and success states. Show useful feedback and recovery instead of inactive controls that look usable. Keep entered feedback on failed sends. Use selectable output styling for a read-only share result. Reference: pages 234–236, applied to this game's states.
+
+The Tutorial must stay optional and easy to find. Its short introduction explains the mode, the next-step instruction names the move, and the selection row explains the control. Do not add a new onboarding overlay to solve a spacing problem.
+
+## Before shipping any design change
+
+1. Identify the player's immediate task and the intended action hierarchy.
+2. Read the existing component and its sibling states before editing it. Reuse the shared styles.
+3. Inspect actual content at desktop, laptop, phone and narrow-phone sizes, including long text and solved states.
+4. Check keyboard focus, labels, relevant color contrast and touch targets. For dialogs, test Escape, outside dismissal and focus restoration.
+5. Verify affected behavior with isolated `?test=1` previews and blocked external telemetry. Do not count QA as growth.
+6. Record findings, fixes and deliberate exceptions. Review the actual rendered result before publishing.
+
+Refactoring UI provides design principles, not a conformance certificate. Name the specific issue and the player benefit rather than claiming universal compliance.
