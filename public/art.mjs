@@ -1,0 +1,14 @@
+const colors = {bakery:['#EDB07D','#A44E36'],cafe:['#91BBB0','#286A61'],books:['#91AEE0','#35588B'],florist:['#D9A3B8','#9A486E'],homes:['#A6A1CC','#655A96'],market:['#E1BF6E','#857029']};
+
+export function placeArt(id) {
+  let shape;
+  if (id === 'park') shape = '<path fill="#78A96E" d="M18 51h48v9H18z"/><path fill="#7A5A42" d="M37 23h7v32h-7z"/><circle fill="#54956B" cx="31" cy="24" r="15"/><circle fill="#6FAB79" cx="46" cy="21" r="16"/><circle fill="#8BBB83" cx="42" cy="12" r="11"/><path stroke="#FFF0B3" stroke-width="3" d="M54 49h16m-13 0v9m10-9v9"/>';
+  else if (id === 'pond') shape = '<ellipse fill="#AED5DB" cx="42" cy="45" rx="35" ry="16"/><ellipse fill="#79B8CA" cx="41" cy="43" rx="29" ry="12"/><path stroke="#DBF0EC" stroke-width="3" stroke-linecap="round" d="M23 44h13m9 7h12"/><path fill="#529174" d="M50 37a8 5 0 1 0 8 5l-8-5z"/><path fill="#FAE3AC" d="M27 31c1-8 10-6 10 0 7 0 7 9-1 9h-7c-7 0-8-9-2-9z"/><path fill="#D89153" d="m27 30-6 2 6 3z"/><circle cx="30" cy="29" r="1.3" fill="#334458"/>';
+  else if (id === 'bikes') shape = '<path stroke="#729397" stroke-width="3" stroke-linecap="round" d="M18 15h50m-45 0v42m40-42v42"/><path fill="#F4C55F" d="m12 15 10-9h42l9 9z"/><g fill="none" stroke="#334D67" stroke-width="3"><circle cx="24" cy="47" r="10"/><circle cx="61" cy="47" r="10"/><path d="m24 47 13-20 12 20H24l11-14h21l5 14m-5-14-3-11h9m-31 5h11"/></g>';
+  else {
+    const [wall, roof] = colors[id] || colors.homes;
+    const detail = id === 'books' ? '<path stroke="#E4E9D2" stroke-width="3" d="M22 37v12m6-10v10m6-13v13"/>' : id === 'florist' ? '<g fill="#F8E4A3"><circle cx="23" cy="44" r="4"/><circle cx="30" cy="41" r="4"/><circle cx="37" cy="44" r="4"/></g><path fill="#798C59" d="M19 47h23l-3 6H22z"/>' : id === 'bakery' ? '<path fill="#EDC57C" d="M20 46c0-11 19-11 19 0z"/><path stroke="#FAE8B8" stroke-width="2" d="m24 39-1 4m6-5-1 4m6-3-1 4"/>' : id === 'cafe' ? '<path fill="#F4EEE0" d="M23 36h13v10a6 6 0 0 1-13 0z"/><path fill="none" stroke="#F4EEE0" stroke-width="3" d="M36 38c10-2 10 10 0 8"/>' : id === 'market' ? '<g fill="#C17050"><circle cx="23" cy="45" r="4"/><circle cx="33" cy="45" r="4"/></g><path fill="#83A074" d="M20 49h20v4H20z"/>' : '<path fill="#FBE1A0" d="M20 34h15v14H20z"/><path stroke="#8D86B2" stroke-width="2" d="M27 34v14m-7-7h15"/>';
+    shape = `<path fill="${wall}" d="M13 25h58v35H13z"/><path fill="${roof}" d="M8 26 21 9h43l13 17z"/><path fill="#FFF4DA" d="M13 26h58v6H13z"/><path fill="${roof}" d="M14 26h8v8h-8zm17 0h8v8h-8zm17 0h8v8h-8zm17 0h6v8h-6z"/><path fill="#496576" d="M47 37h15v23H47z"/><path fill="#CBE0D9" d="M50 40h9v10h-9z"/><circle fill="#F5DA95" cx="58" cy="54" r="1.2"/>${detail}<path fill="${roof}" d="M10 59h64v4H10z"/>`;
+  }
+  return `<svg viewBox="0 0 84 72" aria-hidden="true" focusable="false"><ellipse fill="#30495A" opacity=".09" cx="42" cy="64" rx="34" ry="4"/>${shape}</svg>`;
+}

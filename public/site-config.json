@@ -1,0 +1,9 @@
+{
+  "feedbackEnabled": true,
+  "eventsEnabled": false,
+  "analytics": {
+    "enabled": true,
+    "projectToken": "phc_sFWFzLqxV6vdbRYQQXygHCbHBQyL3wmLBFyciD6gBqss",
+    "apiHost": "https://us.i.posthog.com"
+  }
+}

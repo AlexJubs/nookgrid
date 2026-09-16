@@ -1,0 +1,4981 @@
+{
+  "version": 1,
+  "startDate": "2026-09-10",
+  "puzzles": [
+    {
+      "date": "2026-09-10",
+      "clues": [
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "park"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "books"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "bakery"
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "bikes"
+        },
+        {
+          "type": "left",
+          "a": "pond",
+          "b": "bakery"
+        },
+        {
+          "type": "sameColumn",
+          "a": "books",
+          "b": "homes"
+        }
+      ],
+      "solution": [
+        "cafe",
+        "homes",
+        "florist",
+        "market",
+        "books",
+        "bikes",
+        "pond",
+        "bakery",
+        "park"
+      ]
+    },
+    {
+      "date": "2026-09-11",
+      "clues": [
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "market"
+        },
+        {
+          "type": "left",
+          "a": "bakery",
+          "b": "books"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "park"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "park"
+        },
+        {
+          "type": "adjacent",
+          "a": "pond",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "homes",
+          "b": "bikes"
+        },
+        {
+          "type": "adjacent",
+          "a": "homes",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "pond"
+        }
+      ],
+      "solution": [
+        "bakery",
+        "books",
+        "park",
+        "homes",
+        "market",
+        "pond",
+        "bikes",
+        "cafe",
+        "florist"
+      ]
+    },
+    {
+      "date": "2026-09-12",
+      "clues": [
+        {
+          "type": "row",
+          "a": "books",
+          "value": 1
+        },
+        {
+          "type": "left",
+          "a": "cafe",
+          "b": "florist"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "market"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "books"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "cafe"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "park"
+        },
+        {
+          "type": "sameColumn",
+          "a": "florist",
+          "b": "market"
+        },
+        {
+          "type": "left",
+          "a": "bikes",
+          "b": "cafe"
+        }
+      ],
+      "solution": [
+        "bakery",
+        "park",
+        "market",
+        "books",
+        "homes",
+        "pond",
+        "bikes",
+        "cafe",
+        "florist"
+      ]
+    },
+    {
+      "date": "2026-09-13",
+      "clues": [
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "park"
+        },
+        {
+          "type": "left",
+          "a": "florist",
+          "b": "books"
+        },
+        {
+          "type": "adjacent",
+          "a": "park",
+          "b": "market"
+        },
+        {
+          "type": "sameColumn",
+          "a": "homes",
+          "b": "bikes"
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "homes"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "cafe"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "books"
+        },
+        {
+          "type": "above",
+          "a": "market",
+          "b": "florist"
+        }
+      ],
+      "solution": [
+        "market",
+        "pond",
+        "bikes",
+        "park",
+        "cafe",
+        "bakery",
+        "florist",
+        "books",
+        "homes"
+      ]
+    },
+    {
+      "date": "2026-09-14",
+      "clues": [
+        {
+          "type": "column",
+          "a": "bakery",
+          "value": 0
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "left",
+          "a": "cafe",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "bikes",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "florist"
+        },
+        {
+          "type": "sameRow",
+          "a": "florist",
+          "b": "park"
+        },
+        {
+          "type": "left",
+          "a": "bikes",
+          "b": "books"
+        }
+      ],
+      "solution": [
+        "bakery",
+        "cafe",
+        "homes",
+        "pond",
+        "bikes",
+        "books",
+        "florist",
+        "market",
+        "park"
+      ]
+    },
+    {
+      "date": "2026-09-15",
+      "clues": [
+        {
+          "type": "adjacent",
+          "a": "park",
+          "b": "bikes"
+        },
+        {
+          "type": "left",
+          "a": "cafe",
+          "b": "homes"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "market"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bikes",
+          "b": "market"
+        },
+        {
+          "type": "sameColumn",
+          "a": "books",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "pond",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "park"
+        }
+      ],
+      "solution": [
+        "bakery",
+        "pond",
+        "market",
+        "cafe",
+        "homes",
+        "books",
+        "florist",
+        "park",
+        "bikes"
+      ]
+    },
+    {
+      "date": "2026-09-16",
+      "clues": [
+        {
+          "type": "row",
+          "a": "florist",
+          "value": 1
+        },
+        {
+          "type": "column",
+          "a": "park",
+          "value": 0
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "sameRow",
+          "a": "florist",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "cafe"
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "homes"
+        },
+        {
+          "type": "sameRow",
+          "a": "bikes",
+          "b": "market"
+        }
+      ],
+      "solution": [
+        "books",
+        "homes",
+        "bakery",
+        "park",
+        "florist",
+        "pond",
+        "bikes",
+        "market",
+        "cafe"
+      ]
+    },
+    {
+      "date": "2026-09-17",
+      "clues": [
+        {
+          "type": "row",
+          "a": "bakery",
+          "value": 0
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "bikes"
+        },
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "park"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "left",
+          "a": "bakery",
+          "b": "homes"
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "florist"
+        },
+        {
+          "type": "left",
+          "a": "pond",
+          "b": "park"
+        }
+      ],
+      "solution": [
+        "bakery",
+        "homes",
+        "market",
+        "pond",
+        "park",
+        "cafe",
+        "bikes",
+        "books",
+        "florist"
+      ]
+    },
+    {
+      "date": "2026-09-18",
+      "clues": [
+        {
+          "type": "left",
+          "a": "homes",
+          "b": "cafe"
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "books"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "bikes"
+        },
+        {
+          "type": "adjacent",
+          "a": "homes",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "homes"
+        }
+      ],
+      "solution": [
+        "pond",
+        "park",
+        "florist",
+        "bakery",
+        "books",
+        "market",
+        "bikes",
+        "homes",
+        "cafe"
+      ]
+    },
+    {
+      "date": "2026-09-19",
+      "clues": [
+        {
+          "type": "row",
+          "a": "pond",
+          "value": 2
+        },
+        {
+          "type": "left",
+          "a": "florist",
+          "b": "bakery"
+        },
+        {
+          "type": "left",
+          "a": "bikes",
+          "b": "cafe"
+        },
+        {
+          "type": "adjacent",
+          "a": "pond",
+          "b": "market"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "books"
+        },
+        {
+          "type": "left",
+          "a": "park",
+          "b": "books"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "pond"
+        }
+      ],
+      "solution": [
+        "florist",
+        "bakery",
+        "homes",
+        "park",
+        "books",
+        "market",
+        "bikes",
+        "cafe",
+        "pond"
+      ]
+    },
+    {
+      "date": "2026-09-20",
+      "clues": [
+        {
+          "type": "left",
+          "a": "homes",
+          "b": "bikes"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "books"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "florist"
+        },
+        {
+          "type": "sameColumn",
+          "a": "books",
+          "b": "homes"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "park"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "cafe",
+          "b": "bakery"
+        },
+        {
+          "type": "above",
+          "a": "market",
+          "b": "homes"
+        }
+      ],
+      "solution": [
+        "market",
+        "florist",
+        "cafe",
+        "books",
+        "pond",
+        "bakery",
+        "homes",
+        "bikes",
+        "park"
+      ]
+    },
+    {
+      "date": "2026-09-21",
+      "clues": [
+        {
+          "type": "row",
+          "a": "bakery",
+          "value": 2
+        },
+        {
+          "type": "left",
+          "a": "pond",
+          "b": "cafe"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "florist"
+        },
+        {
+          "type": "left",
+          "a": "market",
+          "b": "books"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "cafe"
+        }
+      ],
+      "solution": [
+        "market",
+        "books",
+        "park",
+        "homes",
+        "bikes",
+        "florist",
+        "bakery",
+        "pond",
+        "cafe"
+      ]
+    },
+    {
+      "date": "2026-09-22",
+      "clues": [
+        {
+          "type": "column",
+          "a": "park",
+          "value": 1
+        },
+        {
+          "type": "row",
+          "a": "cafe",
+          "value": 2
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "books"
+        },
+        {
+          "type": "left",
+          "a": "bakery",
+          "b": "park"
+        },
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "park"
+        },
+        {
+          "type": "adjacent",
+          "a": "homes",
+          "b": "bikes"
+        },
+        {
+          "type": "sameColumn",
+          "a": "homes",
+          "b": "market"
+        },
+        {
+          "type": "left",
+          "a": "florist",
+          "b": "bikes"
+        }
+      ],
+      "solution": [
+        "florist",
+        "bikes",
+        "homes",
+        "books",
+        "pond",
+        "market",
+        "bakery",
+        "park",
+        "cafe"
+      ]
+    },
+    {
+      "date": "2026-09-23",
+      "clues": [
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "cafe"
+        },
+        {
+          "type": "sameRow",
+          "a": "florist",
+          "b": "pond"
+        },
+        {
+          "type": "left",
+          "a": "homes",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "bikes",
+          "b": "bakery"
+        },
+        {
+          "type": "above",
+          "a": "bikes",
+          "b": "park"
+        },
+        {
+          "type": "above",
+          "a": "market",
+          "b": "florist"
+        },
+        {
+          "type": "above",
+          "a": "cafe",
+          "b": "florist"
+        }
+      ],
+      "solution": [
+        "homes",
+        "bikes",
+        "market",
+        "books",
+        "bakery",
+        "cafe",
+        "pond",
+        "park",
+        "florist"
+      ]
+    },
+    {
+      "date": "2026-09-24",
+      "clues": [
+        {
+          "type": "corner",
+          "a": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "pond"
+        },
+        {
+          "type": "left",
+          "a": "park",
+          "b": "cafe"
+        },
+        {
+          "type": "sameColumn",
+          "a": "cafe",
+          "b": "florist"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "bikes"
+        },
+        {
+          "type": "sameRow",
+          "a": "florist",
+          "b": "bikes"
+        }
+      ],
+      "solution": [
+        "park",
+        "cafe",
+        "bakery",
+        "books",
+        "pond",
+        "homes",
+        "market",
+        "florist",
+        "bikes"
+      ]
+    },
+    {
+      "date": "2026-09-25",
+      "clues": [
+        {
+          "type": "sameRow",
+          "a": "park",
+          "b": "pond"
+        },
+        {
+          "type": "left",
+          "a": "bikes",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "bikes",
+          "b": "books"
+        },
+        {
+          "type": "above",
+          "a": "market",
+          "b": "bakery"
+        },
+        {
+          "type": "sameColumn",
+          "a": "florist",
+          "b": "bikes"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "pond"
+        }
+      ],
+      "solution": [
+        "florist",
+        "cafe",
+        "market",
+        "bikes",
+        "homes",
+        "bakery",
+        "books",
+        "park",
+        "pond"
+      ]
+    },
+    {
+      "date": "2026-09-26",
+      "clues": [
+        {
+          "type": "row",
+          "a": "bikes",
+          "value": 2
+        },
+        {
+          "type": "left",
+          "a": "park",
+          "b": "market"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "park"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "bikes"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "books"
+        },
+        {
+          "type": "adjacent",
+          "a": "park",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "bikes"
+        }
+      ],
+      "solution": [
+        "homes",
+        "bakery",
+        "books",
+        "cafe",
+        "florist",
+        "pond",
+        "bikes",
+        "park",
+        "market"
+      ]
+    },
+    {
+      "date": "2026-09-27",
+      "clues": [
+        {
+          "type": "left",
+          "a": "books",
+          "b": "florist"
+        },
+        {
+          "type": "adjacent",
+          "a": "pond",
+          "b": "bikes"
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "park"
+        },
+        {
+          "type": "above",
+          "a": "cafe",
+          "b": "bakery"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "park"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "bikes"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "adjacent",
+          "a": "pond",
+          "b": "market"
+        },
+        {
+          "type": "sameColumn",
+          "a": "books",
+          "b": "pond"
+        }
+      ],
+      "solution": [
+        "books",
+        "florist",
+        "park",
+        "bikes",
+        "homes",
+        "cafe",
+        "pond",
+        "market",
+        "bakery"
+      ]
+    },
+    {
+      "date": "2026-09-28",
+      "clues": [
+        {
+          "type": "left",
+          "a": "cafe",
+          "b": "park"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "bikes"
+        },
+        {
+          "type": "sameRow",
+          "a": "florist",
+          "b": "homes"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "left",
+          "a": "bakery",
+          "b": "bikes"
+        },
+        {
+          "type": "left",
+          "a": "park",
+          "b": "books"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "park"
+        }
+      ],
+      "solution": [
+        "homes",
+        "pond",
+        "florist",
+        "market",
+        "bakery",
+        "bikes",
+        "cafe",
+        "park",
+        "books"
+      ]
+    },
+    {
+      "date": "2026-09-29",
+      "clues": [
+        {
+          "type": "row",
+          "a": "books",
+          "value": 0
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "pond"
+        },
+        {
+          "type": "left",
+          "a": "cafe",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "florist"
+        },
+        {
+          "type": "left",
+          "a": "bikes",
+          "b": "books"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "homes"
+        }
+      ],
+      "solution": [
+        "bikes",
+        "books",
+        "market",
+        "cafe",
+        "homes",
+        "bakery",
+        "park",
+        "pond",
+        "florist"
+      ]
+    },
+    {
+      "date": "2026-09-30",
+      "clues": [
+        {
+          "type": "left",
+          "a": "bikes",
+          "b": "market"
+        },
+        {
+          "type": "left",
+          "a": "homes",
+          "b": "park"
+        },
+        {
+          "type": "sameRow",
+          "a": "florist",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "florist"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "cafe"
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "cafe"
+        },
+        {
+          "type": "adjacent",
+          "a": "pond",
+          "b": "market"
+        }
+      ],
+      "solution": [
+        "homes",
+        "park",
+        "pond",
+        "florist",
+        "bikes",
+        "market",
+        "bakery",
+        "books",
+        "cafe"
+      ]
+    },
+    {
+      "date": "2026-10-01",
+      "clues": [
+        {
+          "type": "row",
+          "a": "pond",
+          "value": 1
+        },
+        {
+          "type": "left",
+          "a": "market",
+          "b": "park"
+        },
+        {
+          "type": "left",
+          "a": "park",
+          "b": "books"
+        },
+        {
+          "type": "sameColumn",
+          "a": "books",
+          "b": "pond"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "bikes"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "park"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "cafe"
+        }
+      ],
+      "solution": [
+        "florist",
+        "homes",
+        "bakery",
+        "bikes",
+        "cafe",
+        "pond",
+        "market",
+        "park",
+        "books"
+      ]
+    },
+    {
+      "date": "2026-10-02",
+      "clues": [
+        {
+          "type": "corner",
+          "a": "bakery"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "homes"
+        },
+        {
+          "type": "sameColumn",
+          "a": "books",
+          "b": "florist"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "bikes"
+        },
+        {
+          "type": "left",
+          "a": "bikes",
+          "b": "bakery"
+        },
+        {
+          "type": "sameRow",
+          "a": "books",
+          "b": "market"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "park"
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "cafe"
+        }
+      ],
+      "solution": [
+        "market",
+        "books",
+        "park",
+        "pond",
+        "florist",
+        "cafe",
+        "homes",
+        "bikes",
+        "bakery"
+      ]
+    },
+    {
+      "date": "2026-10-03",
+      "clues": [
+        {
+          "type": "row",
+          "a": "books",
+          "value": 2
+        },
+        {
+          "type": "sameColumn",
+          "a": "cafe",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "bakery"
+        },
+        {
+          "type": "left",
+          "a": "florist",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "bikes"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "park"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "market"
+        }
+      ],
+      "solution": [
+        "florist",
+        "pond",
+        "homes",
+        "bakery",
+        "park",
+        "cafe",
+        "market",
+        "books",
+        "bikes"
+      ]
+    },
+    {
+      "date": "2026-10-04",
+      "clues": [
+        {
+          "type": "column",
+          "a": "pond",
+          "value": 2
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "books"
+        },
+        {
+          "type": "sameRow",
+          "a": "pond",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "park",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "bikes",
+          "b": "cafe"
+        },
+        {
+          "type": "left",
+          "a": "bakery",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "bikes",
+          "b": "market"
+        }
+      ],
+      "solution": [
+        "park",
+        "bikes",
+        "homes",
+        "florist",
+        "cafe",
+        "books",
+        "bakery",
+        "market",
+        "pond"
+      ]
+    },
+    {
+      "date": "2026-10-05",
+      "clues": [
+        {
+          "type": "adjacent",
+          "a": "bikes",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "pond",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "cafe"
+        },
+        {
+          "type": "above",
+          "a": "market",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "books"
+        },
+        {
+          "type": "left",
+          "a": "park",
+          "b": "bakery"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "cafe"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "florist"
+        }
+      ],
+      "solution": [
+        "homes",
+        "pond",
+        "florist",
+        "market",
+        "park",
+        "bakery",
+        "bikes",
+        "cafe",
+        "books"
+      ]
+    },
+    {
+      "date": "2026-10-06",
+      "clues": [
+        {
+          "type": "left",
+          "a": "books",
+          "b": "park"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "homes"
+        },
+        {
+          "type": "left",
+          "a": "cafe",
+          "b": "books"
+        },
+        {
+          "type": "sameRow",
+          "a": "pond",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "market"
+        }
+      ],
+      "solution": [
+        "cafe",
+        "books",
+        "park",
+        "florist",
+        "bikes",
+        "market",
+        "pond",
+        "homes",
+        "bakery"
+      ]
+    },
+    {
+      "date": "2026-10-07",
+      "clues": [
+        {
+          "type": "column",
+          "a": "market",
+          "value": 1
+        },
+        {
+          "type": "left",
+          "a": "cafe",
+          "b": "park"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "bakery"
+        },
+        {
+          "type": "sameRow",
+          "a": "books",
+          "b": "florist"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "homes"
+        }
+      ],
+      "solution": [
+        "pond",
+        "cafe",
+        "park",
+        "florist",
+        "books",
+        "homes",
+        "bikes",
+        "market",
+        "bakery"
+      ]
+    },
+    {
+      "date": "2026-10-08",
+      "clues": [
+        {
+          "type": "row",
+          "a": "bakery",
+          "value": 0
+        },
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "cafe",
+          "b": "florist"
+        },
+        {
+          "type": "adjacent",
+          "a": "park",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "pond"
+        },
+        {
+          "type": "left",
+          "a": "bikes",
+          "b": "books"
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "bakery"
+        }
+      ],
+      "solution": [
+        "bikes",
+        "books",
+        "bakery",
+        "park",
+        "homes",
+        "cafe",
+        "market",
+        "pond",
+        "florist"
+      ]
+    },
+    {
+      "date": "2026-10-09",
+      "clues": [
+        {
+          "type": "column",
+          "a": "books",
+          "value": 2
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "market",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "cafe",
+          "b": "pond"
+        },
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "books"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "bikes"
+        },
+        {
+          "type": "left",
+          "a": "florist",
+          "b": "pond"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "homes"
+        }
+      ],
+      "solution": [
+        "park",
+        "cafe",
+        "books",
+        "homes",
+        "market",
+        "bakery",
+        "florist",
+        "pond",
+        "bikes"
+      ]
+    },
+    {
+      "date": "2026-10-10",
+      "clues": [
+        {
+          "type": "row",
+          "a": "cafe",
+          "value": 1
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "market"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "books"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "bikes"
+        },
+        {
+          "type": "left",
+          "a": "park",
+          "b": "bakery"
+        }
+      ],
+      "solution": [
+        "pond",
+        "books",
+        "homes",
+        "cafe",
+        "market",
+        "florist",
+        "park",
+        "bakery",
+        "bikes"
+      ]
+    },
+    {
+      "date": "2026-10-11",
+      "clues": [
+        {
+          "type": "column",
+          "a": "pond",
+          "value": 0
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "books"
+        },
+        {
+          "type": "above",
+          "a": "bikes",
+          "b": "park"
+        },
+        {
+          "type": "sameRow",
+          "a": "books",
+          "b": "park"
+        },
+        {
+          "type": "left",
+          "a": "florist",
+          "b": "homes"
+        },
+        {
+          "type": "sameRow",
+          "a": "books",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "market"
+        },
+        {
+          "type": "left",
+          "a": "homes",
+          "b": "bakery"
+        }
+      ],
+      "solution": [
+        "pond",
+        "bikes",
+        "cafe",
+        "florist",
+        "homes",
+        "bakery",
+        "market",
+        "park",
+        "books"
+      ]
+    },
+    {
+      "date": "2026-10-12",
+      "clues": [
+        {
+          "type": "row",
+          "a": "cafe",
+          "value": 1
+        },
+        {
+          "type": "left",
+          "a": "pond",
+          "b": "florist"
+        },
+        {
+          "type": "left",
+          "a": "bakery",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "books"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "sameColumn",
+          "a": "florist",
+          "b": "park"
+        },
+        {
+          "type": "adjacent",
+          "a": "bikes",
+          "b": "market"
+        }
+      ],
+      "solution": [
+        "bakery",
+        "bikes",
+        "market",
+        "pond",
+        "florist",
+        "cafe",
+        "books",
+        "park",
+        "homes"
+      ]
+    },
+    {
+      "date": "2026-10-13",
+      "clues": [
+        {
+          "type": "corner",
+          "a": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "park"
+        },
+        {
+          "type": "left",
+          "a": "bikes",
+          "b": "park"
+        },
+        {
+          "type": "left",
+          "a": "florist",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "market"
+        },
+        {
+          "type": "sameColumn",
+          "a": "cafe",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "pond"
+        }
+      ],
+      "solution": [
+        "cafe",
+        "homes",
+        "books",
+        "florist",
+        "pond",
+        "bakery",
+        "market",
+        "bikes",
+        "park"
+      ]
+    },
+    {
+      "date": "2026-10-14",
+      "clues": [
+        {
+          "type": "row",
+          "a": "bakery",
+          "value": 1
+        },
+        {
+          "type": "sameColumn",
+          "a": "books",
+          "b": "market"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "florist"
+        },
+        {
+          "type": "above",
+          "a": "market",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "pond"
+        },
+        {
+          "type": "sameColumn",
+          "a": "florist",
+          "b": "park"
+        },
+        {
+          "type": "left",
+          "a": "cafe",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "florist"
+        }
+      ],
+      "solution": [
+        "cafe",
+        "pond",
+        "books",
+        "bakery",
+        "florist",
+        "market",
+        "bikes",
+        "park",
+        "homes"
+      ]
+    },
+    {
+      "date": "2026-10-15",
+      "clues": [
+        {
+          "type": "row",
+          "a": "books",
+          "value": 0
+        },
+        {
+          "type": "corner",
+          "a": "florist"
+        },
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "bakery"
+        },
+        {
+          "type": "left",
+          "a": "bikes",
+          "b": "florist"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "park"
+        },
+        {
+          "type": "sameColumn",
+          "a": "cafe",
+          "b": "books"
+        },
+        {
+          "type": "above",
+          "a": "cafe",
+          "b": "homes"
+        }
+      ],
+      "solution": [
+        "books",
+        "bikes",
+        "florist",
+        "cafe",
+        "park",
+        "market",
+        "homes",
+        "bakery",
+        "pond"
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "clues": [
+        {
+          "type": "adjacent",
+          "a": "homes",
+          "b": "bikes"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "pond"
+        },
+        {
+          "type": "adjacent",
+          "a": "park",
+          "b": "market"
+        },
+        {
+          "type": "left",
+          "a": "pond",
+          "b": "bikes"
+        },
+        {
+          "type": "sameColumn",
+          "a": "park",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "books"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "cafe"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "park"
+        }
+      ],
+      "solution": [
+        "bakery",
+        "park",
+        "market",
+        "cafe",
+        "pond",
+        "bikes",
+        "florist",
+        "books",
+        "homes"
+      ]
+    },
+    {
+      "date": "2026-10-17",
+      "clues": [
+        {
+          "type": "row",
+          "a": "books",
+          "value": 0
+        },
+        {
+          "type": "left",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "park"
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "park"
+        },
+        {
+          "type": "left",
+          "a": "pond",
+          "b": "cafe"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "homes"
+        },
+        {
+          "type": "sameColumn",
+          "a": "park",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "market",
+          "b": "pond"
+        }
+      ],
+      "solution": [
+        "books",
+        "park",
+        "florist",
+        "homes",
+        "market",
+        "bikes",
+        "bakery",
+        "pond",
+        "cafe"
+      ]
+    },
+    {
+      "date": "2026-10-18",
+      "clues": [
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "bikes"
+        },
+        {
+          "type": "left",
+          "a": "cafe",
+          "b": "park"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "florist"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "park"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "market"
+        },
+        {
+          "type": "left",
+          "a": "homes",
+          "b": "bakery"
+        },
+        {
+          "type": "left",
+          "a": "pond",
+          "b": "market"
+        }
+      ],
+      "solution": [
+        "florist",
+        "homes",
+        "bakery",
+        "bikes",
+        "cafe",
+        "park",
+        "books",
+        "pond",
+        "market"
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "clues": [
+        {
+          "type": "row",
+          "a": "cafe",
+          "value": 1
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "market"
+        },
+        {
+          "type": "sameRow",
+          "a": "park",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "cafe"
+        },
+        {
+          "type": "sameColumn",
+          "a": "cafe",
+          "b": "park"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "bikes"
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "bikes"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bikes",
+          "b": "market"
+        },
+        {
+          "type": "left",
+          "a": "bakery",
+          "b": "cafe"
+        }
+      ],
+      "solution": [
+        "homes",
+        "books",
+        "market",
+        "bakery",
+        "cafe",
+        "bikes",
+        "pond",
+        "park",
+        "florist"
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "clues": [
+        {
+          "type": "row",
+          "a": "cafe",
+          "value": 2
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "park"
+        },
+        {
+          "type": "left",
+          "a": "pond",
+          "b": "bikes"
+        },
+        {
+          "type": "left",
+          "a": "park",
+          "b": "bakery"
+        },
+        {
+          "type": "sameColumn",
+          "a": "books",
+          "b": "pond"
+        },
+        {
+          "type": "adjacent",
+          "a": "pond",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "bikes"
+        }
+      ],
+      "solution": [
+        "books",
+        "park",
+        "bakery",
+        "homes",
+        "florist",
+        "market",
+        "pond",
+        "bikes",
+        "cafe"
+      ]
+    },
+    {
+      "date": "2026-10-21",
+      "clues": [
+        {
+          "type": "row",
+          "a": "books",
+          "value": 2
+        },
+        {
+          "type": "corner",
+          "a": "pond"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "bikes"
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "park"
+        },
+        {
+          "type": "sameRow",
+          "a": "florist",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "books"
+        },
+        {
+          "type": "sameColumn",
+          "a": "cafe",
+          "b": "pond"
+        },
+        {
+          "type": "sameRow",
+          "a": "books",
+          "b": "bikes"
+        }
+      ],
+      "solution": [
+        "florist",
+        "market",
+        "pond",
+        "homes",
+        "bakery",
+        "cafe",
+        "bikes",
+        "books",
+        "park"
+      ]
+    },
+    {
+      "date": "2026-10-22",
+      "clues": [
+        {
+          "type": "above",
+          "a": "bikes",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "florist"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "bikes"
+        },
+        {
+          "type": "left",
+          "a": "bikes",
+          "b": "books"
+        },
+        {
+          "type": "left",
+          "a": "bakery",
+          "b": "bikes"
+        },
+        {
+          "type": "sameColumn",
+          "a": "books",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "homes"
+        }
+      ],
+      "solution": [
+        "cafe",
+        "florist",
+        "park",
+        "bakery",
+        "bikes",
+        "books",
+        "pond",
+        "market",
+        "homes"
+      ]
+    },
+    {
+      "date": "2026-10-23",
+      "clues": [
+        {
+          "type": "above",
+          "a": "market",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "pond"
+        },
+        {
+          "type": "left",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "pond"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "bikes"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "cafe"
+        }
+      ],
+      "solution": [
+        "market",
+        "cafe",
+        "park",
+        "homes",
+        "bakery",
+        "pond",
+        "florist",
+        "bikes",
+        "books"
+      ]
+    },
+    {
+      "date": "2026-10-24",
+      "clues": [
+        {
+          "type": "row",
+          "a": "market",
+          "value": 1
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "park"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "homes"
+        },
+        {
+          "type": "sameRow",
+          "a": "pond",
+          "b": "bikes"
+        },
+        {
+          "type": "left",
+          "a": "bakery",
+          "b": "books"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "cafe"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "bikes"
+        }
+      ],
+      "solution": [
+        "park",
+        "bakery",
+        "books",
+        "bikes",
+        "market",
+        "pond",
+        "florist",
+        "cafe",
+        "homes"
+      ]
+    },
+    {
+      "date": "2026-10-25",
+      "clues": [
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "pond"
+        },
+        {
+          "type": "left",
+          "a": "park",
+          "b": "cafe"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "florist"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "pond"
+        },
+        {
+          "type": "sameRow",
+          "a": "pond",
+          "b": "bikes"
+        },
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "florist"
+        },
+        {
+          "type": "sameColumn",
+          "a": "books",
+          "b": "park"
+        },
+        {
+          "type": "above",
+          "a": "cafe",
+          "b": "bikes"
+        }
+      ],
+      "solution": [
+        "park",
+        "cafe",
+        "florist",
+        "books",
+        "homes",
+        "bakery",
+        "pond",
+        "bikes",
+        "market"
+      ]
+    },
+    {
+      "date": "2026-10-26",
+      "clues": [
+        {
+          "type": "left",
+          "a": "florist",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "bakery"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "park"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "bikes"
+        },
+        {
+          "type": "sameColumn",
+          "a": "park",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "park",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "park"
+        }
+      ],
+      "solution": [
+        "market",
+        "florist",
+        "pond",
+        "books",
+        "homes",
+        "bakery",
+        "bikes",
+        "park",
+        "cafe"
+      ]
+    },
+    {
+      "date": "2026-10-27",
+      "clues": [
+        {
+          "type": "row",
+          "a": "pond",
+          "value": 0
+        },
+        {
+          "type": "column",
+          "a": "bikes",
+          "value": 2
+        },
+        {
+          "type": "sameColumn",
+          "a": "pond",
+          "b": "market"
+        },
+        {
+          "type": "sameColumn",
+          "a": "park",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "florist"
+        },
+        {
+          "type": "adjacent",
+          "a": "bikes",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "homes"
+        },
+        {
+          "type": "sameRow",
+          "a": "books",
+          "b": "bikes"
+        },
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "park"
+        }
+      ],
+      "solution": [
+        "homes",
+        "pond",
+        "bakery",
+        "books",
+        "market",
+        "bikes",
+        "florist",
+        "park",
+        "cafe"
+      ]
+    },
+    {
+      "date": "2026-10-28",
+      "clues": [
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "florist"
+        },
+        {
+          "type": "left",
+          "a": "market",
+          "b": "bakery"
+        },
+        {
+          "type": "above",
+          "a": "cafe",
+          "b": "pond"
+        },
+        {
+          "type": "sameColumn",
+          "a": "books",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "bakery"
+        },
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "homes"
+        },
+        {
+          "type": "left",
+          "a": "homes",
+          "b": "florist"
+        }
+      ],
+      "solution": [
+        "cafe",
+        "homes",
+        "florist",
+        "market",
+        "bakery",
+        "books",
+        "pond",
+        "park",
+        "bikes"
+      ]
+    },
+    {
+      "date": "2026-10-29",
+      "clues": [
+        {
+          "type": "row",
+          "a": "pond",
+          "value": 2
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "books"
+        },
+        {
+          "type": "left",
+          "a": "florist",
+          "b": "bakery"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "market",
+          "b": "cafe"
+        },
+        {
+          "type": "adjacent",
+          "a": "park",
+          "b": "bikes"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "park"
+        }
+      ],
+      "solution": [
+        "florist",
+        "bakery",
+        "books",
+        "homes",
+        "market",
+        "park",
+        "pond",
+        "cafe",
+        "bikes"
+      ]
+    },
+    {
+      "date": "2026-10-30",
+      "clues": [
+        {
+          "type": "column",
+          "a": "park",
+          "value": 2
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "bikes"
+        },
+        {
+          "type": "left",
+          "a": "homes",
+          "b": "park"
+        },
+        {
+          "type": "above",
+          "a": "bikes",
+          "b": "florist"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "florist"
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "bikes"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "books"
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "market"
+        }
+      ],
+      "solution": [
+        "bakery",
+        "pond",
+        "cafe",
+        "bikes",
+        "homes",
+        "park",
+        "florist",
+        "books",
+        "market"
+      ]
+    },
+    {
+      "date": "2026-10-31",
+      "clues": [
+        {
+          "type": "row",
+          "a": "market",
+          "value": 1
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "florist"
+        },
+        {
+          "type": "sameColumn",
+          "a": "cafe",
+          "b": "books"
+        },
+        {
+          "type": "sameRow",
+          "a": "homes",
+          "b": "bikes"
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "park"
+        },
+        {
+          "type": "left",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "sameColumn",
+          "a": "park",
+          "b": "homes"
+        }
+      ],
+      "solution": [
+        "books",
+        "bakery",
+        "pond",
+        "cafe",
+        "park",
+        "market",
+        "florist",
+        "homes",
+        "bikes"
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "clues": [
+        {
+          "type": "column",
+          "a": "pond",
+          "value": 0
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "homes"
+        },
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "books"
+        },
+        {
+          "type": "sameRow",
+          "a": "park",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "park"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "homes"
+        },
+        {
+          "type": "left",
+          "a": "pond",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "sameColumn",
+          "a": "books",
+          "b": "bikes"
+        }
+      ],
+      "solution": [
+        "bakery",
+        "books",
+        "cafe",
+        "homes",
+        "park",
+        "market",
+        "pond",
+        "bikes",
+        "florist"
+      ]
+    },
+    {
+      "date": "2026-11-02",
+      "clues": [
+        {
+          "type": "row",
+          "a": "homes",
+          "value": 2
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "pond"
+        },
+        {
+          "type": "left",
+          "a": "park",
+          "b": "cafe"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "pond"
+        },
+        {
+          "type": "left",
+          "a": "bikes",
+          "b": "florist"
+        },
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "homes"
+        },
+        {
+          "type": "sameColumn",
+          "a": "pond",
+          "b": "market"
+        }
+      ],
+      "solution": [
+        "bikes",
+        "florist",
+        "market",
+        "bakery",
+        "books",
+        "pond",
+        "homes",
+        "park",
+        "cafe"
+      ]
+    },
+    {
+      "date": "2026-11-03",
+      "clues": [
+        {
+          "type": "corner",
+          "a": "books"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "market",
+          "b": "florist"
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "market"
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "cafe"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "market",
+          "b": "park"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "books"
+        }
+      ],
+      "solution": [
+        "bakery",
+        "homes",
+        "market",
+        "pond",
+        "bikes",
+        "florist",
+        "books",
+        "cafe",
+        "park"
+      ]
+    },
+    {
+      "date": "2026-11-04",
+      "clues": [
+        {
+          "type": "column",
+          "a": "florist",
+          "value": 2
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "bikes"
+        },
+        {
+          "type": "sameRow",
+          "a": "books",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "park"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "cafe",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "bikes"
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "homes"
+        }
+      ],
+      "solution": [
+        "cafe",
+        "homes",
+        "florist",
+        "pond",
+        "books",
+        "park",
+        "market",
+        "bikes",
+        "bakery"
+      ]
+    },
+    {
+      "date": "2026-11-05",
+      "clues": [
+        {
+          "type": "row",
+          "a": "pond",
+          "value": 1
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "bakery"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "cafe"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "pond"
+        }
+      ],
+      "solution": [
+        "park",
+        "books",
+        "homes",
+        "bikes",
+        "bakery",
+        "pond",
+        "cafe",
+        "market",
+        "florist"
+      ]
+    },
+    {
+      "date": "2026-11-06",
+      "clues": [
+        {
+          "type": "column",
+          "a": "books",
+          "value": 0
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "cafe"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "pond",
+          "b": "homes"
+        },
+        {
+          "type": "sameRow",
+          "a": "florist",
+          "b": "park"
+        }
+      ],
+      "solution": [
+        "park",
+        "bikes",
+        "florist",
+        "market",
+        "bakery",
+        "pond",
+        "books",
+        "cafe",
+        "homes"
+      ]
+    },
+    {
+      "date": "2026-11-07",
+      "clues": [
+        {
+          "type": "row",
+          "a": "books",
+          "value": 2
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "bakery"
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "homes"
+        },
+        {
+          "type": "sameColumn",
+          "a": "florist",
+          "b": "park"
+        },
+        {
+          "type": "adjacent",
+          "a": "pond",
+          "b": "bikes"
+        },
+        {
+          "type": "sameColumn",
+          "a": "pond",
+          "b": "market"
+        },
+        {
+          "type": "sameRow",
+          "a": "florist",
+          "b": "bikes"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "pond"
+        }
+      ],
+      "solution": [
+        "cafe",
+        "market",
+        "park",
+        "bikes",
+        "pond",
+        "florist",
+        "books",
+        "bakery",
+        "homes"
+      ]
+    },
+    {
+      "date": "2026-11-08",
+      "clues": [
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "bikes"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "pond"
+        },
+        {
+          "type": "sameColumn",
+          "a": "pond",
+          "b": "bikes"
+        },
+        {
+          "type": "left",
+          "a": "bikes",
+          "b": "books"
+        },
+        {
+          "type": "adjacent",
+          "a": "park",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "homes"
+        }
+      ],
+      "solution": [
+        "bakery",
+        "market",
+        "florist",
+        "bikes",
+        "books",
+        "park",
+        "pond",
+        "cafe",
+        "homes"
+      ]
+    },
+    {
+      "date": "2026-11-09",
+      "clues": [
+        {
+          "type": "column",
+          "a": "park",
+          "value": 0
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "florist"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "bakery"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "pond"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "cafe"
+        },
+        {
+          "type": "adjacent",
+          "a": "park",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "bikes"
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "homes"
+        }
+      ],
+      "solution": [
+        "homes",
+        "florist",
+        "books",
+        "park",
+        "bikes",
+        "pond",
+        "market",
+        "cafe",
+        "bakery"
+      ]
+    },
+    {
+      "date": "2026-11-10",
+      "clues": [
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "homes"
+        },
+        {
+          "type": "sameRow",
+          "a": "books",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "pond"
+        },
+        {
+          "type": "sameRow",
+          "a": "florist",
+          "b": "bikes"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "florist"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "homes"
+        },
+        {
+          "type": "left",
+          "a": "bakery",
+          "b": "park"
+        }
+      ],
+      "solution": [
+        "market",
+        "bakery",
+        "park",
+        "books",
+        "pond",
+        "homes",
+        "bikes",
+        "florist",
+        "cafe"
+      ]
+    },
+    {
+      "date": "2026-11-11",
+      "clues": [
+        {
+          "type": "column",
+          "a": "cafe",
+          "value": 2
+        },
+        {
+          "type": "left",
+          "a": "bakery",
+          "b": "florist"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "books"
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "cafe"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "bikes"
+        },
+        {
+          "type": "sameRow",
+          "a": "florist",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "homes"
+        },
+        {
+          "type": "sameRow",
+          "a": "homes",
+          "b": "bikes"
+        }
+      ],
+      "solution": [
+        "pond",
+        "bakery",
+        "florist",
+        "park",
+        "books",
+        "cafe",
+        "homes",
+        "bikes",
+        "market"
+      ]
+    },
+    {
+      "date": "2026-11-12",
+      "clues": [
+        {
+          "type": "left",
+          "a": "books",
+          "b": "florist"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "bakery"
+        },
+        {
+          "type": "adjacent",
+          "a": "park",
+          "b": "market"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "florist"
+        },
+        {
+          "type": "above",
+          "a": "market",
+          "b": "books"
+        },
+        {
+          "type": "above",
+          "a": "cafe",
+          "b": "bikes"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "homes"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "park"
+        }
+      ],
+      "solution": [
+        "park",
+        "market",
+        "cafe",
+        "homes",
+        "pond",
+        "bikes",
+        "bakery",
+        "books",
+        "florist"
+      ]
+    },
+    {
+      "date": "2026-11-13",
+      "clues": [
+        {
+          "type": "column",
+          "a": "books",
+          "value": 2
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "books"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "bakery"
+        },
+        {
+          "type": "adjacent",
+          "a": "florist",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "bikes",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "pond",
+          "b": "homes"
+        },
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "pond"
+        }
+      ],
+      "solution": [
+        "florist",
+        "bikes",
+        "park",
+        "pond",
+        "homes",
+        "books",
+        "bakery",
+        "market",
+        "cafe"
+      ]
+    },
+    {
+      "date": "2026-11-14",
+      "clues": [
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "cafe"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "bikes"
+        },
+        {
+          "type": "left",
+          "a": "homes",
+          "b": "pond"
+        },
+        {
+          "type": "sameRow",
+          "a": "park",
+          "b": "bikes"
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "cafe"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "park"
+        }
+      ],
+      "solution": [
+        "homes",
+        "pond",
+        "market",
+        "books",
+        "cafe",
+        "bakery",
+        "florist",
+        "park",
+        "bikes"
+      ]
+    },
+    {
+      "date": "2026-11-15",
+      "clues": [
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "homes"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "florist"
+        },
+        {
+          "type": "sameRow",
+          "a": "florist",
+          "b": "park"
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "bikes",
+          "b": "market"
+        }
+      ],
+      "solution": [
+        "florist",
+        "bikes",
+        "park",
+        "homes",
+        "books",
+        "pond",
+        "bakery",
+        "market",
+        "cafe"
+      ]
+    },
+    {
+      "date": "2026-11-16",
+      "clues": [
+        {
+          "type": "row",
+          "a": "bakery",
+          "value": 1
+        },
+        {
+          "type": "above",
+          "a": "cafe",
+          "b": "homes"
+        },
+        {
+          "type": "left",
+          "a": "florist",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "cafe"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "park"
+        },
+        {
+          "type": "sameColumn",
+          "a": "florist",
+          "b": "park"
+        }
+      ],
+      "solution": [
+        "books",
+        "florist",
+        "market",
+        "cafe",
+        "park",
+        "bakery",
+        "homes",
+        "pond",
+        "bikes"
+      ]
+    },
+    {
+      "date": "2026-11-17",
+      "clues": [
+        {
+          "type": "left",
+          "a": "florist",
+          "b": "bakery"
+        },
+        {
+          "type": "adjacent",
+          "a": "pond",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "bikes",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "cafe"
+        },
+        {
+          "type": "sameRow",
+          "a": "books",
+          "b": "pond"
+        },
+        {
+          "type": "left",
+          "a": "bikes",
+          "b": "florist"
+        },
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "pond"
+        },
+        {
+          "type": "sameColumn",
+          "a": "books",
+          "b": "park"
+        }
+      ],
+      "solution": [
+        "bikes",
+        "florist",
+        "bakery",
+        "market",
+        "park",
+        "homes",
+        "pond",
+        "books",
+        "cafe"
+      ]
+    },
+    {
+      "date": "2026-11-18",
+      "clues": [
+        {
+          "type": "left",
+          "a": "pond",
+          "b": "florist"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "bikes"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "cafe"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "bikes"
+        },
+        {
+          "type": "sameRow",
+          "a": "park",
+          "b": "pond"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "cafe"
+        },
+        {
+          "type": "above",
+          "a": "bikes",
+          "b": "pond"
+        }
+      ],
+      "solution": [
+        "books",
+        "market",
+        "homes",
+        "bikes",
+        "bakery",
+        "cafe",
+        "pond",
+        "florist",
+        "park"
+      ]
+    },
+    {
+      "date": "2026-11-19",
+      "clues": [
+        {
+          "type": "left",
+          "a": "bikes",
+          "b": "park"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "bikes"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "books"
+        },
+        {
+          "type": "sameColumn",
+          "a": "cafe",
+          "b": "florist"
+        },
+        {
+          "type": "sameRow",
+          "a": "homes",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "bakery"
+        }
+      ],
+      "solution": [
+        "market",
+        "homes",
+        "cafe",
+        "pond",
+        "bakery",
+        "florist",
+        "bikes",
+        "park",
+        "books"
+      ]
+    },
+    {
+      "date": "2026-11-20",
+      "clues": [
+        {
+          "type": "left",
+          "a": "homes",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "bikes",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "market",
+          "b": "park"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "bikes"
+        },
+        {
+          "type": "sameColumn",
+          "a": "books",
+          "b": "florist"
+        },
+        {
+          "type": "adjacent",
+          "a": "pond",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "park"
+        }
+      ],
+      "solution": [
+        "books",
+        "bikes",
+        "bakery",
+        "homes",
+        "pond",
+        "market",
+        "florist",
+        "cafe",
+        "park"
+      ]
+    },
+    {
+      "date": "2026-11-21",
+      "clues": [
+        {
+          "type": "left",
+          "a": "florist",
+          "b": "park"
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "market",
+          "b": "bakery"
+        },
+        {
+          "type": "sameRow",
+          "a": "homes",
+          "b": "bikes"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "market"
+        },
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "books"
+        }
+      ],
+      "solution": [
+        "pond",
+        "florist",
+        "park",
+        "books",
+        "market",
+        "cafe",
+        "homes",
+        "bakery",
+        "bikes"
+      ]
+    },
+    {
+      "date": "2026-11-22",
+      "clues": [
+        {
+          "type": "left",
+          "a": "books",
+          "b": "pond"
+        },
+        {
+          "type": "adjacent",
+          "a": "park",
+          "b": "homes"
+        },
+        {
+          "type": "sameRow",
+          "a": "florist",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "cafe",
+          "b": "books"
+        },
+        {
+          "type": "left",
+          "a": "homes",
+          "b": "books"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "homes"
+        },
+        {
+          "type": "left",
+          "a": "market",
+          "b": "bakery"
+        }
+      ],
+      "solution": [
+        "florist",
+        "market",
+        "bakery",
+        "park",
+        "cafe",
+        "bikes",
+        "homes",
+        "books",
+        "pond"
+      ]
+    },
+    {
+      "date": "2026-11-23",
+      "clues": [
+        {
+          "type": "adjacent",
+          "a": "bikes",
+          "b": "market"
+        },
+        {
+          "type": "left",
+          "a": "park",
+          "b": "cafe"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "florist"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "park"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "florist"
+        },
+        {
+          "type": "adjacent",
+          "a": "pond",
+          "b": "market"
+        },
+        {
+          "type": "sameRow",
+          "a": "books",
+          "b": "pond"
+        }
+      ],
+      "solution": [
+        "books",
+        "pond",
+        "market",
+        "bakery",
+        "florist",
+        "bikes",
+        "park",
+        "cafe",
+        "homes"
+      ]
+    },
+    {
+      "date": "2026-11-24",
+      "clues": [
+        {
+          "type": "column",
+          "a": "bakery",
+          "value": 0
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "books"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "florist",
+          "b": "bakery"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "bikes",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "park",
+          "b": "market"
+        },
+        {
+          "type": "sameColumn",
+          "a": "homes",
+          "b": "bikes"
+        }
+      ],
+      "solution": [
+        "florist",
+        "bikes",
+        "books",
+        "park",
+        "market",
+        "cafe",
+        "bakery",
+        "homes",
+        "pond"
+      ]
+    },
+    {
+      "date": "2026-11-25",
+      "clues": [
+        {
+          "type": "row",
+          "a": "bakery",
+          "value": 0
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "florist"
+        },
+        {
+          "type": "sameColumn",
+          "a": "park",
+          "b": "pond"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "florist"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "market"
+        },
+        {
+          "type": "left",
+          "a": "homes",
+          "b": "cafe"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "books"
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "homes"
+        }
+      ],
+      "solution": [
+        "pond",
+        "bakery",
+        "florist",
+        "books",
+        "homes",
+        "cafe",
+        "park",
+        "market",
+        "bikes"
+      ]
+    },
+    {
+      "date": "2026-11-26",
+      "clues": [
+        {
+          "type": "left",
+          "a": "homes",
+          "b": "books"
+        },
+        {
+          "type": "left",
+          "a": "pond",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "cafe"
+        },
+        {
+          "type": "sameRow",
+          "a": "pond",
+          "b": "bikes"
+        },
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "park"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "bakery"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "pond"
+        },
+        {
+          "type": "sameColumn",
+          "a": "homes",
+          "b": "market"
+        }
+      ],
+      "solution": [
+        "florist",
+        "homes",
+        "books",
+        "pond",
+        "market",
+        "bikes",
+        "cafe",
+        "park",
+        "bakery"
+      ]
+    },
+    {
+      "date": "2026-11-27",
+      "clues": [
+        {
+          "type": "above",
+          "a": "books",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "market",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "park"
+        },
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "pond"
+        },
+        {
+          "type": "left",
+          "a": "park",
+          "b": "bakery"
+        },
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "bikes"
+        }
+      ],
+      "solution": [
+        "books",
+        "bikes",
+        "florist",
+        "market",
+        "cafe",
+        "pond",
+        "homes",
+        "park",
+        "bakery"
+      ]
+    },
+    {
+      "date": "2026-11-28",
+      "clues": [
+        {
+          "type": "left",
+          "a": "homes",
+          "b": "cafe"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "market"
+        },
+        {
+          "type": "left",
+          "a": "pond",
+          "b": "park"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "books"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "park"
+        },
+        {
+          "type": "sameRow",
+          "a": "florist",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "pond"
+        }
+      ],
+      "solution": [
+        "homes",
+        "cafe",
+        "florist",
+        "bikes",
+        "bakery",
+        "books",
+        "pond",
+        "park",
+        "market"
+      ]
+    },
+    {
+      "date": "2026-11-29",
+      "clues": [
+        {
+          "type": "row",
+          "a": "park",
+          "value": 0
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "park"
+        },
+        {
+          "type": "left",
+          "a": "homes",
+          "b": "bakery"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "cafe"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "bakery"
+        },
+        {
+          "type": "adjacent",
+          "a": "park",
+          "b": "market"
+        },
+        {
+          "type": "left",
+          "a": "florist",
+          "b": "bikes"
+        }
+      ],
+      "solution": [
+        "pond",
+        "books",
+        "park",
+        "florist",
+        "bikes",
+        "market",
+        "homes",
+        "bakery",
+        "cafe"
+      ]
+    },
+    {
+      "date": "2026-11-30",
+      "clues": [
+        {
+          "type": "column",
+          "a": "homes",
+          "value": 2
+        },
+        {
+          "type": "row",
+          "a": "florist",
+          "value": 2
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "park"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "cafe"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "florist"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "books"
+        },
+        {
+          "type": "sameRow",
+          "a": "books",
+          "b": "park"
+        }
+      ],
+      "solution": [
+        "bakery",
+        "pond",
+        "homes",
+        "park",
+        "market",
+        "books",
+        "cafe",
+        "bikes",
+        "florist"
+      ]
+    },
+    {
+      "date": "2026-12-01",
+      "clues": [
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "park"
+        },
+        {
+          "type": "above",
+          "a": "cafe",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "park"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "market"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "books"
+        },
+        {
+          "type": "left",
+          "a": "market",
+          "b": "bikes"
+        },
+        {
+          "type": "sameRow",
+          "a": "pond",
+          "b": "bikes"
+        }
+      ],
+      "solution": [
+        "market",
+        "bikes",
+        "pond",
+        "bakery",
+        "cafe",
+        "park",
+        "books",
+        "homes",
+        "florist"
+      ]
+    },
+    {
+      "date": "2026-12-02",
+      "clues": [
+        {
+          "type": "column",
+          "a": "pond",
+          "value": 2
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "bakery"
+        },
+        {
+          "type": "adjacent",
+          "a": "bikes",
+          "b": "market"
+        },
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "books"
+        },
+        {
+          "type": "left",
+          "a": "florist",
+          "b": "books"
+        },
+        {
+          "type": "sameRow",
+          "a": "pond",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "bikes"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "market"
+        }
+      ],
+      "solution": [
+        "florist",
+        "books",
+        "cafe",
+        "homes",
+        "market",
+        "pond",
+        "bakery",
+        "bikes",
+        "park"
+      ]
+    },
+    {
+      "date": "2026-12-03",
+      "clues": [
+        {
+          "type": "adjacent",
+          "a": "cafe",
+          "b": "homes"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "bikes"
+        },
+        {
+          "type": "left",
+          "a": "bakery",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "market",
+          "b": "florist"
+        },
+        {
+          "type": "sameRow",
+          "a": "park",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "cafe"
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "cafe"
+        }
+      ],
+      "solution": [
+        "park",
+        "bakery",
+        "market",
+        "pond",
+        "bikes",
+        "florist",
+        "books",
+        "cafe",
+        "homes"
+      ]
+    },
+    {
+      "date": "2026-12-04",
+      "clues": [
+        {
+          "type": "row",
+          "a": "park",
+          "value": 2
+        },
+        {
+          "type": "left",
+          "a": "bikes",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "cafe"
+        },
+        {
+          "type": "left",
+          "a": "market",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "florist"
+        },
+        {
+          "type": "sameRow",
+          "a": "books",
+          "b": "market"
+        }
+      ],
+      "solution": [
+        "bikes",
+        "homes",
+        "bakery",
+        "books",
+        "market",
+        "pond",
+        "park",
+        "florist",
+        "cafe"
+      ]
+    },
+    {
+      "date": "2026-12-05",
+      "clues": [
+        {
+          "type": "above",
+          "a": "homes",
+          "b": "bikes"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "florist"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "bakery"
+        },
+        {
+          "type": "above",
+          "a": "market",
+          "b": "cafe"
+        },
+        {
+          "type": "left",
+          "a": "books",
+          "b": "park"
+        },
+        {
+          "type": "sameRow",
+          "a": "cafe",
+          "b": "bikes"
+        },
+        {
+          "type": "left",
+          "a": "park",
+          "b": "homes"
+        }
+      ],
+      "solution": [
+        "books",
+        "park",
+        "homes",
+        "bakery",
+        "market",
+        "florist",
+        "pond",
+        "cafe",
+        "bikes"
+      ]
+    },
+    {
+      "date": "2026-12-06",
+      "clues": [
+        {
+          "type": "column",
+          "a": "bakery",
+          "value": 2
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "park",
+          "b": "bakery"
+        },
+        {
+          "type": "adjacent",
+          "a": "bakery",
+          "b": "homes"
+        },
+        {
+          "type": "sameRow",
+          "a": "florist",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "bikes",
+          "b": "books"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "florist"
+        }
+      ],
+      "solution": [
+        "bikes",
+        "cafe",
+        "park",
+        "books",
+        "homes",
+        "bakery",
+        "florist",
+        "pond",
+        "market"
+      ]
+    },
+    {
+      "date": "2026-12-07",
+      "clues": [
+        {
+          "type": "row",
+          "a": "books",
+          "value": 2
+        },
+        {
+          "type": "left",
+          "a": "market",
+          "b": "park"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "florist"
+        },
+        {
+          "type": "sameColumn",
+          "a": "cafe",
+          "b": "homes"
+        },
+        {
+          "type": "sameColumn",
+          "a": "bakery",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "cafe",
+          "b": "market"
+        },
+        {
+          "type": "sameRow",
+          "a": "bakery",
+          "b": "market"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "homes"
+        }
+      ],
+      "solution": [
+        "cafe",
+        "bikes",
+        "pond",
+        "market",
+        "park",
+        "bakery",
+        "homes",
+        "books",
+        "florist"
+      ]
+    },
+    {
+      "date": "2026-12-08",
+      "clues": [
+        {
+          "type": "column",
+          "a": "park",
+          "value": 2
+        },
+        {
+          "type": "above",
+          "a": "bikes",
+          "b": "pond"
+        },
+        {
+          "type": "above",
+          "a": "books",
+          "b": "park"
+        },
+        {
+          "type": "adjacent",
+          "a": "books",
+          "b": "homes"
+        },
+        {
+          "type": "sameRow",
+          "a": "bikes",
+          "b": "market"
+        },
+        {
+          "type": "above",
+          "a": "bakery",
+          "b": "homes"
+        },
+        {
+          "type": "above",
+          "a": "pond",
+          "b": "cafe"
+        }
+      ],
+      "solution": [
+        "bikes",
+        "bakery",
+        "market",
+        "pond",
+        "homes",
+        "books",
+        "cafe",
+        "florist",
+        "park"
+      ]
+    }
+  ],
+  "tutorial": {
+    "date": "tutorial",
+    "clues": [
+      {
+        "type": "row",
+        "a": "bakery",
+        "value": 0
+      },
+      {
+        "type": "column",
+        "a": "bakery",
+        "value": 0
+      },
+      {
+        "type": "left",
+        "a": "bakery",
+        "b": "cafe"
+      },
+      {
+        "type": "left",
+        "a": "cafe",
+        "b": "books"
+      },
+      {
+        "type": "left",
+        "a": "florist",
+        "b": "park"
+      },
+      {
+        "type": "left",
+        "a": "park",
+        "b": "pond"
+      },
+      {
+        "type": "above",
+        "a": "florist",
+        "b": "homes"
+      },
+      {
+        "type": "left",
+        "a": "homes",
+        "b": "bikes"
+      },
+      {
+        "type": "left",
+        "a": "bikes",
+        "b": "market"
+      }
+    ],
+    "solution": [
+      "bakery",
+      "cafe",
+      "books",
+      "florist",
+      "park",
+      "pond",
+      "homes",
+      "bikes",
+      "market"
+    ]
+  }
+}

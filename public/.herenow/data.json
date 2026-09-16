@@ -1,0 +1,25 @@
+{
+  "collections": {
+    "feedback": {
+      "fields": {
+        "enjoyment": { "type": "string", "maxLength": 3, "trim": true },
+        "difficulty": { "type": "string", "maxLength": 5, "trim": true },
+        "message": { "type": "string", "maxLength": 1000, "trim": true },
+        "date": { "type": "string", "maxLength": 10, "trim": true }
+      },
+      "access": { "read": "owner", "insert": "public", "update": "owner", "delete": "owner" },
+      "rateLimit": "5/hour/ip"
+    },
+    "events": {
+      "fields": {
+        "event": { "type": "string", "required": true, "maxLength": 16, "trim": true },
+        "date": { "type": "string", "required": true, "maxLength": 10, "trim": true },
+        "puzzle": { "type": "string", "required": true, "maxLength": 32, "trim": true },
+        "mode": { "type": "string", "required": true, "maxLength": 16, "trim": true },
+        "returning": { "type": "boolean", "required": true }
+      },
+      "access": { "read": "owner", "insert": "public", "update": "owner", "delete": "owner" },
+      "rateLimit": "60/hour/ip"
+    }
+  }
+}

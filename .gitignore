@@ -1,0 +1,15 @@
+/*
+!/.gitignore
+!/README.md
+!/AGENTS.md
+!/public/
+!/scripts/
+/scripts/*
+!/scripts/generate.mjs
+!/scripts/package_itch.py
+!/tests/
+/tests/*
+!/tests/engine.test.mjs
+!/tests/state.test.mjs
+**/.DS_Store
+**/__pycache__/
