@@ -22,7 +22,9 @@
 .game-page .play-area{grid-column:1;grid-row:2;display:grid;grid-template-columns:192px minmax(0,1fr);gap:0 12px;align-items:start;max-width:none;width:100%;margin:0}
 .game-page .puzzle-instruction{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;color:#526057;text-align:center}
 .game-page .clue-panel{grid-column:2;grid-row:2;width:100%;justify-self:start;border:0;margin:0;padding:0}
-.game-page .clues-header{min-height:0;margin:0 0 16px}
+.game-page .clues-header{min-height:44px;margin:-10px 0 6px}
+.puzzle-switch{display:inline-flex;align-items:center;justify-content:flex-end;min-width:44px;min-height:44px;flex-shrink:0;font-size:12px;color:var(--muted)}
+.puzzle-switch:hover{color:var(--ink)}
 .game-page .clues-header h2{font-family:inherit;font-size:14px;font-weight:650;letter-spacing:0}
 .game-page .clues{gap:4px;padding:0}
 .game-page .clue{padding:4px 0;gap:8px;font-size:13px;min-height:0;border:0;border-radius:0;background:none;text-wrap:pretty}

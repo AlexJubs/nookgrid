@@ -295,7 +295,7 @@ function render() {
     item.querySelector('.clue-icon').textContent = isStartingClue ? '★' : {met:'✓',conflict:'!',pending:'·'}[status];
     item.querySelector('.clue-state').textContent = (isStartingClue ? ' Start here.' : '') + {met:' Matches the plan.',conflict:' Needs a move.',pending:' Required places are not placed yet.'}[status];
   });
-  $('selection-status').classList.toggle('sr-only', !selected || board.includes(selected));
+  $('selection-status').classList.toggle('sr-only', !selected);
   $('selection-status').textContent = selected ? `${nameOf(selected)} selected. Choose a lot.` : 'Drag a place, or tap a place then a square.';
   $('remove-place').hidden = !selected || !board.includes(selected);
   $('undo').disabled = !history.some(previous => restoreHintedPlaces(previous.board,progress.hintedPlaces,puzzle.solution).some((id,index) => id !== board[index]));
@@ -419,6 +419,10 @@ async function init() {
     const number = bank.puzzles.findIndex(item => item.date === puzzle.date) + 1;
     $('puzzle-label').textContent = mode === 'practice' ? 'Starter' : `Puzzle #${number}`;
     $('puzzle-date').textContent = mode === 'practice' ? 'An easier puzzle' : new Date(`${puzzle.date}T12:00:00Z`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
+    if (mode === 'practice') {
+      $('puzzle-switch').textContent = "Today's puzzle";
+      $('puzzle-switch').href = './index.html';
+    }
     $('board-title').textContent = {daily:"Today's puzzle",archive:'Archived puzzle',practice:'The starter puzzle'}[mode];
     document.title = `NookGrid | ${mode === 'daily' ? 'Free daily spatial logic puzzle' : mode === 'practice' ? 'Starter logic puzzle' : `Logic puzzle ${number}`}`;
     $('archive').replaceChildren();
