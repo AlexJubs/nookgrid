@@ -269,13 +269,26 @@ function render() {
   if (!puzzle) return;
   const board = progress.board;
   const solved = isSolved(puzzle, board);
+  // ponytail: this lesson follows the fixed Starter's first four rules; update it if that puzzle changes.
+  const starterPlaces = puzzle.solution.slice(0,3);
+  const nextStarterIndex = starterPlaces.findIndex((id,index) => board[index] !== id);
+  const starterStep = mode !== 'practice' ? -1 : nextStarterIndex < 0 || board.some(id => id && !starterPlaces.includes(id)) ? 3 : nextStarterIndex;
+  const isLearning = starterStep >= 0 && starterStep < 3;
   const shouldFocusCompletion = solved && (!wasSolved || (!selected && Boolean(document.activeElement?.closest('.play-controls'))));
   $('game').classList.toggle('has-guidance', shouldShowGuidance);
-  document.querySelector('.puzzle-instruction').textContent = shouldShowGuidance ? 'Which column fits Park? Start with the ★ items.' : 'Arrange the places to match the plan.';
+  const instruction = mode === 'practice' && solved ? 'Your neighborhood is complete.' : starterStep >= 0 ? [
+    'Place Bakery in A1, the top-left square.',
+    'Bakery fits. Place Cafe directly to its right.',
+    'Cafe fits. Use the plan to place Books.',
+    'Use the plan to finish the neighborhood.'
+  ][starterStep] : shouldShowGuidance ? 'Which column fits Park? Start with the ★ items.' : 'Arrange the places to match the plan.';
+  const instructionLabel = document.querySelector('.puzzle-instruction');
+  if (instructionLabel.textContent !== instruction) instructionLabel.textContent = instruction;
   [...$('board').children].forEach((button,index) => {
     const id = board[index], address = `${'ABC'[Math.floor(index / 3)]}${index % 3 + 1}`;
     const isLocked = progress.hintedPlaces.includes(id);
     button.className = `lot${id ? ' occupied' : ''}${isLocked ? ' locked' : ''}${id && id === selected ? ' selected' : ''}${selected && !isLocked ? ' target' : ''}`;
+    button.classList.toggle('starter-target',starterStep === 0 && index === 0);
     button.setAttribute('aria-disabled',String(isLocked));
     button.setAttribute('aria-label', `Lot ${address}, ${id ? nameOf(id) : 'empty'}${isLocked ? ', fixed by a hint' : id === selected && id ? ', selected' : ''}`);
     button.setAttribute('aria-pressed', String(Boolean(id && id === selected)));
@@ -283,20 +296,22 @@ function render() {
   });
   [...$('tray').children].forEach(button => {
     const id = button.dataset.place, placed = board.includes(id), isLocked = progress.hintedPlaces.includes(id);
+    button.hidden = isLearning && !starterPlaces.slice(0,starterStep + 1).includes(id) && !placed && selected !== id;
     button.className = `place${placed ? ' placed' : ''}${isLocked ? ' locked' : ''}${selected === id ? ' selected' : ''}`;
     button.setAttribute('aria-disabled',String(isLocked));
     button.setAttribute('aria-pressed', String(selected === id));
     button.setAttribute('aria-label', `${nameOf(id)}${isLocked ? ', fixed by a hint' : placed ? ', already on the board' : ', choose a lot'}`);
   });
   [...$('clues').children].forEach((item,index) => {
+    item.hidden = isLearning && (starterStep === 0 ? index > 1 : index !== starterStep + 1);
     const status = clueStatus(puzzle.clues[index],board);
     const isStartingClue = shouldShowGuidance && item.dataset.teaser === 'true';
     item.className = `clue ${status}`;
     item.querySelector('.clue-icon').textContent = isStartingClue ? '★' : {met:'✓',conflict:'!',pending:'·'}[status];
     item.querySelector('.clue-state').textContent = (isStartingClue ? ' Start here.' : '') + {met:' Matches the plan.',conflict:' Needs a move.',pending:' Required places are not placed yet.'}[status];
   });
-  $('selection-status').classList.toggle('sr-only', !selected);
-  $('selection-status').textContent = selected ? `${nameOf(selected)} selected. Choose a lot.` : 'Drag a place, or tap a place then a square.';
+  $('selection-status').classList.toggle('sr-only', !selected && !isLearning);
+  $('selection-status').textContent = selected ? `${nameOf(selected)} selected. Choose a lot.` : isLearning ? `Drag ${nameOf(starterPlaces[starterStep])}, or tap it then a square.` : 'Drag a place, or tap a place then a square.';
   $('remove-place').hidden = !selected || !board.includes(selected);
   $('undo').disabled = !history.some(previous => restoreHintedPlaces(previous.board,progress.hintedPlaces,puzzle.solution).some((id,index) => id !== board[index]));
   for (const id of ['clear','clear-win']) $(id).disabled = !board.some(Boolean) || progress.hintedPlaces.length === 9;
@@ -418,10 +433,14 @@ async function init() {
     $('feedback-form').hidden = !config.feedbackEnabled;
     const number = bank.puzzles.findIndex(item => item.date === puzzle.date) + 1;
     $('puzzle-label').textContent = mode === 'practice' ? 'Starter' : `Puzzle #${number}`;
-    $('puzzle-date').textContent = mode === 'practice' ? 'An easier puzzle' : new Date(`${puzzle.date}T12:00:00Z`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
+    $('puzzle-date').textContent = mode === 'practice' ? 'Learn by playing' : new Date(`${puzzle.date}T12:00:00Z`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
     if (mode === 'practice') {
       $('puzzle-switch').textContent = "Today's puzzle";
       $('puzzle-switch').href = './index.html';
+      document.querySelector('.puzzle-instruction').setAttribute('role','status');
+      $('completion-title').textContent = 'Nice work!';
+      $('share').hidden = true;
+      $('play-today').classList.replace('secondary','primary');
     }
     $('board-title').textContent = {daily:"Today's puzzle",archive:'Archived puzzle',practice:'The starter puzzle'}[mode];
     document.title = `NookGrid | ${mode === 'daily' ? 'Free daily spatial logic puzzle' : mode === 'practice' ? 'Starter logic puzzle' : `Logic puzzle ${number}`}`;

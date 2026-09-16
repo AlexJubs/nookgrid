@@ -38,6 +38,7 @@
 .game-page .lot .address{color:#6e7b6c}
 .game-page .lot:hover{background:#e3ebdf}
 .game-page .lot.selected,.game-page .place.selected{background:#eef4eb;outline:3px solid var(--blue);outline-offset:1px}
+.game-page .lot.starter-target:not(.selected){outline:2px dashed var(--blue);outline-offset:-5px}
 .game-page .play-controls{display:contents}
 .game-page .selection-bar{grid-column:1/-1;grid-row:2;min-width:0;min-height:44px;padding:0;gap:8px;justify-content:center}
 .game-page .selection-bar p{font-size:12px;text-align:center}
