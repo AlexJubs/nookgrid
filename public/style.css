@@ -8,18 +8,19 @@
 @media(min-width:681px){.site-header{height:80px}.play-area{max-width:440px;width:100%;margin:0 auto}.game-layout{grid-template-columns:minmax(0,1fr) minmax(310px,.95fr)}}
 
 .game-page{--ink:#252b28;--muted:#69736d;--blue:#37634f;--line:#e2e7e3;--board-size:400px;color:var(--ink);background:#fff;max-width:900px;min-height:100svh;margin-inline:auto}
-.game-page .site-header{max-width:980px;height:64px;padding:0 20px;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:12px;align-items:center}
+.game-page .site-header{max-width:980px;height:72px;padding:8px 20px;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:12px;align-items:center}
 .game-page .icon-button{display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:10px;background:#f4f5f4;font-size:26px;font-weight:750;line-height:1}
 .game-page .icon-button:hover{background:#e9eeea}
 .game-page .icon-button svg{width:24px;height:24px}
 .puzzle-heading{text-align:center;min-width:0}
-.puzzle-heading h1{margin:0 0 4px;line-height:1}
-.game-page .brand{font-size:28px;letter-spacing:-1px}
-.puzzle-heading p{font-size:11px;line-height:1.5;color:var(--muted);margin:0}
+.puzzle-heading h1{margin:0 0 6px;line-height:1}
+.game-page .brand{font-size:32px;letter-spacing:-1.2px}
+.puzzle-meta{display:flex;align-items:baseline;justify-content:center;gap:7px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--muted);margin:0}
+#puzzle-label{font-size:10px;font-weight:650;letter-spacing:.06em;text-transform:uppercase}
 .game-page main{max-width:980px;padding:0 16px 12px}
 .game-page .game-layout{display:grid;grid-template-columns:calc(var(--board-size) + 204px) minmax(0,1fr);gap:16px;padding:0;border:0;border-radius:0;box-shadow:none}
 .game-page .play-area{grid-column:1;grid-row:2;display:grid;grid-template-columns:192px minmax(0,1fr);gap:0 12px;align-items:start;max-width:none;width:100%;margin:0}
-.game-page .puzzle-instruction{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;text-align:center}
+.game-page .puzzle-instruction{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;color:#526057;text-align:center}
 .game-page .clue-panel{grid-column:2;grid-row:2;width:100%;justify-self:start;border:0;margin:0;padding:0}
 .game-page .clues-header{min-height:0;margin:0 0 16px}
 .game-page .clues-header h2{font-family:inherit;font-size:14px;font-weight:650;letter-spacing:0}
@@ -118,9 +119,9 @@
 @media(max-width:927px){
   .game-page{--board-size:240px}
   .game-page main{max-width:480px;padding:0 16px 8px}
-  .game-page .site-header{max-width:480px;height:56px;padding:0 16px}
-  .game-page .brand{font-size:26px}
-  .puzzle-heading p{font-size:10px}
+  .game-page .site-header{max-width:480px;height:64px;padding:6px 16px}
+  .game-page .brand{font-size:28px}
+  .puzzle-meta{font-size:10px;gap:5px}
   .game-page .game-layout{grid-template-columns:minmax(0,1fr);gap:10px}
   .game-page .clue-panel{grid-column:1;grid-row:2;width:100%}
   .game-page .clues-header{margin:0 0 6px}

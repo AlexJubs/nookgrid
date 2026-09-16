@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>NookGrid | Free daily spatial logic puzzle</title>
-  <meta name="description" content="Arrange nine little places. Follow the clues. Make the neighborhood fit. A free daily logic puzzle with hints, saved progress and a new challenge each day.">
+  <meta name="description" content="Arrange nine little places to match the neighborhood plan. A free daily logic puzzle with hints, saved progress and a new challenge each day.">
   <meta name="robots" content="index, follow"><link rel="canonical" href="https://nookgrid.com/">
   <meta name="theme-color" content="#FFFFFF">
   <meta property="og:title" content="NookGrid | Free daily spatial logic puzzle">
-  <meta property="og:description" content="Nine places, one neighborhood. Can you make every clue fit? Play a free daily logic puzzle.">
+  <meta property="og:description" content="Nine places, one neighborhood plan. Can you find the arrangement? Play a free daily logic puzzle.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="NookGrid">
   <meta property="og:url" content="https://nookgrid.com/">
@@ -16,16 +16,16 @@
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1098">
   <meta property="og:image:height" content="750">
-  <meta property="og:image:alt" content="NookGrid gameplay with three places on a nine-lot neighborhood board, a tray of places, and logic clues alongside.">
+  <meta property="og:image:alt" content="NookGrid gameplay with three places on a nine-lot neighborhood board, a tray of places, and the neighborhood plan alongside.">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=20260916-wider-palette1">
-  <script type="module" src="./app.mjs?v=20260916-dialog-dismiss1"></script>
+  <link rel="stylesheet" href="./style.css?v=20260916-neighborhood-plan1">
+  <script type="module" src="./app.mjs?v=20260916-neighborhood-plan1"></script>
 </head>
 <body class="game-page">
   <a class="skip-link" href="#game" data-track="index-a-1">Skip to puzzle</a>
   <header class="site-header">
     <button class="icon-button" id="help-open" aria-label="How to play" aria-haspopup="dialog">?</button>
-    <div class="puzzle-heading"><h1><a class="brand" href="./" aria-label="NookGrid home" data-track="index-a-2">NookGrid</a></h1><p><span id="puzzle-label">Daily puzzle</span><span aria-hidden="true"> · </span><span id="puzzle-date">Loading…</span></p></div>
+    <div class="puzzle-heading"><h1><a class="brand" href="./" aria-label="NookGrid home" data-track="index-a-2">NookGrid</a></h1><p class="puzzle-meta"><span id="puzzle-label">Daily puzzle</span><span aria-hidden="true"> · </span><span id="puzzle-date">Loading…</span></p></div>
     <button class="icon-button" id="menu-open" aria-label="Menu" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h14"/></svg></button>
   </header>
   <main>
@@ -35,8 +35,8 @@
     <div id="load-error" class="notice error" hidden>The neighborhood couldn't load. Check your connection, then <a href="./" data-track="index-a-5">try again</a>.</div>
     <noscript><p class="notice">NookGrid needs JavaScript to play. Enable it, then reload this page.</p></noscript>
     <section class="game-layout" id="game" aria-label="Neighborhood puzzle" aria-busy="true" inert>
-      <p class="puzzle-instruction">Arrange the places so every clue is true.</p>
-      <section class="clue-panel" id="clue-list" aria-labelledby="clues-title"><div class="clues-header"><h2 id="clues-title">All clues</h2></div><ol class="clues" id="clues" aria-label="All clues"></ol></section>
+      <p class="puzzle-instruction">Arrange the places to match the plan.</p>
+      <section class="clue-panel" id="clue-list" aria-labelledby="clues-title"><div class="clues-header"><h2 id="clues-title">Neighborhood plan</h2></div><ol class="clues" id="clues" aria-label="Neighborhood plan"></ol></section>
       <div class="play-area">
         <div class="play-controls"><div class="place-tray" id="tray" role="group" aria-label="Places to arrange"></div></div>
         <div class="board-wrap"><div class="board" id="board" role="group" aria-label="Neighborhood lots, three rows and three columns"></div></div>
@@ -49,7 +49,7 @@
           </div>
         </div>
         <section class="completion" id="completion" hidden aria-labelledby="completion-title" tabindex="-1">
-          <div><h2 id="completion-title">Solved!</h2><p id="completion-time" hidden></p><p id="completion-detail">Every clue fits.</p></div>
+          <div><h2 id="completion-title">Solved!</h2><p id="completion-time" hidden></p><p id="completion-detail">The neighborhood plan is complete.</p></div>
           <button class="primary" id="share">Share result</button>
           <p id="share-status" role="status"></p>
           <div id="next-puzzle" hidden><span>Next puzzle in</span><strong id="next-puzzle-time" role="timer" aria-live="off">00:00:00</strong></div>
@@ -64,7 +64,7 @@
 
   <dialog id="help-dialog" aria-labelledby="help-title">
     <button class="close-dialog" data-close aria-label="Close how to play" data-track="index-button-1">×</button><h2 id="help-title">How to play</h2>
-    <p class="help-intro">Nine places. Every clue must fit.</p>
+    <p class="help-intro">Arrange all nine places to match the neighborhood plan.</p>
     <p>Drag a place onto the grid, or tap it then a square. Occupied squares swap places.</p>
     <div class="help-status"><span><span class="key-dot met">✓</span> Fits this layout</span><span><span class="key-dot conflict">!</span> Needs a change</span></div>
     <dl class="help-terms"><dt>Directly left</dt><dd>One square left, same row.</dd><dt>Above</dt><dd>Anywhere higher, same column.</dd><dt>Touching</dt><dd>Sharing a side, never a diagonal.</dd></dl>

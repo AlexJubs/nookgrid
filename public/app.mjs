@@ -271,7 +271,7 @@ function render() {
   const solved = isSolved(puzzle, board);
   const shouldFocusCompletion = solved && (!wasSolved || (!selected && Boolean(document.activeElement?.closest('.play-controls'))));
   $('game').classList.toggle('has-guidance', shouldShowGuidance);
-  document.querySelector('.puzzle-instruction').textContent = shouldShowGuidance ? 'Which column fits Park? Use the ★ clues.' : 'Arrange the places so every clue is true.';
+  document.querySelector('.puzzle-instruction').textContent = shouldShowGuidance ? 'Which column fits Park? Start with the ★ items.' : 'Arrange the places to match the plan.';
   [...$('board').children].forEach((button,index) => {
     const id = board[index], address = `${'ABC'[Math.floor(index / 3)]}${index % 3 + 1}`;
     const isLocked = progress.hintedPlaces.includes(id);
@@ -293,7 +293,7 @@ function render() {
     const isStartingClue = shouldShowGuidance && item.dataset.teaser === 'true';
     item.className = `clue ${status}`;
     item.querySelector('.clue-icon').textContent = isStartingClue ? '★' : {met:'✓',conflict:'!',pending:'·'}[status];
-    item.querySelector('.clue-state').textContent = (isStartingClue ? ' Starting clue.' : '') + {met:' Clue fits.',conflict:' Needs a move.',pending:' Required places are not placed yet.'}[status];
+    item.querySelector('.clue-state').textContent = (isStartingClue ? ' Start here.' : '') + {met:' Matches the plan.',conflict:' Needs a move.',pending:' Required places are not placed yet.'}[status];
   });
   $('selection-status').classList.toggle('sr-only', !selected || board.includes(selected));
   $('selection-status').textContent = selected ? `${nameOf(selected)} selected. Choose a lot.` : 'Drag a place, or tap a place then a square.';
@@ -313,7 +313,7 @@ function render() {
     const solveTime = formatSolveTime(progress.elapsedMs);
     $('completion-time').textContent = solveTime ? `Solved in ${solveTime}` : '';
     $('completion-time').hidden = !solveTime;
-    $('selection-status').textContent = 'Every clue fits.';
+    $('selection-status').textContent = 'The neighborhood plan is complete.';
     if (!progress.reported) { track('puzzle_complete',{active_ms_this_page:analytics.activeMilliseconds()}); progress.reported = true; save(); }
     if (shouldFocusCompletion) {
       $('completion').focus({preventScroll:true});
@@ -417,8 +417,8 @@ async function init() {
     $('feedback-unavailable').hidden = config.feedbackEnabled;
     $('feedback-form').hidden = !config.feedbackEnabled;
     const number = bank.puzzles.findIndex(item => item.date === puzzle.date) + 1;
-    $('puzzle-label').textContent = mode === 'practice' ? 'Starter puzzle' : `Puzzle ${number}`;
-    $('puzzle-date').textContent = mode === 'practice' ? 'An easier first puzzle' : new Date(`${puzzle.date}T12:00:00Z`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
+    $('puzzle-label').textContent = mode === 'practice' ? 'Starter' : `Puzzle #${number}`;
+    $('puzzle-date').textContent = mode === 'practice' ? 'An easier puzzle' : new Date(`${puzzle.date}T12:00:00Z`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
     $('board-title').textContent = {daily:"Today's puzzle",archive:'Archived puzzle',practice:'The starter puzzle'}[mode];
     document.title = `NookGrid | ${mode === 'daily' ? 'Free daily spatial logic puzzle' : mode === 'practice' ? 'Starter logic puzzle' : `Logic puzzle ${number}`}`;
     $('archive').replaceChildren();
