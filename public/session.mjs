@@ -1,4 +1,4 @@
-import { createAnalytics } from './analytics.mjs?v=20260916-editorial1';
+import { createAnalytics } from './analytics.mjs?v=20260917-x1';
 
 let testing = new URLSearchParams(location.search).has('test') || ['localhost','127.0.0.1',''].includes(location.hostname);
 try {
