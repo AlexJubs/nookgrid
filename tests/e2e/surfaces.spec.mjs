@@ -44,7 +44,9 @@ for (const dialog of ['menu', 'help', 'hint', 'feedback', 'settings', 'share']) 
       }));
     }
     await openGame(page);
-    await page.keyboard.press('Tab');
+    await page.locator('#menu-open').press('Enter');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#menu-dialog')).not.toBeVisible();
     if (['feedback', 'settings'].includes(dialog)) await choose(page.locator('#menu-open'));
     const opener = page.locator(`#${{ menu: 'menu-open', help: 'help-open', hint: 'hint', feedback: 'feedback-open', settings: 'settings-open', share: 'share' }[dialog]}`);
     await choose(opener);
