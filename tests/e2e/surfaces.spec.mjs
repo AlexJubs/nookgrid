@@ -1,28 +1,79 @@
 import { test, expect, bank, daily, today, emptyBoard, openGame, place, expectBoard, solvePuzzle, seedProgress, readProgress, choose } from './fixtures.mjs';
 
-test('menu reaches tutorial, archive and today while keeping QA isolated', async ({ page }) => {
+test('puzzle navigation preserves progress and exposes only released dates', async ({ page }) => {
   await openGame(page);
+  await place(page, 'cafe', 0);
   await page.locator('#menu-open').click();
-  const dates = await page.locator('#archive option').evaluateAll(options => options.map(option => option.value));
-  expect(dates).toEqual([...bank.puzzles.filter(puzzle => puzzle.date <= today).map(puzzle => puzzle.date).reverse(), 'practice']);
-  expect(dates).not.toContain('2026-09-18');
-  await page.locator('#archive').selectOption('2026-09-11');
-  await expect(page).toHaveURL(/date=2026-09-11.*test=1/);
+  const menu = page.locator('#menu-dialog');
+  expect(await menu.locator('h2').evaluateAll(headings => headings.every(heading => !heading.checkVisibility() || heading.getBoundingClientRect().height <= 1))).toBe(true);
+  await expect(menu.getByRole('button', { name: 'Settings', exact: true })).toBeVisible();
+  await expect(menu.getByRole('button', { name: 'Feedback', exact: true })).toBeVisible();
+  await expect(menu.getByRole('link', { name: 'Privacy', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Puzzles', exact: true }).click();
+  const links = page.locator('#puzzle-list a');
+  expect(await links.evaluateAll(items => items.map(item => item.dataset.puzzleDate))).toEqual([
+    'practice', '2026-09-17', '2026-09-16', '2026-09-15', '2026-09-14',
+    '2026-09-13', '2026-09-12', '2026-09-11', '2026-09-10'
+  ]);
+  await expect(page.locator('#puzzle-list [aria-current="page"]')).toHaveCount(1);
+  await expect(page.locator('#puzzle-list [aria-current="page"]')).toHaveAccessibleName('Today, Sep 17, 2026');
+  expect(await links.evaluateAll(items => items.every(item => new URL(item.href).searchParams.get('test') === '1'))).toBe(true);
+  await expect(page.locator('#puzzles-more')).toBeHidden();
+  await page.getByRole('link', { name: 'Sep 11, 2026', exact: true }).click();
+  await expect(page).toHaveURL(/date=2026-09-11/);
+  expect(new URL(page.url()).searchParams.get('test')).toBe('1');
   await expect(page.locator('#board-title')).toHaveText('Archived puzzle');
   await place(page, 'park', 0);
   await page.locator('#menu-open').click();
-  await page.locator('#menu-dialog').getByRole('link', { name: 'Tutorial', exact: true }).click();
+  await page.locator('#puzzles-open').click();
+  await expect(page.locator('#puzzle-list [aria-current="page"]')).toHaveAccessibleName('Sep 11, 2026');
+  await page.locator('#puzzles-dialog').getByRole('link', { name: 'Tutorial', exact: true }).click();
   await expect(page.locator('#puzzle-label')).toHaveText('Tutorial');
-  await expect(page).toHaveURL(/date=practice.*test=1/);
+  expect(Object.fromEntries(new URL(page.url()).searchParams)).toMatchObject({ date: 'practice', test: '1' });
+  await place(page, 'bakery', 0);
   await page.locator('#menu-open').click();
-  await page.locator('#menu-dialog').getByRole('link', { name: "Today's puzzle", exact: true }).click();
+  await page.locator('#puzzles-open').click();
+  await expect(page.locator('#puzzle-list [aria-current="page"]')).toHaveAccessibleName('Tutorial');
+  await page.getByRole('link', { name: 'Today, Sep 17, 2026', exact: true }).click();
   await expect(page.locator('#board-title')).toHaveText("Today's puzzle");
-  await expectBoard(page, emptyBoard);
+  await expectBoard(page, ['cafe', ...Array(8).fill(null)]);
   await openGame(page, 'date=2026-09-11');
   await expectBoard(page, ['park', ...Array(8).fill(null)]);
+  await openGame(page, 'date=practice');
+  await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
   await openGame(page, 'date=2099-01-01');
   await expect(page.locator('#puzzle-date')).toHaveText('Sep 17, 2026');
-  await expectBoard(page, emptyBoard);
+  await expectBoard(page, ['cafe', ...Array(8).fill(null)]);
+});
+
+test('earlier puzzles append in bounded pages without duplicates or future dates', async ({ page }) => {
+  await page.clock.setSystemTime(new Date('2026-11-09T12:00:00Z'));
+  await openGame(page);
+  await page.locator('#menu-open').click();
+  await page.locator('#puzzles-open').click();
+  const links = page.locator('#puzzle-list a');
+  const dates = page.locator('#puzzle-list a:not([data-puzzle-date="practice"])');
+  await expect(links).toHaveCount(31);
+  await expect(dates.first()).toHaveAttribute('data-puzzle-date', '2026-11-09');
+  await expect(dates.last()).toHaveAttribute('data-puzzle-date', '2026-10-11');
+  await page.getByRole('button', { name: 'Earlier puzzles', exact: true }).press('Enter');
+  await expect(links).toHaveCount(61);
+  await expect(dates.nth(30)).toHaveAttribute('data-puzzle-date', '2026-10-10');
+  await expect(dates.nth(30)).toBeFocused();
+  await expect(dates.last()).toHaveAttribute('data-puzzle-date', '2026-09-11');
+  await page.locator('#puzzles-more').press('Enter');
+  await expect(links).toHaveCount(62);
+  await expect(dates.last()).toHaveAttribute('data-puzzle-date', '2026-09-10');
+  await expect(dates.last()).toBeFocused();
+  await expect(page.locator('#puzzles-more')).toBeHidden();
+  const values = await dates.evaluateAll(items => items.map(item => item.dataset.puzzleDate));
+  expect(new Set(values).size).toBe(61);
+  expect(values.every(date => date <= '2026-11-09')).toBe(true);
+  expect(values).toEqual([...values].sort().reverse());
+  await expect(page.locator('#puzzle-list [aria-current="page"]')).toHaveCount(1);
+  await page.getByRole('link', { name: 'Sep 10, 2026', exact: true }).press('Enter');
+  await expect(page.locator('#puzzle-date')).toHaveText('Sep 10, 2026');
+  expect(new URL(page.url()).searchParams.get('test')).toBe('1');
 });
 
 test('archived completion offers today and has no countdown', async ({ page }) => {
@@ -35,28 +86,49 @@ test('archived completion offers today and has no countdown', async ({ page }) =
   await expect(page.locator('#next-puzzle')).toBeHidden();
 });
 
-test('menu help reuses the help dialog and restores the menu opener', async ({ page }) => {
+test('Tutorial tips stay inline and return keyboard focus without resetting progress', async ({ page }) => {
   await openGame(page);
-  for (const dismissal of ['close', 'escape', 'backdrop']) {
-    await page.locator('#menu-open').press('Enter');
-    await page.locator('#help-menu').press('Enter');
-    await expect(page.locator('#menu-dialog')).not.toBeVisible();
-    await expect(page.locator('#help-dialog')).toBeVisible();
-    await expect(page.locator('dialog[open]')).toHaveCount(1);
-    if (dismissal === 'close') await page.locator('#help-dialog [data-close]').click();
-    if (dismissal === 'escape') await page.keyboard.press('Escape');
-    if (dismissal === 'backdrop') await page.mouse.click(1, 1);
-    await expect(page.locator('#help-dialog')).not.toBeVisible();
-    await expect(page.locator('#menu-open')).toBeFocused();
-  }
+  await place(page, 'park', 0);
+  await expect(page.locator('#help-open')).toHaveAccessibleName('Tutorial');
+  await page.locator('#help-open').press('Enter');
+  await expect(page.locator('#puzzle-label')).toHaveText('Tutorial');
+  expect(new URL(page.url()).searchParams.get('test')).toBe('1');
+  await place(page, 'bakery', 0);
+  const opener = page.getByRole('button', { name: 'Tutorial tips', exact: true });
+  await opener.press('Enter');
+  const reference = page.locator('#tutorial-reference');
+  await expect(reference).toBeVisible();
+  await expect(page.locator('dialog[open]')).toHaveCount(0);
+  const board = await page.locator('#board').boundingBox();
+  const tips = await reference.boundingBox();
+  expect(tips.y).toBeGreaterThanOrEqual(board.y + board.height);
+  await expect(reference).toContainText('Directly left');
+  await expect(reference).toContainText('Above');
+  await expect(reference).toContainText('Touching');
+  await expect(reference).toContainText('Keyboard');
+  await expect(reference.locator('.help-status')).toContainText('Fits this layout');
+  await expect(reference.locator('.help-status .met use')).toHaveAttribute('href', /\/icons\.svg#check$/);
+  await expect(reference.locator('.help-status')).toContainText('Needs a change');
+  await expect(reference.locator('.help-status .conflict use')).toHaveAttribute('href', /\/icons\.svg#exclamation-mark$/);
+  await expect(reference.getByRole('link', { name: 'Worked example', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Back to tutorial', exact: true }).press('Enter');
+  await expect(reference).toBeHidden();
+  await expect(opener).toBeFocused();
+  expect(await opener.evaluate(element => getComputedStyle(element).outlineStyle)).toBe('solid');
+  await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
+  await opener.press('Enter');
+  await expect(reference).toBeVisible();
+  await opener.press('Enter');
+  await expect(reference).toBeHidden();
+  await openGame(page);
+  await expectBoard(page, ['park', ...Array(8).fill(null)]);
 });
 
-test('reading pages return to the current puzzle through nested navigation', async ({ page }) => {
+test('reading pages keep explicit puzzle context through nested navigation', async ({ page }) => {
   for (const [query, date] of [['date=2099-01-01', today], ['date=2026-09-11', '2026-09-11'], ['date=practice', 'practice']]) {
     await openGame(page, query);
     await place(page, 'bakery', 0);
-    await choose(page.locator('#help-open'));
-    await choose(page.getByRole('link', { name: 'Worked example', exact: true }));
+    await page.goto(`/about.html?date=${date}&test=1#worked-example`);
     await expect(page.locator('#worked-example')).toBeVisible();
     expect(new URL(page.url()).pathname).toBe('/about.html');
     expect(new URL(page.url()).hash).toBe('#worked-example');
@@ -83,7 +155,7 @@ test('direct reading pages return to today without a saved return destination', 
   }
 });
 
-for (const dialog of ['menu', 'help', 'hint', 'feedback', 'settings', 'share']) {
+for (const dialog of ['menu', 'puzzles', 'hint', 'feedback', 'settings', 'share']) {
   test(`${dialog} touch focus stays quiet and keyboard focus stays visible`, async ({ page }, testInfo) => {
     if (dialog === 'share') {
       await seedProgress(page, { board: daily.solution, moves: 9, elapsedMs: 1000 });
@@ -95,8 +167,8 @@ for (const dialog of ['menu', 'help', 'hint', 'feedback', 'settings', 'share']) 
     await page.locator('#menu-open').press('Enter');
     await page.keyboard.press('Escape');
     await expect(page.locator('#menu-dialog')).not.toBeVisible();
-    if (['feedback', 'settings'].includes(dialog)) await choose(page.locator('#menu-open'));
-    const opener = page.locator(`#${{ menu: 'menu-open', help: 'help-open', hint: 'hint', feedback: 'feedback-open', settings: 'settings-open', share: 'share' }[dialog]}`);
+    if (['puzzles', 'feedback', 'settings'].includes(dialog)) await choose(page.locator('#menu-open'));
+    const opener = page.locator(`#${{ menu: 'menu-open', puzzles: 'puzzles-open', hint: 'hint', feedback: 'feedback-open', settings: 'settings-open', share: 'share' }[dialog]}`);
     await choose(opener);
     const surface = page.locator(`#${dialog}-dialog`);
     await expect(surface).toBeVisible();
@@ -111,7 +183,7 @@ for (const dialog of ['menu', 'help', 'hint', 'feedback', 'settings', 'share']) 
     await choose(surface.locator('[data-close]'));
     await expect(surface).not.toBeVisible();
     expect(await focusedOutline()).toBe('none');
-    if (['feedback', 'settings'].includes(dialog)) await page.locator('#menu-open').press('Enter');
+    if (['puzzles', 'feedback', 'settings'].includes(dialog)) await page.locator('#menu-open').press('Enter');
     await opener.press('Enter');
     await expect(surface).toBeVisible();
     expect(await page.evaluate(id => document.activeElement.closest('dialog')?.id === `${id}-dialog`, dialog)).toBe(true);
@@ -130,16 +202,16 @@ for (const dialog of ['menu', 'help', 'hint', 'feedback', 'settings', 'share']) 
     }
     await openGame(page);
     const open = async () => {
-      if (['feedback', 'settings'].includes(dialog)) await page.locator('#menu-open').press('Enter');
-      await page.locator(`#${{ menu: 'menu-open', help: 'help-open', hint: 'hint', feedback: 'feedback-open', settings: 'settings-open', share: 'share' }[dialog]}`).press('Enter');
+      if (['puzzles', 'feedback', 'settings'].includes(dialog)) await page.locator('#menu-open').press('Enter');
+      await page.locator(`#${{ menu: 'menu-open', puzzles: 'puzzles-open', hint: 'hint', feedback: 'feedback-open', settings: 'settings-open', share: 'share' }[dialog]}`).press('Enter');
       await expect(page.locator(`#${dialog}-dialog`)).toBeVisible();
       await expect(page.locator('dialog[open]')).toHaveCount(1);
     };
-    const focus = page.locator(`#${{ menu: 'menu-open', help: 'help-open', hint: 'hint', feedback: 'menu-open', settings: 'menu-open', share: 'share' }[dialog]}`);
+    const focus = page.locator(`#${{ menu: 'menu-open', puzzles: 'menu-open', hint: 'hint', feedback: 'menu-open', settings: 'menu-open', share: 'share' }[dialog]}`);
     const surface = page.locator(`#${dialog}-dialog`);
     for (const dismissal of ['close', 'escape', 'backdrop']) {
       await open();
-      await surface.locator('h2').click();
+      await surface.click({ position: { x: 12, y: 12 } });
       await expect(surface).toBeVisible();
       if (dismissal === 'close') await surface.locator('[data-close]').click();
       if (dismissal === 'escape') await page.keyboard.press('Escape');
@@ -181,11 +253,12 @@ test('preferences and supporting pages preserve test mode and private analytics 
   expect(await page.evaluate(() => localStorage.getItem('nookgrid:analytics'))).toBe('no');
   await openGame(page);
   await page.locator('#help-open').click();
-  await page.getByText('More controls', { exact: true }).click();
-  await expect(page.locator('.help-details')).toHaveAttribute('open', '');
+  await expect(page.locator('#puzzle-label')).toHaveText('Tutorial');
+  await page.locator('#help-open').click();
+  await expect(page.locator('#tutorial-reference')).toBeVisible();
   await page.getByRole('link', { name: 'Worked example' }).click();
   await expect(page).toHaveURL(/about\.html\?[^#]*test=1[^#]*#worked-example/);
-  expect(new URL(page.url()).searchParams.get('date')).toBe(today);
+  expect(new URL(page.url()).searchParams.get('date')).toBe('practice');
   await expect(page.locator('#worked-example')).toBeVisible();
 });
 
@@ -193,12 +266,12 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
   test(`mobile navigation and typography stay consistent at ${viewport.width} by ${viewport.height}`, async ({ page }) => {
     await page.setViewportSize(viewport);
     await openGame(page);
-    const titleSizes = await page.locator('dialog h2').evaluateAll(headings => headings.map(heading => parseFloat(getComputedStyle(heading).fontSize)));
+    const titleSizes = await page.locator('dialog:not(#menu-dialog) h2').evaluateAll(headings => headings.map(heading => parseFloat(getComputedStyle(heading).fontSize)));
     expect(new Set(titleSizes)).toEqual(new Set([20]));
     expect(titleSizes[0]).toBeLessThan(await page.locator('.brand').evaluate(brand => parseFloat(getComputedStyle(brand).fontSize)));
     await choose(page.locator('#menu-open'));
     const menuColor = await page.locator('#menu-dialog').evaluate(dialog => getComputedStyle(dialog).backgroundColor);
-    const rows = await page.locator('#menu-dialog .menu-links :is(a,button)').evaluateAll(elements => elements.map(element => {
+    const rows = await page.locator('#puzzles-open, #settings-open').evaluateAll(elements => elements.map(element => {
       const style = getComputedStyle(element), bounds = element.getBoundingClientRect();
       const chevron = element.querySelector('.menu-chevron');
       return {
@@ -208,7 +281,7 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
         hasChevron: Boolean(chevron?.checkVisibility() && chevron.getAttribute('aria-hidden') === 'true')
       };
     }));
-    expect(rows).toHaveLength(6);
+    expect(rows).toHaveLength(2);
     for (const row of rows) {
       expect(row.width, row.label).toBeGreaterThanOrEqual(44);
       expect(row.height, row.label).toBeGreaterThanOrEqual(44);
@@ -219,11 +292,12 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
       expect(row.background, row.label).not.toBe(menuColor);
       expect(row.hasChevron, row.label).toBe(true);
     }
-    const archive = page.getByRole('combobox', { name: 'Puzzle archive' });
-    await expect(archive).toBeInViewport();
-    const archiveBounds = await archive.boundingBox();
-    expect(archiveBounds.width).toBeGreaterThanOrEqual(44);
-    expect(archiveBounds.height).toBeGreaterThanOrEqual(44);
+    for (const control of [page.locator('#feedback-open'), page.locator('#menu-dialog').getByRole('link', { name: 'Privacy', exact: true })]) {
+      await expect(control).toBeInViewport();
+      const bounds = await control.boundingBox();
+      expect(bounds.width).toBeGreaterThanOrEqual(44);
+      expect(bounds.height).toBeGreaterThanOrEqual(44);
+    }
     await choose(page.getByRole('button', { name: 'Settings', exact: true }));
     const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
     const analyticsSwitch = settings.getByRole('switch', { name: 'Play analytics', exact: true });
@@ -278,7 +352,7 @@ test('UTC rollover announces the next puzzle without replacing the saved board',
   expect((await readProgress(page, today)).board).toEqual(['bakery', ...Array(8).fill(null)]);
 });
 
-test('keyboard controls retain names, focus outlines and text clue states', async ({ page, isMobile }) => {
+test('keyboard controls retain names, focus outlines and text clue states', async ({ page, isMobile, browserName }) => {
   await openGame(page);
   const skip = page.getByRole('link', { name: 'Skip to puzzle' });
   if (isMobile) await skip.focus();
@@ -296,12 +370,18 @@ test('keyboard controls retain names, focus outlines and text clue states', asyn
   await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
   await expect(page.getByRole('button', { name: 'Lot A1, Bakery', exact: true })).toHaveAttribute('aria-pressed', 'false');
   await expect(page.locator('#clues .clue-state').first()).toContainText(/Matches the plan|Needs a move|not placed yet/);
-  await page.locator('#help-open').focus();
+  await page.locator('#menu-open').press('Enter');
+  await page.getByRole('button', { name: 'Puzzles', exact: true }).press('Enter');
+  // Cocoa WebKit uses Option+Tab for links; Linux WebKit uses Tab.
+  await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab');
+  const tutorial = page.locator('#puzzles-dialog').getByRole('link', { name: 'Tutorial', exact: true });
+  await expect(tutorial).toBeFocused();
   await page.keyboard.press('Enter');
-  await page.keyboard.press('Tab');
-  expect(await page.evaluate(() => Boolean(document.activeElement.closest('#help-dialog')))).toBe(true);
+  await expect(page.locator('#puzzle-label')).toHaveText('Tutorial');
+  await page.locator('#menu-open').press('Enter');
+  await page.locator('#puzzles-open').press('Enter');
   await page.keyboard.press('Escape');
-  await expect(page.locator('#help-open')).toBeFocused();
+  await expect(page.locator('#menu-open')).toBeFocused();
 });
 
 test('normal and solved layouts preserve touch targets without horizontal overflow', async ({ page }, testInfo) => {

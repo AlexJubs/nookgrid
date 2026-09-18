@@ -103,21 +103,18 @@
 #hint-dialog button{font-size:14px}
 #hint-dialog .secondary{background:#f3f5f2;border-color:transparent}
 #hint-dialog .secondary:hover{background:#e9ede7}
-.game-page #help-dialog{width:min(420px,calc(100% - 32px))}
-
-.game-page #help-dialog .help-intro{font-size:var(--font-body);margin-bottom:12px}
+.game-page #tutorial-reference{flex:none;width:100%;max-width:420px;margin:32px auto 0;padding-top:24px;border-top:1px solid var(--line);font-size:var(--font-body)}
+.game-page #tutorial-reference h2{font-size:var(--font-title);margin-bottom:16px}
+.game-page #tutorial-reference p{font-size:var(--font-body);line-height:1.5;margin-bottom:12px}
 .help-status{display:flex;gap:8px 16px;flex-wrap:wrap;font-size:13px;margin:16px 0}
 .help-status>span{display:flex;align-items:center;gap:6px}
 .help-status .key-dot{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;line-height:20px;font-size:12px}
 .help-terms{display:grid;grid-template-columns:max-content 1fr;gap:8px 12px;font-size:var(--font-body);line-height:1.5;margin:0 0 12px}
 .help-terms dt{font-weight:600}.help-terms dd{margin:0;color:var(--muted)}
-.game-page #help-dialog .help-note{font-size:12px;color:var(--muted)}
-.help-details{margin-top:16px}
-.help-details summary{min-height:44px;padding:12px;background:var(--surface);border-radius:8px;cursor:pointer;font-size:var(--font-body);font-weight:600}
-.help-details summary:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
-.game-page .help-details p{font-size:var(--font-body);margin-top:12px}
+.game-page #tutorial-reference .help-note{font-size:12px;color:var(--muted)}
+.help-controls{margin-top:20px}
 .help-links{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;margin-top:8px}
-.help-links a{display:inline-flex;align-items:center;min-height:44px;font-size:var(--font-body);font-weight:500}
+.help-links a,.help-links .text-button{display:inline-flex;align-items:center;min-height:44px;font-size:var(--font-body);font-weight:500}
 .game-page dialog fieldset{margin:12px 0;gap:4px 12px}
 .game-page dialog fieldset label{min-height:44px}
 .game-page dialog legend{margin-bottom:4px}
@@ -141,17 +138,23 @@ input.setting-toggle{appearance:none;-webkit-appearance:none;position:relative;f
 .setting-toggle:checked::after{transform:translateX(20px)}
 .setting-toggle:disabled{cursor:default;opacity:.55}
 .game-page .primary:hover{background:#2b513e}
-.game-page #menu-dialog{width:min(360px,calc(100% - 32px))}
+.game-page #menu-dialog,.game-page #puzzles-dialog{width:min(360px,calc(100% - 32px))}
+.game-page #menu-dialog{padding-top:52px}
 
 .game-page .menu-links{display:grid;grid-template-columns:1fr;gap:0;background:var(--surface);border-radius:8px}
 .game-page .menu-links a,.game-page .menu-links .text-button{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;margin:0;padding:12px;font-size:var(--font-body);font-weight:600;color:var(--ink);text-align:left;text-decoration:none;border-radius:0}
-.menu-chevron{width:16px;height:16px;color:var(--muted)}
+.menu-chevron{flex:none;width:16px;height:16px;color:var(--muted)}
 .game-page .menu-links>:not(:last-child){border-bottom:1px solid var(--line)}
 .game-page .menu-links a:hover,.game-page .menu-links button:hover{background:#e9eee7}
-.game-page .menu-utilities{margin-top:16px}
-.game-page .archive-picker{display:grid;gap:8px;margin:16px 0 0}
-.game-page .archive-picker label{font-size:var(--font-caption);font-weight:500;color:var(--muted)}
-.game-page .archive-picker select{width:100%;height:48px;min-height:48px;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);font-size:14px}
+.game-page .menu-links>:first-child{border-radius:8px 8px 0 0}
+.game-page .menu-links>:last-child{border-radius:0 0 8px 8px}
+.menu-footer{display:flex;justify-content:center;gap:24px;margin-top:16px;padding-top:8px;border-top:1px solid var(--line)}
+.game-page .menu-footer a,.game-page .menu-footer button{display:inline-flex;align-items:center;min-height:44px;padding:0;font-size:var(--font-body);font-weight:500;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+#puzzle-list{max-height:min(50dvh,360px);overflow:auto;overscroll-behavior:contain}
+.game-page #puzzle-list a{font-weight:500}
+.game-page #puzzle-list a[aria-current="page"]{background:var(--grass);font-weight:600}
+#puzzle-list small{display:block;font-size:var(--font-caption);font-weight:400;color:var(--muted)}
+.game-page #puzzles-more{display:block;width:100%;margin-top:8px;font-size:var(--font-body)}
 .game-page .notice{padding:12px;margin-bottom:12px;line-height:1.5;background:#f4f6f2;border:0;color:var(--ink)}
 .game-page #save-warning{background:#fff7e8;color:#6d532a}
 .game-page #retry-save{color:inherit;text-decoration:underline;text-underline-offset:3px;padding:0;min-height:44px}
@@ -227,9 +230,11 @@ input.setting-toggle{appearance:none;-webkit-appearance:none;position:relative;f
 .native-app body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top);background:#fff;z-index:40;pointer-events:none}
 .native-app dialog{max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px)}
 @media(max-width:927px) and (orientation:portrait){
-  .native-app{--safe-top:env(safe-area-inset-top);--safe-bottom:env(safe-area-inset-bottom)}
+  .native-app{--safe-top:env(safe-area-inset-top);--safe-bottom:env(safe-area-inset-bottom);--header-height:52px}
   .native-app .game-page{height:100dvh;min-height:0;padding-top:var(--safe-top);padding-bottom:var(--safe-bottom);display:flex;flex-direction:column}
-  .native-app .game-page .site-header{height:52px;flex:none;width:100%;padding-block:4px}
+  .native-app .game-page .site-header{height:var(--header-height);flex:none;width:100%;padding-block:4px}
+  .native-app .game-page:has(#tutorial-reference:not([hidden])){height:auto;min-height:100dvh}
+  .native-app .game-page:has(#tutorial-reference:not([hidden])) .game-layout{flex:none;height:calc(100dvh - var(--safe-top) - var(--safe-bottom) - var(--header-height) - 8px)}
   .native-app .game-page .brand{font-size:24px}
   .native-app .puzzle-heading h1{font-size:24px;margin-bottom:2px}
   .native-app .game-page main{display:flex;flex-direction:column;flex:1;min-height:0;width:100%;padding-bottom:8px}
@@ -264,7 +269,7 @@ input.setting-toggle{appearance:none;-webkit-appearance:none;position:relative;f
   .native-app .game-page #next-puzzle,.native-app .game-page .completion-summary>.inline-button:not(.primary){grid-column:2;grid-row:2}
 }
 @media(max-width:927px) and (orientation:portrait) and (max-height:740px){
-  .native-app .game-page .site-header{height:48px}
+  .native-app{--header-height:48px}
   .native-app .game-page .clues{gap:0}
   .native-app .game-page .lot.occupied .address{top:3px;left:3px;font-size:9px}
   .native-app .game-page .place{min-height:54px}

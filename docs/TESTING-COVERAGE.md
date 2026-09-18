@@ -15,9 +15,9 @@ The same browser scenarios run on desktop Chromium at 1280 by 900 and WebKit wit
 | Results | Full incorrect board, clue status text, full correct board, focus transfer, no-hint and hinted wording, reset and undo, reduced-motion celebration |
 | Timer | Restored elapsed time, foreground advancement, simulated hidden interval exclusion, completion freeze, reset, undo and reload |
 | Sharing | Canonical public URL, date and attribution, no QA/hash values or solution spoilers, mocked clipboard success, mocked native-share success/cancellation/failure, selected read-only fallback |
-| Navigation | Today, tutorial and past archive choices; future dates rejected; per-puzzle saves isolated; expired calendar fallback; UTC rollover preserves the active board |
-| Dialogs | Menu, Help, Hint, Feedback, Settings and Share: button, Escape and outside dismissal, inside clicks, one modal, focus restoration |
-| Supporting pages | Help disclosure, worked example, privacy navigation, retained QA mode and saved analytics opt-out |
+| Navigation | Unified Today, Tutorial and past-date list; pagination and restored focus; failed navigation exposes saved-progress recovery; future dates rejected; per-puzzle saves isolated; expired calendar fallback; UTC rollover preserves the active board |
+| Dialogs | Menu, Puzzles, Hint, Feedback, Settings and Share: button, Escape and outside dismissal, inside clicks, one modal, focus restoration |
+| Supporting pages | Inline Tutorial tips, contextual move guidance and compact return, worked example, privacy navigation, retained QA mode and saved analytics opt-out |
 | Recovery | Loading/inert state, failed or malformed puzzle request, retry, malformed/duplicate/unknown/short saved boards, repaired saved hints, unknown legacy solve time |
 | Persistence failure | Denied browser storage still allows moves, hints and undo with a visible warning |
 | Network isolation | Local resources, play while offline after load, optional settings failure, feedback validation and dry-run retention |

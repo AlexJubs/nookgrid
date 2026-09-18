@@ -46,21 +46,79 @@ async function write(key, value) {
 $('retry-save').addEventListener('click', () => save());
 
 async function navigateTo(url) {
-  if (native) {
+  if (native && progress) {
     save(false);
     try { await native.storage?.flush(); }
-    catch { save(); $('save-warning').hidden = false; return; }
+    catch {
+      save();
+      document.querySelector('dialog[open]')?.close();
+      $('save-warning').hidden = false;
+      return;
+    }
   }
   location.assign(url);
 }
 
 function openDialog(id) {
-  if ($('menu-dialog').open) $('menu-dialog').close();
+  const isFromMenu = $('menu-dialog').open;
+  if (isFromMenu) $('menu-dialog').close();
   $(id).showModal();
+  if (isFromMenu) $(id).addEventListener('close', () => $('menu-open').focus({preventScroll:true}), {once:true});
 }
-for (const [button, dialog] of [['menu-open','menu-dialog'],['help-open','help-dialog'],['help-menu','help-dialog'],['feedback-open','feedback-dialog'],['feedback-win','feedback-dialog'],['settings-open','settings-dialog'],['hint','hint-dialog']]) {
+for (const [button, dialog] of [['menu-open','menu-dialog'],['puzzles-open','puzzles-dialog'],['feedback-open','feedback-dialog'],['feedback-win','feedback-dialog'],['settings-open','settings-dialog'],['hint','hint-dialog']]) {
   $(button).addEventListener('click', () => openDialog(dialog));
 }
+
+function showTutorialTips(isOpen) {
+  $('tutorial-reference').hidden = !isOpen;
+  $('help-open').setAttribute('aria-expanded', String(isOpen));
+  if (isOpen) {
+    $('tutorial-reference-title').focus({preventScroll:true});
+    $('tutorial-reference').scrollIntoView();
+  } else {
+    $('help-open').focus({preventScroll:true});
+    window.scrollTo(0,0);
+  }
+}
+$('help-open').addEventListener('click', () => {
+  if (mode === 'practice') showTutorialTips($('tutorial-reference').hidden);
+  else navigateTo(`?date=practice${testMode ? '&test=1' : ''}`);
+});
+$('tutorial-resume').addEventListener('click', () => showTutorialTips(false));
+
+function preparePuzzleList() {
+  const dates = ['practice', ...bank.puzzles.map(item => item.date).filter(date => date <= today).sort().reverse()];
+  let count = 0;
+  function showEarlierPuzzles() {
+    const previousCount = count;
+    for (const date of dates.slice(count, count === 0 ? 31 : count + 30)) {
+      const link = document.createElement('a');
+      const label = date === 'practice' ? 'Tutorial' : new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
+      link.href = `?date=${date}${testMode ? '&test=1' : ''}`;
+      link.dataset.puzzleDate = date;
+      link.setAttribute('aria-label', date === today ? `Today, ${label}` : label);
+      if (date === (mode === 'practice' ? 'practice' : puzzle.date)) link.setAttribute('aria-current','page');
+      const text = document.createElement('span');
+      text.textContent = date === today ? 'Today' : label;
+      if (date === today) {
+        const detail = document.createElement('small');
+        detail.textContent = label;
+        text.append(detail);
+      }
+      link.append(text);
+      link.insertAdjacentHTML('beforeend',renderIcon(link.hasAttribute('aria-current') ? 'check' : 'caret-right','menu-chevron'));
+      $('puzzle-list').append(link);
+      count++;
+    }
+    if (previousCount < count && previousCount > 0) $('puzzle-list').children[previousCount].focus();
+    $('puzzles-more').hidden = count >= dates.length;
+  }
+  showEarlierPuzzles();
+  $('puzzles-more').addEventListener('click', showEarlierPuzzles);
+  $('puzzles-status').hidden = true;
+  $('puzzle-list').hidden = false;
+}
+
 document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => button.closest('dialog').close()));
 document.querySelectorAll('dialog').forEach(dialog => {
   let hasOutsidePress = false;
@@ -81,6 +139,7 @@ document.addEventListener('keydown', event => {
   if (['Tab', 'Escape'].includes(event.key) || (!isEditingText && ['Enter', ' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key))) {
     document.documentElement.classList.remove('pointer-input');
   }
+  if (event.key === 'Escape' && !$('tutorial-reference').hidden && !document.querySelector('dialog[open]')) showTutorialTips(false);
   if (event.key === 'Escape' && selected && !document.querySelector('dialog[open]')) { selected = null; render(); }
 });
 
@@ -310,11 +369,11 @@ function render() {
   $('tutorial-intro').hidden = !isLearning;
   const shouldFocusCompletion = solved && (!wasSolved || (!selected && Boolean(document.activeElement?.closest('.play-controls'))));
   $('game').classList.toggle('has-guidance', shouldShowGuidance);
-  const instruction = mode === 'practice' && solved ? 'Your neighborhood is complete.' : starterStep >= 0 ? [
+  const instruction = mode === 'practice' && selected && board.includes(selected) ? 'Tap another square to move or swap, or choose Put back.' : mode === 'practice' && solved ? 'Your neighborhood is complete.' : starterStep >= 0 ? [
     selected === 'bakery' ? 'Tap A1 to place Bakery.' : 'Tap Bakery, then A1, the outlined square.',
-    'Bakery fits. Place Cafe directly to its right.',
+    'Place Cafe in the next square to the right of Bakery.',
     'Cafe fits. Use the plan to place Books.',
-    'Now all nine places are available. Use the full plan to finish.'
+    'Finish the plan. ✓ fits; ! needs a change.'
   ][starterStep] : shouldShowGuidance ? 'Which column fits Park? Start with the starred items.' : 'Arrange the places to match the plan.';
   const instructionLabel = document.querySelector('.puzzle-instruction');
   if (instructionLabel.textContent !== instruction) instructionLabel.textContent = instruction;
@@ -475,8 +534,11 @@ async function init() {
     $('puzzle-label').textContent = mode === 'practice' ? 'Tutorial' : `Puzzle #${number}`;
     $('puzzle-date').textContent = mode === 'practice' ? 'Learn by playing' : new Date(`${puzzle.date}T12:00:00Z`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
     if (mode === 'practice') {
+      $('help-open').setAttribute('aria-label','Tutorial tips');
+      $('help-open').setAttribute('aria-controls','tutorial-reference');
+      $('help-open').setAttribute('aria-expanded','false');
       $('puzzle-switch').textContent = "Today's puzzle";
-      $('puzzle-switch').href = './index.html';
+      $('puzzle-switch').href = `./index.html${testMode ? '?test=1' : ''}`;
       document.querySelector('.puzzle-instruction').setAttribute('role','status');
       $('completion-title').textContent = 'Nice work!';
       $('share').hidden = true;
@@ -484,14 +546,7 @@ async function init() {
     }
     $('board-title').textContent = {daily:"Today's puzzle",archive:'Archived puzzle',practice:'The tutorial puzzle'}[mode];
     document.title = `NookGrid | ${mode === 'daily' ? 'Free daily spatial logic puzzle' : mode === 'practice' ? 'Tutorial logic puzzle' : `Logic puzzle ${number}`}`;
-    $('archive').replaceChildren();
-    for (const item of [...bank.puzzles.filter(item => item.date <= today).reverse(),{date:'practice'}]) {
-      const option = document.createElement('option'); option.value = item.date;
-      option.textContent = item.date === 'practice' ? 'Tutorial' : `${new Date(`${item.date}T12:00:00Z`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'})}${item.date === today ? ' (today)' : ''}`;
-      option.selected = item.date === (mode === 'practice' ? 'practice' : puzzle.date);
-      $('archive').append(option);
-    }
-    $('archive').addEventListener('change', event => { navigateTo(`?date=${event.target.value}${testMode ? '&test=1' : ''}`); });
+    preparePuzzleList();
     if (native) document.addEventListener('click',event => {
       const anchor = event.target.closest('a[href]');
       if (!anchor || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -515,8 +570,10 @@ async function init() {
     $('puzzle-date').textContent = 'Unavailable';
     $('game').hidden = true;
     $('game').setAttribute('aria-busy','false');
-    $('archive').disabled = true;
-    $('archive').replaceChildren(new Option('Puzzles unavailable'));
+    $('puzzles-status').textContent = 'Puzzles unavailable';
+    $('puzzles-status').hidden = false;
+    $('puzzle-list').hidden = true;
+    $('puzzles-more').hidden = true;
   } finally {
     $('load-status').hidden = true;
   }

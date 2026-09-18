@@ -10,7 +10,7 @@ test('tutorial guides all three moves, unlocks the full plan and completes', asy
   await choose(page.locator('#tray [data-place="bakery"]'));
   await expect(page.locator('.puzzle-instruction')).toHaveText('Tap A1 to place Bakery.');
   await choose(page.locator('#board [data-lot="0"]'));
-  await expect(page.locator('.puzzle-instruction')).toHaveText('Bakery fits. Place Cafe directly to its right.');
+  await expect(page.locator('.puzzle-instruction')).toHaveText('Place Cafe in the next square to the right of Bakery.');
   await expect(page.locator('#tray .place:visible')).toHaveCount(2);
   await expect(page.locator('#clues .clue:visible')).toHaveCount(1);
   await place(page, 'cafe', 1);
@@ -18,6 +18,7 @@ test('tutorial guides all three moves, unlocks the full plan and completes', asy
   await expect(page.locator('#tray .place:visible')).toHaveCount(3);
   await place(page, 'books', 2);
   await expect(page.locator('#tutorial-intro')).toBeHidden();
+  await expect(page.locator('.puzzle-instruction')).toHaveText('Finish the plan. ✓ fits; ! needs a change.');
   await expect(page.locator('#tray .place:visible')).toHaveCount(9);
   await expect(page.locator('#clues .clue:visible')).toHaveCount(bank.tutorial.clues.length);
   await solvePuzzle(page, bank.tutorial.solution, 3);
@@ -29,6 +30,41 @@ test('tutorial guides all three moves, unlocks the full plan and completes', asy
   await page.locator('#play-today').click();
   await expect(page.locator('#puzzle-date')).toHaveText('Sep 17, 2026');
   await expectBoard(page, emptyBoard);
+});
+
+test('Tutorial wrong moves and undo keep guidance aligned with the current board', async ({ page }) => {
+  await openGame(page, 'date=practice');
+  await place(page, 'bakery', 1);
+  await expectBoard(page, [null, 'bakery', ...Array(7).fill(null)]);
+  await expect(page.locator('#tray .place:visible')).toHaveCount(1);
+  await expect(page.locator('#clues .conflict:visible')).not.toHaveCount(0);
+  await choose(page.locator('#board [data-lot="1"]'));
+  await expect(page.locator('.puzzle-instruction')).toHaveText('Tap another square to move or swap, or choose Put back.');
+  await choose(page.locator('#board [data-lot="0"]'));
+  await expect(page.locator('.puzzle-instruction')).toHaveText('Place Cafe in the next square to the right of Bakery.');
+  await place(page, 'cafe', 2);
+  await expectBoard(page, ['bakery', null, 'cafe', ...Array(6).fill(null)]);
+  await expect(page.locator('#tray .place:visible')).toHaveCount(2);
+  await expect(page.locator('.puzzle-instruction')).toHaveText('Place Cafe in the next square to the right of Bakery.');
+  await page.locator('#undo').click();
+  await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
+  await place(page, 'cafe', 1);
+  await expect(page.locator('.puzzle-instruction')).toHaveText('Cafe fits. Use the plan to place Books.');
+  await page.locator('#undo').click();
+  await expect(page.locator('.puzzle-instruction')).toHaveText('Place Cafe in the next square to the right of Bakery.');
+  await expect(page.locator('#tray .place:visible')).toHaveCount(2);
+  await place(page, 'cafe', 1);
+  await place(page, 'books', 2);
+  await expect(page.locator('.puzzle-instruction')).toHaveText('Finish the plan. ✓ fits; ! needs a change.');
+  await choose(page.locator('#board [data-lot="1"]'));
+  await expect(page.locator('.puzzle-instruction')).toHaveText('Tap another square to move or swap, or choose Put back.');
+  await expect(page.getByRole('button', { name: 'Put back', exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.puzzle-instruction')).toHaveText('Finish the plan. ✓ fits; ! needs a change.');
+  await page.locator('#undo').click();
+  await expectBoard(page, ['bakery', 'cafe', ...Array(7).fill(null)]);
+  await expect(page.locator('.puzzle-instruction')).toHaveText('Cafe fits. Use the plan to place Books.');
+  await expect(page.locator('#tray .place:visible')).toHaveCount(3);
 });
 
 test('tap controls select, deselect, swap, remove, undo and reset', async ({ page }) => {

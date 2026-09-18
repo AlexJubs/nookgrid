@@ -7,9 +7,16 @@ test('loading remains inert until the puzzle resource arrives', async ({ page })
   await page.goto('/?test=1', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#load-status')).toBeVisible();
   await expect(page.locator('#game')).toHaveAttribute('inert', '');
+  await page.locator('#menu-open').click();
+  await page.locator('#puzzles-open').click();
+  await expect(page.locator('#puzzles-status')).toContainText(/loading/i);
+  await expect(page.locator('#puzzle-list')).toBeHidden();
   release();
   await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
   await expect(page.locator('#load-status')).toBeHidden();
+  await expect(page.locator('#puzzle-list')).toBeVisible();
+  await expect(page.locator('#puzzles-status')).toBeHidden();
+  await page.getByRole('button', { name: 'Close puzzles', exact: true }).click();
   await expectBoard(page, emptyBoard);
 });
 
@@ -23,8 +30,11 @@ for (const failure of ['unavailable', 'malformed']) {
     await expect(page.locator('#game')).toBeHidden();
     await page.locator('#menu-open').click();
     await expect(page.locator('#menu-dialog')).toBeVisible();
-    await expect(page.locator('#archive')).toBeDisabled();
-    await expect(page.locator('#archive option')).toHaveText('Puzzles unavailable');
+    await page.locator('#puzzles-open').click();
+    await expect(page.locator('#puzzles-dialog')).toBeVisible();
+    await expect(page.locator('#puzzles-status')).toContainText('unavailable');
+    await expect(page.locator('#puzzle-list')).toBeHidden();
+    await expect(page.locator('#puzzles-more')).toBeHidden();
     await page.keyboard.press('Escape');
     await page.unroute('**/puzzles.json');
     await page.getByRole('link', { name: 'Try again' }).click();
@@ -120,5 +130,5 @@ test('an exhausted calendar falls back to the playable tutorial', async ({ page 
   await expect(page.locator('#puzzle-label')).toHaveText('Tutorial');
   await expect(page.locator('#new-day')).toBeHidden();
   await place(page, 'bakery', 0);
-  await expect(page.locator('.puzzle-instruction')).toHaveText('Bakery fits. Place Cafe directly to its right.');
+  await expect(page.locator('.puzzle-instruction')).toHaveText('Place Cafe in the next square to the right of Bakery.');
 });

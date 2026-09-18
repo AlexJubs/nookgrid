@@ -146,3 +146,27 @@ test('native phone completions and the full tutorial plan stay within safe areas
     await expectScreenFit(page, phone, bank.tutorial.clues.length, 0);
   }
 });
+
+
+test('native Tutorial tips remain readable and return to compact gameplay', async ({ page }) => {
+  test.setTimeout(60_000);
+  for (const phone of phones) {
+    await page.setViewportSize({ width: phone.width, height: phone.height });
+    await openGame(page, 'date=practice');
+    await expectScreenFit(page, phone, 2, 1);
+    await page.getByRole('button', { name: 'Tutorial tips', exact: true }).click();
+    const reference = page.locator('#tutorial-reference');
+    await expect(reference).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(phone.width);
+    const resume = page.getByRole('button', { name: 'Back to tutorial', exact: true });
+    await resume.scrollIntoViewIfNeeded();
+    await expect(resume).toBeInViewport();
+    const bounds = await resume.boundingBox();
+    expect(bounds.width).toBeGreaterThanOrEqual(44);
+    expect(bounds.height).toBeGreaterThanOrEqual(44);
+    await resume.click();
+    await expect(reference).toBeHidden();
+    await expect(page.locator('#help-open')).toBeFocused();
+    await expectScreenFit(page, phone, 2, 1);
+  }
+});

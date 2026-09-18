@@ -38,10 +38,11 @@ for (const destination of ['tutorial', 'archive']) {
     });
     await place(page, 'bakery', 0);
     const originalUrl = page.url();
-    if (destination === 'tutorial') await page.locator('#puzzle-switch').click();
+    if (destination === 'tutorial') await page.locator('#help-open').click();
     else {
       await page.locator('#menu-open').click();
-      await page.locator('#archive').selectOption('2026-09-16');
+      await page.locator('#puzzles-open').click();
+      await page.getByRole('link', { name: 'Sep 16, 2026', exact: true }).click();
     }
     await expect(page).toHaveURL(originalUrl);
     await page.evaluate(() => window.releaseNativeWrite());
@@ -60,7 +61,7 @@ test('failed native save keeps the current puzzle and reports the failure', asyn
     window.nativeWriteFailure = true;
   });
   const originalUrl = page.url();
-  await page.locator('#puzzle-switch').click();
+  await page.locator('#help-open').click();
   await expect(page.locator('#save-warning')).toBeVisible();
   await expect(page).toHaveURL(originalUrl);
   await expect(page.locator('#board [data-lot="0"]')).toHaveAttribute('aria-label', 'Lot A1, Bakery');
@@ -84,8 +85,36 @@ test('failed native save keeps the current puzzle and reports the failure', asyn
   await place(page, 'books', 2);
   await expect(page.locator('#save-warning')).toBeHidden();
   expect((await readProgress(page)).board).toEqual(['bakery', 'cafe', 'books', ...Array(6).fill(null)]);
-  await page.locator('#puzzle-switch').click();
+  await page.locator('#help-open').click();
   await expect(page).toHaveURL(/date=practice/);
   const elapsed = await page.evaluate(() => JSON.parse(localStorage.getItem('nookgrid:test:v1:2026-09-17')).elapsedMs);
   expect(elapsed).toBeGreaterThanOrEqual(5_000);
+});
+
+
+test('a failed native archive save exposes retry without leaving the current puzzle', async ({ page }) => {
+  await openGame(page);
+  await place(page, 'bakery', 0);
+  await page.evaluate(async () => {
+    await window.nookgridNative.storage.flush();
+    window.nativeWriteFailure = true;
+  });
+  const originalUrl = page.url();
+  await page.locator('#menu-open').click();
+  await page.locator('#puzzles-open').click();
+  await page.getByRole('link', { name: 'Sep 16, 2026', exact: true }).click();
+  await expect(page.locator('dialog[open]')).toHaveCount(0);
+  await expect(page.locator('#save-warning')).toBeVisible();
+  await expect(page).toHaveURL(originalUrl);
+  await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
+  await page.evaluate(() => { window.nativeWriteFailure = false; });
+  await page.getByRole('button', { name: 'Retry save', exact: true }).click();
+  await expect(page.locator('#save-warning')).toBeHidden();
+  await page.locator('#menu-open').click();
+  await page.locator('#puzzles-open').click();
+  await page.getByRole('link', { name: 'Sep 16, 2026', exact: true }).click();
+  await expect(page).toHaveURL(/date=2026-09-16/);
+  await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
+  await openGame(page);
+  await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
 });
