@@ -40,18 +40,21 @@ final class NookGridUITests: XCTestCase {
     private func scrollTo(_ element: XCUIElement) {
         let puzzleList = app.webViews.firstMatch.descendants(matching: .any)
             .matching(NSPredicate(format: "label BEGINSWITH 'Choose a puzzle'")).firstMatch
+        let helpDialog = app.webViews.firstMatch.descendants(matching: .other)
+            .matching(NSPredicate(format: "label == 'How to play, web dialog'")).firstMatch
         let isPuzzleLink = element.elementType == .link && puzzleList.exists
-        let scrollArea: XCUIElement = isPuzzleLink ? puzzleList : app
+        let isHelpOpen = button("Close how to play").exists
+        let scrollArea: XCUIElement = isPuzzleLink ? puzzleList : isHelpOpen ? helpDialog : app
         let viewport = scrollArea.frame.intersection(app.frame).insetBy(dx: 0, dy: isPuzzleLink ? 4 : 0)
         for _ in 0..<4 {
             let frame = element.frame
             if frame.minY >= viewport.minY && frame.maxY <= viewport.maxY && element.isHittable { return }
             let isBelow = frame.maxY > viewport.maxY
-            let start = scrollArea.coordinate(withNormalizedOffset: CGVector(dx: isPuzzleLink ? 0.5 : 0.02, dy: isBelow ? 0.8 : 0.2))
-            let end = scrollArea.coordinate(withNormalizedOffset: CGVector(dx: isPuzzleLink ? 0.5 : 0.02, dy: isBelow ? 0.2 : 0.8))
+            let start = scrollArea.coordinate(withNormalizedOffset: CGVector(dx: isPuzzleLink || isHelpOpen ? 0.5 : 0.02, dy: isBelow ? 0.8 : 0.2))
+            let end = scrollArea.coordinate(withNormalizedOffset: CGVector(dx: isPuzzleLink || isHelpOpen ? 0.5 : 0.02, dy: isBelow ? 0.2 : 0.8))
             start.press(forDuration: 0.05, thenDragTo: end)
         }
-        XCTAssertTrue(viewport.contains(element.frame), "Element remains outside its scroll area: \(element)")
+        XCTAssertTrue(viewport.contains(element.frame), "Element remains outside its scroll area: \(element), frame \(element.frame), viewport \(viewport). \(app.debugDescription)")
     }
     private func assertLot(_ address: String, _ place: String, file: StaticString = #filePath, line: UInt = #line) {
         let target = button("Lot \(address), \(place)")
@@ -99,7 +102,7 @@ final class NookGridUITests: XCTestCase {
             XCTAssertGreaterThanOrEqual(button("\(name), choose a lot").frame.width, 44)
             XCTAssertGreaterThanOrEqual(button("\(name), choose a lot").frame.height, 44)
         }
-        let controls = [app.webViews.buttons["Tutorial"].firstMatch, button("Menu"), button("Undo"), button("Reset"), button("Hint, 0 hints used")]
+        let controls = [button("How to play"), button("Menu"), button("Undo"), button("Reset"), button("Hint, 0 hints used")]
         for target in controls + lots.map(lot) + places.map({ button("\($0), choose a lot") }) {
             XCTAssertGreaterThanOrEqual(target.frame.minY, 20, target.label)
             XCTAssertLessThanOrEqual(target.frame.maxY, app.frame.maxY - 8, target.label)
@@ -218,13 +221,18 @@ final class NookGridUITests: XCTestCase {
     private func openToday() {
         openPuzzles()
         tap(app.webViews.links.matching(NSPredicate(format: "label BEGINSWITH 'Today, '")).firstMatch)
-        XCTAssertTrue(app.webViews.buttons["Tutorial"].firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(button("How to play").waitForExistence(timeout: 5))
         XCTAssertFalse(button("Close puzzles").exists)
     }
 
     func testArchiveNavigation() {
         openArchive()
         place("Bakery", at: "A1")
+        tap(button("How to play"))
+        XCTAssertTrue(button("Close how to play").waitForExistence(timeout: 5))
+        tap(button("Close how to play"))
+        XCTAssertTrue(app.staticTexts["Sep 10, 2026"].exists)
+        assertLot("A1", "Bakery")
         openToday()
         assertLot("A1", "empty")
         openPuzzles()
@@ -234,20 +242,32 @@ final class NookGridUITests: XCTestCase {
     }
 
     func testDialogsDismiss() {
-        tap(app.webViews.buttons["Tutorial"].firstMatch)
-        XCTAssertTrue(app.staticTexts["Tap Bakery, then A1, the outlined square."].waitForExistence(timeout: 5))
-        XCTAssertFalse(button("Close how to play").exists)
-        tap(button("Tutorial tips"))
-        XCTAssertTrue(button("Back to tutorial").waitForExistence(timeout: 5))
+        let dateLabel = app.staticTexts.matching(NSPredicate(format: "label MATCHES %@", "[A-Z][a-z]{2} [0-9]{1,2}, [0-9]{4}")).firstMatch.label
+        let headerY = app.webViews.links["NookGrid home"].frame.minY
+        tap(button("How to play"))
+        XCTAssertTrue(button("Close how to play").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.webViews.links["Play tutorial"].firstMatch.exists)
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'Tab to move focus'")).firstMatch.exists)
         for label in ["Fits this layout", "Needs a change", "Directly left", "Above", "Touching"] {
             XCTAssertTrue(app.staticTexts[label].exists, label)
         }
-        captureScreenshot("Tutorial reference")
-        tap(button("Back to tutorial"))
-        XCTAssertFalse(button("Back to tutorial").exists)
+        captureScreenshot("How to play over today's puzzle")
+        tap(button("Close how to play"))
+        XCTAssertFalse(button("Close how to play").exists)
+        XCTAssertTrue(app.staticTexts[dateLabel].exists)
+        XCTAssertTrue(button("Park, choose a lot").exists)
+        XCTAssertEqual(app.webViews.links["NookGrid home"].frame.minY, headerY, accuracy: 1)
+        assertLot("A1", "empty")
+        openTutorial()
+        tap(button("How to play"))
+        XCTAssertTrue(button("Close how to play").waitForExistence(timeout: 5))
+        XCTAssertFalse(app.webViews.links["Play tutorial"].firstMatch.exists)
+        captureScreenshot("How to play over Tutorial")
+        tap(button("Close how to play"))
+        XCTAssertFalse(button("Close how to play").exists)
         XCTAssertTrue(app.staticTexts["Tap Bakery, then A1, the outlined square."].isHittable)
-        tap(button("Tutorial tips"))
+        assertLot("A1", "empty")
+        tap(button("How to play"))
         tap(app.webViews.links["Worked example"].firstMatch)
         XCTAssertTrue(app.staticTexts["A quick example"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["A quick example"].isHittable)

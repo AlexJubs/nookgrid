@@ -59,32 +59,16 @@ async function navigateTo(url) {
   location.assign(url);
 }
 
-function openDialog(id) {
+function openDialog(id, opener) {
   const isFromMenu = $('menu-dialog').open;
   if (isFromMenu) $('menu-dialog').close();
   $(id).showModal();
-  if (isFromMenu) $(id).addEventListener('close', () => $('menu-open').focus({preventScroll:true}), {once:true});
+  $(id).addEventListener('close', () => (isFromMenu ? $('menu-open') : opener).focus({preventScroll:true}), {once:true});
 }
-for (const [button, dialog] of [['menu-open','menu-dialog'],['puzzles-open','puzzles-dialog'],['feedback-open','feedback-dialog'],['feedback-win','feedback-dialog'],['settings-open','settings-dialog'],['hint','hint-dialog']]) {
-  $(button).addEventListener('click', () => openDialog(dialog));
+for (const [button, dialog] of [['help-open','help-dialog'],['menu-open','menu-dialog'],['puzzles-open','puzzles-dialog'],['feedback-open','feedback-dialog'],['feedback-win','feedback-dialog'],['settings-open','settings-dialog'],['hint','hint-dialog']]) {
+  $(button).addEventListener('click', () => openDialog(dialog, $(button)));
 }
-
-function showTutorialTips(isOpen) {
-  $('tutorial-reference').hidden = !isOpen;
-  $('help-open').setAttribute('aria-expanded', String(isOpen));
-  if (isOpen) {
-    $('tutorial-reference-title').focus({preventScroll:true});
-    $('tutorial-reference').scrollIntoView();
-  } else {
-    $('help-open').focus({preventScroll:true});
-    window.scrollTo(0,0);
-  }
-}
-$('help-open').addEventListener('click', () => {
-  if (mode === 'practice') showTutorialTips($('tutorial-reference').hidden);
-  else navigateTo(`?date=practice${testMode ? '&test=1' : ''}`);
-});
-$('tutorial-resume').addEventListener('click', () => showTutorialTips(false));
+$('help-tutorial').href = `?date=practice${testMode ? '&test=1' : ''}`;
 
 function preparePuzzleList() {
   const dates = ['practice', ...bank.puzzles.map(item => item.date).filter(date => date <= today).sort().reverse()];
@@ -143,7 +127,6 @@ document.addEventListener('keydown', event => {
   if (['Tab', 'Escape'].includes(event.key) || (!isEditingText && ['Enter', ' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key))) {
     document.documentElement.classList.remove('pointer-input');
   }
-  if (event.key === 'Escape' && !$('tutorial-reference').hidden && !document.querySelector('dialog[open]')) showTutorialTips(false);
   if (event.key === 'Escape' && selected && !document.querySelector('dialog[open]')) { selected = null; render(); }
 });
 
@@ -479,7 +462,7 @@ $('share').addEventListener('click', async () => {
     track('share_result',{result:isCancelled ? 'cancelled' : 'failed'});
     if (!isCancelled) {
       $('share-text').value = text;
-      openDialog('share-dialog');
+      openDialog('share-dialog', $('share'));
       $('share-text').focus();
       $('share-text').select();
     }
@@ -537,10 +520,8 @@ async function init() {
     const number = bank.puzzles.findIndex(item => item.date === puzzle.date) + 1;
     $('puzzle-label').textContent = mode === 'practice' ? 'Tutorial' : `Puzzle #${number}`;
     $('puzzle-date').textContent = mode === 'practice' ? 'Learn by playing' : new Date(`${puzzle.date}T12:00:00Z`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
+    $('help-tutorial').hidden = mode === 'practice';
     if (mode === 'practice') {
-      $('help-open').setAttribute('aria-label','Tutorial tips');
-      $('help-open').setAttribute('aria-controls','tutorial-reference');
-      $('help-open').setAttribute('aria-expanded','false');
       $('puzzle-switch').textContent = "Today's puzzle";
       $('puzzle-switch').href = `./index.html${testMode ? '?test=1' : ''}`;
       document.querySelector('.puzzle-instruction').setAttribute('role','status');

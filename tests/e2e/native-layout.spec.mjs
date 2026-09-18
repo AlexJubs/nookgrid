@@ -148,25 +148,52 @@ test('native phone completions and the full tutorial plan stay within safe areas
 });
 
 
-test('native Tutorial tips remain readable and return to compact gameplay', async ({ page }) => {
+test('native How to play stays within the screen without scrolling the puzzle', async ({ page }) => {
   test.setTimeout(60_000);
   for (const phone of phones) {
     await page.setViewportSize({ width: phone.width, height: phone.height });
-    await openGame(page, 'date=practice');
-    await expectScreenFit(page, phone, 2, 1);
-    await page.getByRole('button', { name: 'Tutorial tips', exact: true }).click();
-    const reference = page.locator('#tutorial-reference');
-    await expect(reference).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(phone.width);
-    const resume = page.getByRole('button', { name: 'Back to tutorial', exact: true });
-    await resume.scrollIntoViewIfNeeded();
-    await expect(resume).toBeInViewport();
-    const bounds = await resume.boundingBox();
-    expect(bounds.width).toBeGreaterThanOrEqual(44);
-    expect(bounds.height).toBeGreaterThanOrEqual(44);
-    await resume.click();
-    await expect(reference).toBeHidden();
-    await expect(page.locator('#help-open')).toBeFocused();
-    await expectScreenFit(page, phone, 2, 1);
+    for (const date of ['2026-09-17', '2026-09-11', 'practice']) {
+      const isTutorial = date === 'practice';
+      const ruleCount = isTutorial ? 2 : bank.puzzles.find(puzzle => puzzle.date === date).clues.length;
+      await openGame(page, `date=${date}`);
+      const originalUrl = page.url();
+      await expectScreenFit(page, phone, ruleCount, isTutorial ? 1 : 9);
+      await page.getByRole('button', { name: 'How to play', exact: true }).click();
+      const help = page.getByRole('dialog', { name: 'How to play', exact: true });
+      await expect(help).toBeVisible();
+      await expect(page).toHaveURL(originalUrl);
+      const bounds = await help.boundingBox();
+      expect(bounds.x).toBeGreaterThanOrEqual(0);
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(phone.width);
+      expect(bounds.y).toBeGreaterThanOrEqual(phone.top);
+      expect(bounds.y + bounds.height).toBeLessThanOrEqual(phone.height - phone.bottom);
+      const close = help.getByRole('button', { name: 'Close how to play', exact: true });
+      await expect(close).toBeInViewport();
+      const controls = [close, help.getByRole('link', { name: 'Worked example', exact: true })];
+      if (!isTutorial) controls.push(help.getByRole('link', { name: 'Play tutorial', exact: true }));
+      for (const control of controls) {
+        await control.scrollIntoViewIfNeeded();
+        await expect(control).toBeInViewport();
+        const target = await control.boundingBox();
+        expect(target.width).toBeGreaterThanOrEqual(44);
+        expect(target.height).toBeGreaterThanOrEqual(44);
+        expect(target.x).toBeGreaterThanOrEqual(bounds.x);
+        expect(target.x + target.width).toBeLessThanOrEqual(bounds.x + bounds.width);
+        expect(target.y).toBeGreaterThanOrEqual(phone.top);
+        expect(target.y + target.height).toBeLessThanOrEqual(phone.height - phone.bottom);
+      }
+      const geometry = await page.evaluate(() => ({
+        scrollHeight: Math.max(document.documentElement.scrollHeight, document.body.scrollHeight),
+        scrollWidth: document.documentElement.scrollWidth,
+        scrollY
+      }));
+      expect(geometry.scrollWidth).toBeLessThanOrEqual(phone.width);
+      expect(geometry.scrollHeight).toBeLessThanOrEqual(phone.height + 1);
+      expect(geometry.scrollY).toBe(0);
+      await close.click();
+      await expect(help).toBeHidden();
+      await expect(page.locator('#help-open')).toBeFocused();
+      await expectScreenFit(page, phone, ruleCount, isTutorial ? 1 : 9);
+    }
   }
 });
