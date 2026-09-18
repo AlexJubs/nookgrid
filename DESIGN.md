@@ -26,7 +26,7 @@ Keep the outcome, main action and supporting countdown together on the completio
 - Fit panels to real content. Preserve the compact board and bounded plan width instead of stretching them into unused space. Reference: pages 76–82.
 - Prefer existing spacing choices: 4, 8, 12, 16, 24 and 32px. Existing board geometry and 44px interaction targets are functional exceptions, not a reason to scale everything uniformly.
 - Preserve the established desktop 400px board, 192px tray/result panel and 248px plan unless a real layout problem calls for a change.
-- Desktop, regular laptop and normal phone game states should fit without page scrolling. Very small screens, expanded disclosures and text-heavy supporting pages may scroll. Never hide necessary content to force a fit.
+- Desktop and regular laptop game states should fit without page scrolling. Phones use the vertical layout below; short screens and solved states may scroll instead of shrinking pieces or hiding content.
 - Adapt widths, type and panel order independently on mobile. Long labels may wrap; controls must not collide. Reference: pages 92–95.
 
 ## Typography, color and surfaces
@@ -56,4 +56,8 @@ Refactoring UI provides design principles, not a conformance certificate. Name t
 
 ## iOS surfaces
 
-The native app keeps the shared compact game. CSS owns top and bottom safe-area padding so the title and controls never overlap the status bar or home indicator; dialog height also respects those insets. Use the existing game icon and a quiet light launch surface. The optional website App Store suggestion is a small dismissible row, shown only on Apple touch devices after a real listing ID is configured. It must never cover or block the puzzle.
+The native app keeps the shared compact game. CSS owns top and bottom safe-area padding so the title and controls never overlap the status bar or home indicator; a fixed background keeps scrolled content clear of the status bar. Dialog height also respects those insets. Use the existing game icon and a quiet light launch surface. The optional website App Store suggestion is a small dismissible row, shown only on Apple touch devices after a real listing ID is configured. It must never cover or block the puzzle.
+
+## Phone layout
+
+Stack the neighborhood plan, board, place tray and action row in that order. Center the board at up to 300px wide and match the tray and controls to it. The tray uses two centered rows of five and four places. Keep 12px between the play sections; remove idle selection text from layout while preserving screen-reader announcements. Undo, Reset and Hint remain equal-width peers beneath the items. Completion replaces the tray beneath the solved board. The DOM order follows the mobile reading order. Desktop keeps its established columns.

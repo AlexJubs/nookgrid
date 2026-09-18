@@ -137,7 +137,7 @@
 .game-page .empty-state h2{font-size:22px;color:var(--ink);margin-bottom:8px}
 .game-page .empty-state p{font-size:14px;margin-bottom:20px}
 @media(max-width:927px){
-  .game-page{--board-size:240px}
+  .game-page{--board-size:300px}
   .game-page main{max-width:480px;padding:0 16px 8px}
   .game-page .site-header{max-width:480px;height:64px;padding:6px 16px}
   .game-page .brand{font-size:28px}
@@ -148,16 +148,18 @@
   .game-page .clues{gap:2px}
   .game-page .clue{font-size:12px;line-height:1.4;padding:2px 0}
   .game-page .has-guidance .clue[data-teaser="true"] .clue-text{font-weight:650}
-.game-page .clue-icon{width:17px;height:17px;font-size:11px}
-  .game-page .play-area{grid-row:3;grid-template-columns:140px minmax(0,1fr);gap:0 12px;align-items:start}
-  .game-page .board-wrap{grid-column:2;grid-row:1}
+  .game-page .clue-icon{width:17px;height:17px;font-size:11px}
+  .game-page .play-area{grid-row:3;display:flex;flex-direction:column;gap:12px;align-items:stretch;max-width:var(--board-size);margin-inline:auto}
+  .game-page .board-wrap{width:100%}
   .game-page .lot svg{width:75%}
-  .game-page .lot .place-name{font-size:10px}
-  .game-page .lot .address{top:4px;left:5px;font-size:9px}
-  .game-page .place-tray{grid-column:1;grid-row:1;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:0}
-  .game-page .place{min-height:52px}
+  .game-page .lot .place-name{font-size:11px}
+  .game-page .lot .address{top:5px;left:6px;font-size:10px}
+  .game-page .place-tray{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:0}
+  .game-page .place{width:calc((100% - 24px)/5);min-height:56px}
   .game-page .place svg{width:36px;height:30px}
   .game-page .place .place-name{font-size:10px}
+  .game-page .selection-bar{min-height:0}
+  .game-page .selection-bar:has(.sr-only):has(button[hidden]){position:absolute;padding:0}
   .game-page .board-actions{grid-column:1/-1;grid-row:3;width:100%;margin:0}
   .game-page .completion{grid-column:1;grid-row:1;grid-template-columns:1fr;margin:0}
   .completion-summary{gap:12px;padding:16px 8px 12px}
@@ -166,13 +168,6 @@
   .game-page .completion p{font-size:11px}
   .game-page .completion .inline-button{padding:8px 4px}
   .game-page dialog{padding:20px}
-}
-@media(max-width:359px){
-  .game-page .play-area{grid-template-columns:116px minmax(0,1fr);gap:0 10px}
-  .game-page .place-tray{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .game-page .lot .place-name{font-size:8px}
-  .game-page .lot.occupied .address{display:none}
-  .game-page .completion-actions{grid-template-columns:1fr}
 }
 .privacy-page,.about-page{--ink:#252b28;--muted:#69736d;--blue:#37634f;--line:#e2e7e3;background:#fff;color:var(--ink);max-width:980px;min-height:100svh;margin-inline:auto}
 .privacy-page .site-header,.about-page .site-header{height:64px;padding:0 24px}
@@ -206,4 +201,5 @@
 .app-store-prompt button{min-width:44px;font-size:20px}
 .native-app{background:#fff}
 .native-app body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+.native-app body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top);background:#fff;z-index:40;pointer-events:none}
 .native-app dialog{max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px)}

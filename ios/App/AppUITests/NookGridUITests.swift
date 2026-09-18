@@ -29,7 +29,19 @@ final class NookGridUITests: XCTestCase {
     }
     private func tap(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
         XCTAssertTrue(element.exists || element.waitForExistence(timeout: 5), "Missing \(element)", file: file, line: line)
+        scrollTo(element)
         element.tap()
+    }
+    private func scrollTo(_ element: XCUIElement) {
+        let viewport = app.frame.insetBy(dx: 0, dy: 24)
+        for _ in 0..<4 {
+            let frame = element.frame
+            if frame.minY >= viewport.minY && frame.maxY <= viewport.maxY { return }
+            let isBelow = frame.maxY > viewport.maxY
+            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: isBelow ? 0.8 : 0.2))
+            let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: isBelow ? 0.2 : 0.8))
+            start.press(forDuration: 0.05, thenDragTo: end)
+        }
     }
     private func assertLot(_ address: String, _ place: String, file: StaticString = #filePath, line: UInt = #line) {
         let target = button("Lot \(address), \(place)")
@@ -93,6 +105,7 @@ final class NookGridUITests: XCTestCase {
     }
 
     func testNativeDragPlacesAndMoves() {
+        scrollTo(button("Bakery, choose a lot"))
         button("Bakery, choose a lot").press(forDuration: 0.15, thenDragTo: lot("A1"))
         assertLot("A1", "Bakery")
         lot("A1").press(forDuration: 0.15, thenDragTo: lot("B2"))

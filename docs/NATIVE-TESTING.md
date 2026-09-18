@@ -16,10 +16,10 @@ Simulator checks do not replace a physical iPhone pass for gestures, sharing and
 
 | Simulator | Native scenarios | Responsive launch, three-run mean |
 | --- | --- | --- |
-| iPhone SE, third generation, iOS 18.2 | 10 passed | 0.89 seconds |
-| iPhone 16 Pro, iOS 18.6 | 10 passed | 0.91 seconds |
+| iPhone SE, third generation, iOS 18.2 | 10 passed | 0.84 seconds |
+| iPhone 16 Pro, iOS 18.6 | 10 passed | 0.93 seconds |
 
-Both full runs completed in about 140 seconds. The notched-device run includes explicit foreground readiness and share-sheet dismissal waits. Empty and solved screenshots were visually inspected; status-bar and home-indicator insets are clear and controls fit. Launch numbers describe this simulator environment, not physical-device performance.
+The stacked layout keeps the plan, board, items and actions in reading order. Small screens scroll vertically; test gestures scroll through the empty gutter before interacting with offscreen controls. Empty, scrolled and solved screenshots were visually inspected; the fixed status-bar background stays clear of game content. The suite includes explicit foreground readiness and share-sheet dismissal waits. Launch numbers describe this simulator environment, not physical-device performance.
 
 On this workstation, iOS 26.4 stalled in the simulator loader before app code ran. A process sample showed the main thread blocked in `dyld_sim` opening a dependent library. The cause is unconfirmed. Current-iOS compatibility remains unverified until a clean current-runtime or CI run passes. The runner keeps selecting the newest runtime by default; use an available iOS 18.2 or 18.6 device explicitly for the verified local cycle. Find its UUID with `xcrun simctl list devices available`, then set `NOOKGRID_SIMULATOR_ID` when running the test command.
 

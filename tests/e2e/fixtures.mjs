@@ -69,6 +69,8 @@ export async function seedProgress(page, progress, date = today) {
 }
 
 export async function dragPlace(page, source, target, cancel = false) {
+  await source.scrollIntoViewIfNeeded();
+  if (target) await target.scrollIntoViewIfNeeded();
   const from = await source.boundingBox();
   const to = target ? await target.boundingBox() : { x: 0, y: 0, width: 2, height: 2 };
   expect(from).not.toBeNull();

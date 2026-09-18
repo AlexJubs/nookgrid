@@ -141,7 +141,7 @@ test('keyboard controls retain names, focus outlines and text clue states', asyn
   await expect(page.locator('#help-open')).toBeFocused();
 });
 
-test('normal and solved layouts fit the viewport and preserve touch targets', async ({ page }, testInfo) => {
+test('normal and solved layouts preserve touch targets without horizontal overflow', async ({ page }, testInfo) => {
   await openGame(page);
   const verifyGeometry = async () => {
     const geometry = await page.evaluate(() => {
@@ -155,7 +155,7 @@ test('normal and solved layouts fit the viewport and preserve touch targets', as
       };
     });
     expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.width);
-    expect(geometry.bottom).toBeLessThanOrEqual(geometry.height);
+    if (geometry.width >= 928) expect(geometry.bottom).toBeLessThanOrEqual(geometry.height);
     for (const target of geometry.targets) {
       expect(target.width, `${target.name} width`).toBeGreaterThanOrEqual(44);
       expect(target.height, `${target.name} height`).toBeGreaterThanOrEqual(44);
@@ -165,9 +165,39 @@ test('normal and solved layouts fit the viewport and preserve touch targets', as
   await page.screenshot({ path: testInfo.outputPath('empty.png'), fullPage: true });
   await solvePuzzle(page);
   await verifyGeometry();
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
   await page.screenshot({ path: testInfo.outputPath('solved.png'), fullPage: true });
   await page.setViewportSize({ width: 320, height: 568 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.locator('#share').scrollIntoViewIfNeeded();
   await expect(page.locator('#share')).toBeInViewport();
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
   await page.screenshot({ path: testInfo.outputPath('narrow-solved.png'), fullPage: true });
+});
+
+test('phone layout stacks the plan, board, items and actions without overlap', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openGame(page);
+  const getBounds = selector => page.locator(selector).boundingBox();
+  const verifyStack = async () => {
+    const [plan, board, tray, actions] = await Promise.all(['#clue-list', '#board', '#tray', '.board-actions'].map(getBounds));
+    expect(plan.y + plan.height).toBeLessThanOrEqual(board.y);
+    expect(board.width).toBeGreaterThanOrEqual(280);
+    expect(board.y + board.height).toBeLessThan(tray.y);
+    expect(tray.y + tray.height).toBeLessThan(actions.y);
+  };
+  await verifyStack();
+  await place(page, 'bakery', 0);
+  await expect(page.getByRole('status').filter({ hasText: 'Bakery moved to A1.' })).toHaveCount(1);
+  await solvePuzzle(page);
+  const board = await getBounds('#board');
+  const result = await getBounds('#completion');
+  expect(result.y).toBeGreaterThan(board.y + board.height);
+  await page.locator('#board [data-lot="0"]').click();
+  await expect(page.locator('#tray')).toBeVisible();
+  await verifyStack();
+  await openGame(page, 'date=practice');
+  await expect(page.locator('#tutorial-intro')).toBeVisible();
+  await expect(page.locator('#selection-status')).toContainText('Drag Bakery');
+  await verifyStack();
 });
