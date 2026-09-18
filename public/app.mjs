@@ -2,6 +2,7 @@ import { PLACES, clueText, clueStatus, isSolved } from './engine.mjs?v=20260915-
 import { movePlace, selectPuzzle, restoreProgress, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces } from './state.mjs?v=20260916-hints1';
 import { placeArt } from './art.mjs?v=20260915-teaser1';
 import { testMode, analytics } from './session.mjs?v=20260917-x1';
+import { native, savedValue, saveValue } from './platform.mjs';
 
 const $ = id => document.getElementById(id);
 const ids = PLACES.map(place => place.id);
@@ -17,12 +18,33 @@ let hasGuidance = false, shouldShowGuidance = false;
 let solveTimer = {elapsedMs:0,startedAt:null};
 
 function read(key) {
-  try { return localStorage.getItem(key); } catch { return null; }
+  return savedValue(key);
+}
+
+function showAppStoreLink(identifier) {
+  const isAppleMobile = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (native || !isAppleMobile || !matchMedia('(pointer:coarse)').matches || !/^[1-9]\d{5,14}$/.test(String(identifier || ''))) return;
+  try { if (sessionStorage.getItem('nookgrid:app-prompt-dismissed') === '1') return; } catch {}
+  $('app-store-link').href = `https://apps.apple.com/app/id${identifier}`;
+  $('app-store-prompt').hidden = false;
+  $('app-store-dismiss').addEventListener('click',() => {
+    $('app-store-prompt').hidden = true;
+    try { sessionStorage.setItem('nookgrid:app-prompt-dismissed','1'); } catch {}
+  });
 }
 
 function write(key, value) {
-  try { localStorage.setItem(key, value); }
+  try { Promise.resolve(saveValue(key,value)).catch(() => { $('save-warning').hidden = false; }); }
   catch { $('save-warning').hidden = false; }
+}
+
+async function navigateTo(url) {
+  if (native) {
+    save(false);
+    try { await native.storage?.flush(); }
+    catch { save(); $('save-warning').hidden = false; return; }
+  }
+  location.assign(url);
 }
 
 function openDialog(id) {
@@ -371,14 +393,16 @@ $('confirm-hint').addEventListener('click', () => {
 });
 
 $('share').addEventListener('click', async () => {
-  const text = shareText(puzzle.date,progress.hints,location.href);
+  const text = shareText(puzzle.date,progress.hints,'https://nookgrid.com/');
   $('share-status').textContent = '';
   try {
-    if (navigator.share) { await navigator.share({title:'NookGrid',text}); track('share_result',{result:'shared'}); }
+    if (native) { await native.share(text); track('share_result',{result:'shared'}); }
+    else if (navigator.share) { await navigator.share({title:'NookGrid',text}); track('share_result',{result:'shared'}); }
     else { await navigator.clipboard.writeText(text); $('share-status').textContent = 'Copied.'; track('share_result',{result:'copied'}); }
   } catch (error) {
-    track('share_result',{result:error.name === 'AbortError' ? 'cancelled' : 'failed'});
-    if (error.name !== 'AbortError') {
+    const isCancelled = error.name === 'AbortError' || (native && error.message === 'Share canceled');
+    track('share_result',{result:isCancelled ? 'cancelled' : 'failed'});
+    if (!isCancelled) {
       $('share-text').value = text;
       openDialog('share-dialog');
       $('share-text').focus();
@@ -420,8 +444,10 @@ async function init() {
     bank = puzzlesResponse;
     if (!Array.isArray(bank.puzzles) || !bank.tutorial) throw new Error('Puzzle bank invalid');
     config = {feedbackEnabled:settings.feedbackEnabled === true};
+    showAppStoreLink(settings.appStoreId);
     ({puzzle,mode} = selectPuzzle(bank,today,params.get('date')));
     progress = restoreProgress(read(`${progressPrefix}${puzzle.date}`),ids,puzzle.solution);
+    if (native && !native.storage) $('save-warning').hidden = false;
     solveTimer.elapsedMs = progress.elapsedMs;
     save();
     hasGuidance = params.get('teaser') === 'park' && params.get('date') === '2026-09-11' && puzzle.date === '2026-09-11';
@@ -452,7 +478,15 @@ async function init() {
       option.selected = item.date === (mode === 'practice' ? 'practice' : puzzle.date);
       $('archive').append(option);
     }
-    $('archive').addEventListener('change', event => { location.search = `?date=${event.target.value}${testMode ? '&test=1' : ''}`; });
+    $('archive').addEventListener('change', event => { navigateTo(`?date=${event.target.value}${testMode ? '&test=1' : ''}`); });
+    if (native) document.addEventListener('click',event => {
+      const anchor = event.target.closest('a[href]');
+      if (!anchor || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const url = new URL(anchor.href);
+      if (url.origin !== location.origin || (url.hash && url.pathname === location.pathname && url.search === location.search)) return;
+      event.preventDefault();
+      navigateTo(url.href);
+    });
     makeBoard(); render();
     $('game').setAttribute('aria-busy','false');
     $('game').inert = false;
@@ -461,6 +495,7 @@ async function init() {
     document.addEventListener('visibilitychange',() => save());
     window.addEventListener('pagehide',() => save(false));
     window.addEventListener('pageshow',() => save());
+    if (native) native.onStateChange(({isActive}) => { save(isActive); updateReturnPrompt(); }).catch(() => {});
   } catch {
     analytics.track('app_error',{action:'puzzle_load'});
     $('load-error').hidden = false;

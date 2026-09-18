@@ -201,3 +201,9 @@
 .about-page footer a,.privacy-page footer a{display:inline-flex;align-items:center;min-height:44px}
 .about-page #worked-example a{display:inline-flex;align-items:center;min-height:44px}
 @media(min-width:760px){.about-page .about-guide{grid-template-columns:1fr 1fr;gap:32px}}
+.app-store-prompt{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 auto 8px;padding:0 8px;max-width:440px;background:#f0f5ec;border-radius:8px;font-size:13px}
+.app-store-prompt a{display:flex;align-items:center;min-height:44px;color:var(--ink)}
+.app-store-prompt button{min-width:44px;font-size:20px}
+.native-app{background:#fff}
+.native-app body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+.native-app dialog{max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px)}

@@ -4,6 +4,7 @@ import { PLACES, clueStatus, solve } from '../public/engine.mjs';
 
 export function generateBank() {
   let seed = 0x4e6f6f6b;
+  const puzzleCount = 3660;
   const ids = PLACES.map(place => place.id), puzzles = [], seen = new Set();
   function random() {
     seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
@@ -17,8 +18,7 @@ export function generateBank() {
     }
     return result;
   }
-  // ponytail: 90-day calendar; extend the verified bank when fewer than 14 days remain.
-  for (let attempt = 0; puzzles.length < 90 && attempt < 10000; attempt++) {
+  for (let attempt = 0; puzzles.length < puzzleCount && attempt < 10000; attempt++) {
     const solution = shuffle(ids);
     if (seen.has(solution.join(','))) continue;
     const anchors = ids.flatMap(a => [
@@ -40,7 +40,7 @@ export function generateBank() {
     puzzles.push({ date, clues, solution });
     seen.add(solution.join(','));
   }
-  if (puzzles.length !== 90) throw new Error('Could not generate the complete puzzle calendar.');
+  if (puzzles.length !== puzzleCount) throw new Error('Could not generate the complete puzzle calendar.');
   return {
     version: 1,
     startDate: '2026-09-10',

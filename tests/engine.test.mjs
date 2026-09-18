@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { PLACES, clueStatus, clueText, isSolved, solve } from '../public/engine.mjs';
@@ -112,14 +113,17 @@ function exhaustiveSolutions(clues) {
   return solutions;
 }
 
-test('generator is deterministic and ships 90 unique consecutive daily puzzles', () => {
+test('generator preserves published puzzles and ships ten years of unique consecutive daily puzzles', () => {
   const bank = generateBank();
   assert.deepEqual(generateBank(), bank);
-  assert.deepEqual(JSON.parse(readFileSync(new URL('../public/puzzles.json', import.meta.url))), bank);
+  assert.equal(readFileSync(new URL('../public/puzzles.json', import.meta.url), 'utf8'), `${JSON.stringify(bank, null, 2)}\n`);
   assert.equal(bank.version, 1);
   assert.equal(bank.startDate, '2026-09-10');
-  assert.equal(bank.puzzles.length, 90);
-  assert.equal(new Set(bank.puzzles.map(puzzle => puzzle.solution.join(','))).size, 90);
+  assert.equal(bank.puzzles.length, 3660);
+  assert.equal(bank.puzzles.at(-1).date, '2036-09-16');
+  assert.equal(new Set([...bank.puzzles, bank.tutorial].map(puzzle => puzzle.solution.join(','))).size, 3661);
+  assert.equal(createHash('sha256').update(JSON.stringify(bank.puzzles.slice(0, 90))).digest('hex'), '21cf6d7a056bd306aea03b78ff22f0705fcd773cd20bb2145fb8ff639bdb7712');
+  assert.equal(createHash('sha256').update(JSON.stringify(bank.tutorial)).digest('hex'), 'e53077c47c014d106b334b3d6fa4c95c11f7d1aa3747d1ee18615231e36274ca');
   bank.puzzles.forEach((puzzle, index) => {
     assert.equal(puzzle.date, new Date(Date.UTC(2026, 8, 10 + index)).toISOString().slice(0, 10));
     assert.ok(puzzle.clues.length >= 7 && puzzle.clues.length <= 11, puzzle.date);

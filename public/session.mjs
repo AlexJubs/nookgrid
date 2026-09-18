@@ -1,6 +1,7 @@
 import { createAnalytics } from './analytics.mjs?v=20260917-x1';
+import { native } from './platform.mjs';
 
-let testing = new URLSearchParams(location.search).has('test') || ['localhost','127.0.0.1',''].includes(location.hostname);
+let testing = new URLSearchParams(location.search).has('test') || (native ? native.isDevelopment : ['localhost','127.0.0.1',''].includes(location.hostname));
 try {
   testing ||= sessionStorage.getItem('nookgrid:test') === '1';
   if (testing) sessionStorage.setItem('nookgrid:test','1');

@@ -1,3 +1,5 @@
+import { native, savedValue, saveValue } from './platform.mjs';
+
 const EVENTS = new Set(['$pageview','engagement','puzzle_view','puzzle_start','puzzle_complete','hint_used','board_move','board_undo','board_reset','share_result','feedback_result','app_error','ui_click','control_change','drag_result']);
 const LABELS = new Set(['action','control','result']);
 const CAMPAIGNS = {utm_source:['listdle','playlin','itch','share','playtest','dlelist','goldles','slowden','reddit','twitter','dledirectory','dailydles','dailydle','puzzled','twelvegames','wordfinder','dles','puzzlerzone','bontegames','puzzleprime','freegameplanet'],utm_medium:['directory','community','result','usability','paid_social','editorial'],utm_campaign:['launch14','daily','paid_test1'],utm_content:['clarity','puzzles','playmygame','aigamedev','devlog','park_hook','game_page','get_feedback','jam_request','embed_feedback','wpg_trial','result_card','listing']};
@@ -18,7 +20,8 @@ function safeProperties(properties = {}) {
     else if (COUNTS.has(key) && Number.isFinite(value) && value >= 0 && value <= 2678400000) clean[key] = Math.round(value);
     else if (SDK_STRINGS.has(key) && typeof value === 'string' && /^[a-zA-Z0-9_.:-]{1,256}$/.test(value)) clean[key] = value;
     else if (['has_guidance','$process_person_profile'].includes(key) && typeof value === 'boolean') clean[key] = value;
-    else if (key === 'measurement_mode' && value === 'cookieless') clean[key] = value;
+    else if (key === 'measurement_mode' && ['cookieless','installation'].includes(value)) clean[key] = value;
+    else if (key === 'platform' && value === 'ios') clean[key] = value;
     else if (key === 'puzzle_date' && typeof value === 'string' && /^(\d{4}-\d{2}-\d{2}|tutorial)$/.test(value)) clean[key] = value;
     else if (key === 'puzzle_mode' && ['daily','archive','practice'].includes(value)) clean[key] = value;
     else if (key === 'device_type' && ['mobile','desktop'].includes(value)) clean[key] = value;
@@ -84,8 +87,13 @@ export function createActiveClock(start, visible, focused) {
 }
 
 export function createAnalytics({testMode = false} = {}) {
-  const read = key => { try { return localStorage.getItem(key); } catch { return null; } };
-  const write = (key,value) => { try { value === null ? localStorage.removeItem(key) : localStorage.setItem(key,value); return true; } catch { return false; } };
+  const read = savedValue;
+  const write = (key,value) => {
+    try {
+      Promise.resolve(saveValue(key,value)).catch(() => { choiceSaved = false; renderChoice(); });
+      return true;
+    } catch { return false; }
+  };
   const withdrawn = () => { try { return sessionStorage.getItem(WITHDRAWAL_KEY) === '1'; } catch { return false; } };
   const rememberWithdrawal = value => { try { value ? sessionStorage.setItem(WITHDRAWAL_KEY,'1') : sessionStorage.removeItem(WITHDRAWAL_KEY); } catch {} };
   const privacy = () => navigator.globalPrivacyControl === true || [navigator.doNotTrack,window.doNotTrack,navigator.msDoNotTrack].includes('1');
@@ -101,7 +109,7 @@ export function createAnalytics({testMode = false} = {}) {
   function renderChoice() {
     const checkbox = document.getElementById('metrics-setting');
     if (checkbox) { checkbox.checked = permitted(); checkbox.disabled = !available || testMode || privacy(); }
-    let message = testMode ? 'Test mode: analytics are off.' : privacy() ? 'Your browser requests privacy, so analytics are off.' : !available ? 'Analytics are not connected yet.' : choice !== 'no' ? 'Basic analytics are on. No tracking ID is saved in your browser.' : 'Basic analytics are off. The puzzle works the same either way.';
+    let message = testMode ? 'Test mode: analytics are off.' : privacy() ? 'Your browser requests privacy, so analytics are off.' : !available ? 'Analytics are not connected yet.' : choice !== 'no' ? native ? 'Play analytics are on. A random app ID measures repeat play.' : 'Basic analytics are on. No tracking ID is saved in your browser.' : 'Basic analytics are off. The puzzle works the same either way.';
     if (!choiceSaved) message += ' We could not save your choice in this browser. Check this setting again next time.';
     for (const id of ['privacy-signal','analytics-choice-status']) {
       const status = document.getElementById(id);
@@ -126,7 +134,7 @@ export function createAnalytics({testMode = false} = {}) {
 
   function track(name,properties = {},instant = false) {
     if (!permitted() || !EVENTS.has(name)) return;
-    const event = {name,properties:{...safeProperties(context),...safeProperties(properties),...attribution(),measurement_mode:'cookieless',device_type:window.innerWidth < 768 ? 'mobile' : 'desktop',active_ms_this_page:ready ? Math.max(0,sample().active - activeOrigin) : 0}};
+    const event = {name,properties:{...safeProperties(context),...safeProperties(properties),...attribution(),measurement_mode:native ? 'installation' : 'cookieless',...(native ? {platform:'ios'} : {}),device_type:window.innerWidth < 768 ? 'mobile' : 'desktop',active_ms_this_page:ready ? Math.max(0,sample().active - activeOrigin) : 0}};
     if (name === '$pageview') Object.assign(event.properties,Object.fromEntries(Object.entries(entrySource).map(([key,value]) => [`entry_${key}`,value])));
     if (!ready) { if (pending.length < 100) pending.push(event); return; }
     send(event,instant);
@@ -153,6 +161,7 @@ export function createAnalytics({testMode = false} = {}) {
     const currentEpoch = ++epoch;
     lastReport = sample();
     try {
+      if (!load && native) load = Promise.resolve(window.posthog);
       if (!load) load = new Promise((resolve,reject) => {
         const script = document.createElement('script');
         const failed = () => { clearTimeout(timeout); script.remove(); reject(new Error('Analytics unavailable')); };
@@ -164,6 +173,7 @@ export function createAnalytics({testMode = false} = {}) {
         document.head.append(script);
       });
       const sdk = await load;
+      const installationId = native ? await native.installationId() : null;
       if (!permitted() || currentEpoch !== epoch) return;
       function onReady(instance) {
         if (!permitted() || currentEpoch !== epoch) return;
@@ -176,7 +186,7 @@ export function createAnalytics({testMode = false} = {}) {
       else {
         client = sdk;
         sdk.init(settings.projectToken,{
-          api_host:settings.apiHost,cookieless_mode:'always',persistence:'memory',persistence_name:'nookgrid',cross_subdomain_cookie:false,
+          api_host:settings.apiHost,...(native ? {bootstrap:{distinctID:installationId,isIdentifiedID:false}} : {cookieless_mode:'always'}),persistence:'memory',persistence_name:'nookgrid',cross_subdomain_cookie:false,
           person_profiles:'never',autocapture:false,capture_pageview:false,capture_pageleave:false,
           capture_dead_clicks:false,capture_heatmaps:false,capture_exceptions:false,capture_performance:false,rageclick:false,
           disable_session_recording:true,disable_surveys:true,disable_product_tours:true,disable_conversations:true,

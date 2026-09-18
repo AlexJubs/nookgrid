@@ -53,3 +53,7 @@ The Tutorial must stay optional and easy to find. Its short introduction explain
 6. Record findings, fixes and deliberate exceptions. Review the actual rendered result before publishing. Passing geometry and contrast checks does not by itself establish coherent grouping or visual hierarchy.
 
 Refactoring UI provides design principles, not a conformance certificate. Name the specific issue and the player benefit rather than claiming universal compliance.
+
+## iOS surfaces
+
+The native app keeps the shared compact game. CSS owns top and bottom safe-area padding so the title and controls never overlap the status bar or home indicator; dialog height also respects those insets. Use the existing game icon and a quiet light launch surface. The optional website App Store suggestion is a small dismissible row, shown only on Apple touch devices after a real listing ID is configured. It must never cover or block the puzzle.
