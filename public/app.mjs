@@ -69,7 +69,12 @@ document.querySelectorAll('dialog').forEach(dialog => {
     hasOutsidePress = false;
   });
 });
+document.addEventListener('pointerdown', () => document.documentElement.classList.add('pointer-input'), true);
 document.addEventListener('keydown', event => {
+  const isEditingText = event.target.matches('textarea,input:not([type="checkbox"]):not([type="radio"]),[contenteditable="true"]');
+  if (['Tab', 'Escape'].includes(event.key) || (!isEditingText && ['Enter', ' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key))) {
+    document.documentElement.classList.remove('pointer-input');
+  }
   if (event.key === 'Escape' && selected && !document.querySelector('dialog[open]')) { selected = null; render(); }
 });
 

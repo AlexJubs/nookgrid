@@ -1,4 +1,4 @@
-import { test, expect, bank, daily, today, emptyBoard, openGame, place, expectBoard, solvePuzzle, seedProgress, readProgress } from './fixtures.mjs';
+import { test, expect, bank, daily, today, emptyBoard, openGame, place, expectBoard, solvePuzzle, seedProgress, readProgress, choose } from './fixtures.mjs';
 
 test('menu reaches tutorial, archive and today while keeping QA isolated', async ({ page }) => {
   await openGame(page);
@@ -36,6 +36,41 @@ test('archived completion offers today and has no countdown', async ({ page }) =
 });
 
 for (const dialog of ['menu', 'help', 'hint', 'feedback', 'settings', 'share']) {
+  test(`${dialog} touch focus stays quiet and keyboard focus stays visible`, async ({ page }, testInfo) => {
+    if (dialog === 'share') {
+      await seedProgress(page, { board: daily.solution, moves: 9, elapsedMs: 1000 });
+      await page.addInitScript(() => Object.defineProperty(navigator, 'share', {
+        configurable: true, value: async () => { throw new Error('Unavailable'); }
+      }));
+    }
+    await openGame(page);
+    await page.keyboard.press('Tab');
+    if (['feedback', 'settings'].includes(dialog)) await choose(page.locator('#menu-open'));
+    const opener = page.locator(`#${{ menu: 'menu-open', help: 'help-open', hint: 'hint', feedback: 'feedback-open', settings: 'settings-open', share: 'share' }[dialog]}`);
+    await choose(opener);
+    const surface = page.locator(`#${dialog}-dialog`);
+    await expect(surface).toBeVisible();
+    const focusedOutline = () => page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle);
+    expect(await page.evaluate(id => document.activeElement.closest('dialog')?.id === `${id}-dialog`, dialog)).toBe(true);
+    expect(await focusedOutline()).toBe('none');
+    if (dialog === 'feedback') {
+      await page.locator('#feedback-message').pressSequentially('A quiet touch interface.');
+      expect(await focusedOutline()).toBe('none');
+    }
+    if (['hint', 'menu'].includes(dialog)) await page.screenshot({ path: testInfo.outputPath(`${dialog}-touch.png`) });
+    await choose(surface.locator('[data-close]'));
+    await expect(surface).not.toBeVisible();
+    expect(await focusedOutline()).toBe('none');
+    if (['feedback', 'settings'].includes(dialog)) await page.locator('#menu-open').press('Enter');
+    await opener.press('Enter');
+    await expect(surface).toBeVisible();
+    expect(await page.evaluate(id => document.activeElement.closest('dialog')?.id === `${id}-dialog`, dialog)).toBe(true);
+    expect(await focusedOutline()).toBe('solid');
+    await page.keyboard.press('Escape');
+    await expect(surface).not.toBeVisible();
+    expect(await focusedOutline()).toBe('solid');
+  });
+
   test(`${dialog} dialog supports close, Escape, backdrop and focus restoration`, async ({ page }) => {
     if (dialog === 'share') {
       await seedProgress(page, { board: daily.solution, moves: 9, elapsedMs: 1000 });

@@ -35,6 +35,7 @@ Keep the outcome, main action and supporting countdown together on the completio
 - Reuse the forest accent, dark ink and green-tinted neutrals. Avoid unrelated palettes in different dialogs. Reserve warning treatment for an actual warning, such as unavailable local saving.
 - Small text must remain readable. Aim for at least 4.5:1 contrast for ordinary text, including actionable placed-piece labels and board coordinates. Keep status icons/text alongside colors.
 - Use spacing or a subtle surface before adding borders and shadows. Borders may still identify controls; shadows should indicate layers or movement. Reference: pages 142–168, 180–184 and 238–241.
+- Touch and mouse interaction must not show keyboard focus rings, including automatic dialog focus and focus restoration. Keep focus in place for accessibility; restore visible outlines on keyboard navigation. Typing in a touch-opened text field stays visually quiet. Selected pieces and Tutorial destinations retain their purposeful outlines.
 - Every action needs visible keyboard focus. Preserve accessible names, minimum 44px standalone touch targets, native controls, reduced-motion behavior and Escape/backdrop dialog dismissal.
 
 ## Every state is part of the design

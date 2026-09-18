@@ -14,13 +14,17 @@ final class NookGridUITests: XCTestCase {
     }
 
     override func tearDownWithError() throws {
-        if app.state == .runningForeground {
+        if app.state == .runningForeground { captureScreenshot(name) }
+        if app.state != .notRunning { app.terminate() }
+    }
+
+    private func captureScreenshot(_ name: String) {
+        XCTContext.runActivity(named: name) { activity in
             let screenshot = XCTAttachment(screenshot: app.screenshot())
             screenshot.name = name
             screenshot.lifetime = .keepAlways
-            add(screenshot)
+            activity.add(screenshot)
         }
-        if app.state != .notRunning { app.terminate() }
     }
 
     private func button(_ label: String) -> XCUIElement { app.webViews.firstMatch.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).firstMatch }
@@ -209,6 +213,7 @@ final class NookGridUITests: XCTestCase {
         XCTAssertTrue(button("Close preferences").waitForExistence(timeout: 5))
         tap(button("Close preferences"))
         tap(button("Hint, 0 hints used"))
+        captureScreenshot("Hint touch focus")
         tap(button("Cancel"))
         XCTAssertFalse(app.staticTexts["Reveal a place?"].exists)
         tap(button("Menu"))
@@ -216,6 +221,7 @@ final class NookGridUITests: XCTestCase {
         XCTAssertTrue(button("Close feedback").waitForExistence(timeout: 5))
         tap(button("Close feedback"))
         tap(button("Menu"))
+        captureScreenshot("Menu touch focus")
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.15)).tap()
         XCTAssertFalse(button("Close menu").exists)
     }
