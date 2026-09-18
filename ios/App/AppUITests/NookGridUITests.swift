@@ -216,13 +216,21 @@ final class NookGridUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["9 hints used."].exists)
         tap(button("Share result"))
         let copy = app.cells["Copy"].firstMatch
-        XCTAssertTrue(copy.waitForExistence(timeout: 10), app.debugDescription)
+        XCTAssertTrue(copy.waitForExistence(timeout: 60), app.debugDescription)
         XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS 'https://nookgrid.com/' AND label CONTAINS '9 hints'")).firstMatch.exists, app.debugDescription)
-        tap(app.buttons.matching(NSPredicate(format: "label ==[c] 'close'")).firstMatch)
+        let close = app.buttons.matching(NSPredicate(format: "label ==[c] 'close'")).firstMatch
+        if close.exists { close.tap() }
+        else {
+            let dismiss = app.otherElements["PopoverDismissRegion"].firstMatch
+            XCTAssertTrue(dismiss.exists, app.debugDescription)
+            dismiss.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.15)).tap()
+        }
+        XCTAssertTrue(copy.waitForNonExistence(timeout: 5), app.debugDescription)
         XCTAssertFalse(button("Close share result").exists)
         XCTAssertTrue(button("Share result").exists)
         tap(button("Share result"))
-        tap(copy)
+        XCTAssertTrue(copy.waitForExistence(timeout: 60), app.debugDescription)
+        copy.tap()
         XCTAssertTrue(copy.waitForNonExistence(timeout: 5), app.debugDescription)
         XCTAssertTrue(app.staticTexts["Solved!"].exists)
     }

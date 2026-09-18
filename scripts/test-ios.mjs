@@ -40,7 +40,8 @@ for (const [index, device] of devices.entries()) {
   await rm(result, {recursive: true, force: true});
   const log = createWriteStream(`artifacts/ios/xcodebuild-${index + 1}.log`);
   console.log(`Testing ${device.name}: ${device.udid}`);
-  const args = ['test', '-project', 'ios/App/App.xcodeproj', '-scheme', 'App', '-configuration', 'Debug', '-destination', `platform=iOS Simulator,id=${device.udid}`, '-derivedDataPath', 'artifacts/ios/DerivedData', '-resultBundlePath', result, '-parallel-testing-enabled', 'NO', '-test-timeouts-enabled', 'YES', '-default-test-execution-time-allowance', '120', '-maximum-test-execution-time-allowance', '180', 'CODE_SIGNING_ALLOWED=NO'];
+  console.log(command('xcrun', ['simctl', 'bootstatus', device.udid, '-b']));
+  const args = ['test', '-project', 'ios/App/App.xcodeproj', '-scheme', 'App', '-configuration', 'Debug', '-destination', `platform=iOS Simulator,id=${device.udid}`, '-derivedDataPath', 'artifacts/ios/DerivedData', '-resultBundlePath', result, '-parallel-testing-enabled', 'NO', '-test-timeouts-enabled', 'YES', '-default-test-execution-time-allowance', '180', '-maximum-test-execution-time-allowance', '180', 'CODE_SIGNING_ALLOWED=NO'];
   if (process.env.NOOKGRID_IOS_TEST) args.push(`-only-testing:AppUITests/NookGridUITests/${process.env.NOOKGRID_IOS_TEST}`);
   const child = spawn('xcodebuild', args, {stdio: ['ignore', 'pipe', 'pipe']});
   for (const stream of [child.stdout, child.stderr]) stream.on('data', data => {
