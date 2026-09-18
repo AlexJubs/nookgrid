@@ -45,13 +45,29 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 class GameViewController: CAPBridgeViewController {
     var blockingRules: WKContentRuleList?
 
-    override func webViewConfiguration(for configuration: InstanceConfiguration) -> WKWebViewConfiguration {
-        let webConfiguration = super.webViewConfiguration(for: configuration)
-        #if DEBUG
+    #if DEBUG
+    override func capacitorDidLoad() {
+        super.capacitorDidLoad()
+        guard let content = webView?.configuration.userContentController else { preconditionFailure("Missing game web view") }
         let debug = WKUserScript(source: "Object.defineProperty(window, 'nookgridDebug', {value:true})", injectionTime: .atDocumentStart, forMainFrameOnly: true)
-        webConfiguration.userContentController.addUserScript(debug)
-        #endif
-        if let blockingRules { webConfiguration.userContentController.add(blockingRules) }
-        return webConfiguration
+        content.addUserScript(debug)
+        if ProcessInfo.processInfo.arguments.contains("nookgrid-offline") {
+            let inputTrace = WKUserScript(source: """
+            for (const type of ['pointerdown', 'pointerup', 'pointercancel', 'lostpointercapture', 'click']) {
+                window.addEventListener(type, event => {
+                    const target = event.target.closest?.('[data-place], [data-lot]');
+                    if (!target) return;
+                    const input = {type, target: target.getAttribute('aria-label'), pointerId: event.pointerId,
+                        pointerType: event.pointerType, primary: event.isPrimary, button: event.button, detail: event.detail};
+                    console.log('NG_INPUT_BEGIN', JSON.stringify(input));
+                    setTimeout(() => console.log('NG_INPUT_END', JSON.stringify({...input,
+                        prevented: event.defaultPrevented, selection: document.querySelector('#selection-status')?.textContent})), 0);
+                }, true);
+            }
+            """, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+            content.addUserScript(inputTrace)
+        }
+        if let blockingRules { content.add(blockingRules) }
     }
+    #endif
 }
