@@ -41,6 +41,11 @@ for (const [index, device] of devices.entries()) {
   const log = createWriteStream(`artifacts/ios/xcodebuild-${index + 1}.log`);
   console.log(`Testing ${device.name}: ${device.udid}`);
   console.log(command('xcrun', ['simctl', 'bootstatus', device.udid, '-b']));
+  // Reused simulators can load an older test runner despite a rebuilt bundle.
+  const runner = 'com.nookgrid.app.uitests.xctrunner';
+  if (spawnSync('xcrun', ['simctl', 'get_app_container', device.udid, runner], {stdio: 'ignore'}).status === 0) {
+    console.log(command('xcrun', ['simctl', 'uninstall', device.udid, runner]));
+  }
   const args = ['test', '-project', 'ios/App/App.xcodeproj', '-scheme', 'App', '-configuration', 'Debug', '-destination', `platform=iOS Simulator,id=${device.udid}`, '-derivedDataPath', 'artifacts/ios/DerivedData', '-resultBundlePath', result, '-parallel-testing-enabled', 'NO', '-test-timeouts-enabled', 'YES', '-default-test-execution-time-allowance', '180', '-maximum-test-execution-time-allowance', '180', 'CODE_SIGNING_ALLOWED=NO'];
   if (process.env.NOOKGRID_IOS_TEST) args.push(`-only-testing:AppUITests/NookGridUITests/${process.env.NOOKGRID_IOS_TEST}`);
   const child = spawn('xcodebuild', args, {stdio: ['ignore', 'pipe', 'pipe']});

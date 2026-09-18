@@ -19,8 +19,8 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="NookGrid gameplay with three places on a nine-lot neighborhood board, a tray of places, and the neighborhood plan alongside.">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=20260918-ui-system1">
-  <script type="module" src="./app.mjs?v=20260918-ui-system1"></script>
+  <link rel="stylesheet" href="./style.css?v=20260918-simple1">
+  <script type="module" src="./app.mjs?v=20260918-simple1"></script>
 </head>
 <body class="game-page">
   <a class="skip-link" href="#game" data-track="index-a-1">Skip to puzzle</a>
@@ -33,9 +33,9 @@
   <main>
     <h2 id="board-title" class="sr-only">Today's puzzle</h2>
     <div id="new-day" class="notice" hidden>A new neighborhood is ready. <a href="./" data-track="index-a-4">Play today's puzzle</a>. Your current board stays saved.</div>
-    <p id="save-warning" class="notice" role="status" hidden>Progress can’t be saved in this browser. You can still play, but keep this tab open.</p>
+    <p id="save-warning" class="notice" role="status" hidden><span>Progress can’t be saved in this browser. Keep this tab open.</span> <button class="text-button" id="retry-save">Retry save</button></p>
     <p id="load-status" class="empty-state" role="status">Loading the neighborhood…</p>
-    <div id="load-error" class="empty-state" role="alert" hidden><h2>Couldn't load the puzzle</h2><p>Check your connection and try again.</p><a class="primary inline-button" href="" data-track="index-a-5">Try again</a></div>
+    <div id="load-error" class="empty-state" role="alert" hidden><h2>Couldn't load the puzzle</h2><p>Please try again.</p><a class="primary inline-button" href="" data-track="index-a-5">Try again</a></div>
     <noscript><p class="notice">NookGrid needs JavaScript to play. Enable it, then reload this page.</p></noscript>
     <section class="game-layout" id="game" aria-label="Neighborhood puzzle" aria-busy="true" inert>
       <p class="puzzle-instruction">Arrange the places to match the plan.</p>
@@ -69,7 +69,7 @@
     <button class="close-dialog" data-close aria-label="Close menu" data-track="menu-close"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#x"/></svg></button><h2 id="menu-title">Menu</h2>
     <nav class="menu-links" aria-label="Play"><a href="./" data-track="index-a-8"><span>Today's puzzle</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#caret-right"/></svg></a><a href="?date=practice" data-track="index-a-6"><span>Tutorial</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#caret-right"/></svg></a></nav>
     <div class="archive-picker"><label for="archive">Puzzle archive</label><select id="archive"><option>Loading puzzles…</option></select></div>
-    <nav class="menu-links menu-utilities" aria-label="Help and settings"><a href="./about.html" data-track="index-a-3"><span>How to play</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#caret-right"/></svg></a><button class="text-button" id="feedback-open"><span>Feedback</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#caret-right"/></svg></button><button class="text-button" id="settings-open"><span>Settings</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#caret-right"/></svg></button><a href="./privacy.html" data-track="index-a-9"><span>Privacy</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#caret-right"/></svg></a></nav>
+    <nav class="menu-links menu-utilities" aria-label="Help and settings"><button class="text-button" id="help-menu" aria-haspopup="dialog"><span>How to play</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#caret-right"/></svg></button><button class="text-button" id="feedback-open"><span>Feedback</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#caret-right"/></svg></button><button class="text-button" id="settings-open"><span>Settings</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#caret-right"/></svg></button><a href="./privacy.html" data-track="index-a-9"><span>Privacy</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#caret-right"/></svg></a></nav>
   </dialog>
 
   <dialog id="help-dialog" aria-labelledby="help-title">
@@ -105,7 +105,7 @@
       <p id="analytics-description">Help improve the puzzles by measuring visits, moves and results without saving a tracking ID.</p>
       <p id="privacy-signal" role="status"></p>
     </div>
-    <section class="settings-section" aria-labelledby="saved-progress-title"><h3 id="saved-progress-title">Saved progress</h3><p>Your progress stays in this browser. Clearing browser data removes it.</p></section>
+    <p class="settings-note">Your progress stays in this browser. Clearing browser data removes it.</p>
     <a class="settings-privacy" href="./privacy.html" data-track="index-a-12">Read the privacy notes</a>
   </dialog>
 </body>

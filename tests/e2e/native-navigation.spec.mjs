@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { test, expect, openGame, place } from './fixtures.mjs';
+import { test, expect, openGame, place, expectBoard, readProgress } from './fixtures.mjs';
 
 const storageSource = readFileSync(new URL('../../native/storage.mjs', import.meta.url), 'utf8').replace('export async function', 'async function');
 
@@ -65,7 +65,25 @@ test('failed native save keeps the current puzzle and reports the failure', asyn
   await expect(page).toHaveURL(originalUrl);
   await expect(page.locator('#board [data-lot="0"]')).toHaveAttribute('aria-label', 'Lot A1, Bakery');
   await page.clock.fastForward(5_000);
+  await page.evaluate(() => {
+    window.nativeWriteFailure = false;
+    window.holdNativeWrite = true;
+  });
+  await page.getByRole('button', { name: 'Retry save', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => typeof window.releaseNativeWrite)).toBe('function');
+  await expect(page.locator('#save-warning')).toBeVisible();
+  await expect(page).toHaveURL(originalUrl);
+  await page.evaluate(() => window.releaseNativeWrite());
+  await expect(page.locator('#save-warning')).toBeHidden();
+  await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
+  expect((await readProgress(page)).board).toEqual(['bakery', ...Array(8).fill(null)]);
+  await page.evaluate(() => { window.nativeWriteFailure = true; });
+  await place(page, 'cafe', 1);
+  await expect(page.locator('#save-warning')).toBeVisible();
   await page.evaluate(() => { window.nativeWriteFailure = false; });
+  await place(page, 'books', 2);
+  await expect(page.locator('#save-warning')).toBeHidden();
+  expect((await readProgress(page)).board).toEqual(['bakery', 'cafe', 'books', ...Array(6).fill(null)]);
   await page.locator('#puzzle-switch').click();
   await expect(page).toHaveURL(/date=practice/);
   const elapsed = await page.evaluate(() => JSON.parse(localStorage.getItem('nookgrid:test:v1:2026-09-17')).elapsedMs);

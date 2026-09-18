@@ -1,8 +1,9 @@
 import { PLACES, clueText, clueStatus, isSolved } from './engine.mjs?v=20260915-teaser1';
 import { movePlace, selectPuzzle, restoreProgress, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces } from './state.mjs?v=20260916-hints1';
 import { placeArt } from './art.mjs?v=20260915-teaser1';
-import { testMode, analytics } from './session.mjs?v=20260918-ui-system1';
+import { testMode, analytics } from './session.mjs?v=20260918-simple1';
 import { native, savedValue, saveValue } from './platform.mjs';
+import { updatePuzzleLinks } from './navigation.mjs?v=20260918-simple1';
 
 const $ = id => document.getElementById(id);
 const renderIcon = (name, className = '') => `<svg class="ui-icon ${className}" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#${name}"/></svg>`;
@@ -34,10 +35,15 @@ function showAppStoreLink(identifier) {
   });
 }
 
-function write(key, value) {
-  try { Promise.resolve(saveValue(key,value)).catch(() => { $('save-warning').hidden = false; }); }
+async function write(key, value) {
+  try {
+    await saveValue(key,value);
+    $('save-warning').hidden = !native || Boolean(native.storage);
+  }
   catch { $('save-warning').hidden = false; }
 }
+
+$('retry-save').addEventListener('click', () => save());
 
 async function navigateTo(url) {
   if (native) {
@@ -52,7 +58,7 @@ function openDialog(id) {
   if ($('menu-dialog').open) $('menu-dialog').close();
   $(id).showModal();
 }
-for (const [button, dialog] of [['menu-open','menu-dialog'],['help-open','help-dialog'],['feedback-open','feedback-dialog'],['feedback-win','feedback-dialog'],['settings-open','settings-dialog'],['hint','hint-dialog']]) {
+for (const [button, dialog] of [['menu-open','menu-dialog'],['help-open','help-dialog'],['help-menu','help-dialog'],['feedback-open','feedback-dialog'],['feedback-win','feedback-dialog'],['settings-open','settings-dialog'],['hint','hint-dialog']]) {
   $(button).addEventListener('click', () => openDialog(dialog));
 }
 document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => button.closest('dialog').close()));
@@ -305,7 +311,7 @@ function render() {
   const shouldFocusCompletion = solved && (!wasSolved || (!selected && Boolean(document.activeElement?.closest('.play-controls'))));
   $('game').classList.toggle('has-guidance', shouldShowGuidance);
   const instruction = mode === 'practice' && solved ? 'Your neighborhood is complete.' : starterStep >= 0 ? [
-    'Place Bakery in A1, the top-left square.',
+    selected === 'bakery' ? 'Tap A1 to place Bakery.' : 'Tap Bakery, then A1, the outlined square.',
     'Bakery fits. Place Cafe directly to its right.',
     'Cafe fits. Use the plan to place Books.',
     'Now all nine places are available. Use the full plan to finish.'
@@ -326,6 +332,7 @@ function render() {
     const id = button.dataset.place, placed = board.includes(id), isLocked = progress.hintedPlaces.includes(id);
     button.hidden = isLearning && !starterPlaces.slice(0,starterStep + 1).includes(id) && !placed && selected !== id;
     button.className = `place${placed ? ' placed' : ''}${isLocked ? ' locked' : ''}${selected === id ? ' selected' : ''}`;
+    button.querySelector('.placed-check use').setAttribute('href', `./icons.svg#${isLocked ? 'lock-key' : 'check'}`);
     button.setAttribute('aria-disabled',String(isLocked));
     button.setAttribute('aria-pressed', String(selected === id));
     button.setAttribute('aria-label', `${nameOf(id)}${isLocked ? ', fixed by a hint' : placed ? ', already on the board' : ', choose a lot'}`);
@@ -451,6 +458,7 @@ async function init() {
     config = {feedbackEnabled:settings.feedbackEnabled === true};
     showAppStoreLink(settings.appStoreId);
     ({puzzle,mode} = selectPuzzle(bank,today,params.get('date')));
+    updatePuzzleLinks(mode === 'practice' ? 'practice' : puzzle.date);
     progress = restoreProgress(read(`${progressPrefix}${puzzle.date}`),ids,puzzle.solution);
     if (native && !native.storage) $('save-warning').hidden = false;
     solveTimer.elapsedMs = progress.elapsedMs;
@@ -508,6 +516,7 @@ async function init() {
     $('game').hidden = true;
     $('game').setAttribute('aria-busy','false');
     $('archive').disabled = true;
+    $('archive').replaceChildren(new Option('Puzzles unavailable'));
   } finally {
     $('load-status').hidden = true;
   }

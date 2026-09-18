@@ -24,6 +24,7 @@ for (const failure of ['unavailable', 'malformed']) {
     await page.locator('#menu-open').click();
     await expect(page.locator('#menu-dialog')).toBeVisible();
     await expect(page.locator('#archive')).toBeDisabled();
+    await expect(page.locator('#archive option')).toHaveText('Puzzles unavailable');
     await page.keyboard.press('Escape');
     await page.unroute('**/puzzles.json');
     await page.getByRole('link', { name: 'Try again' }).click();
@@ -77,7 +78,10 @@ test('storage denial warns and permits moves, hints and undo', async ({ page }) 
   await expectBoard(page, [...daily.solution.slice(0, 2), ...Array(7).fill(null)]);
   await page.locator('#undo').click();
   await expectBoard(page, [daily.solution[0], ...Array(8).fill(null)]);
-  await expect(page.locator('#save-warning')).toContainText('You can still play');
+  await expect(page.locator('#save-warning')).toContainText('Keep this tab open.');
+  await page.getByRole('button', { name: 'Retry save' }).click();
+  await expect(page.locator('#save-warning')).toBeVisible();
+  await expectBoard(page, [daily.solution[0], ...Array(8).fill(null)]);
 });
 
 test('missing optional settings keeps play available and disables feedback', async ({ page }) => {

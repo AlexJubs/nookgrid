@@ -6,8 +6,10 @@ test('tutorial guides all three moves, unlocks the full plan and completes', asy
   await expect(page.locator('#tutorial-intro')).toBeVisible();
   await expect(page.locator('#tray .place:visible')).toHaveCount(1);
   await expect(page.locator('#clues .clue:visible')).toHaveCount(2);
-  await expect(page.locator('.puzzle-instruction')).toHaveText('Place Bakery in A1, the top-left square.');
-  await place(page, 'bakery', 0);
+  await expect(page.locator('.puzzle-instruction')).toHaveText('Tap Bakery, then A1, the outlined square.');
+  await choose(page.locator('#tray [data-place="bakery"]'));
+  await expect(page.locator('.puzzle-instruction')).toHaveText('Tap A1 to place Bakery.');
+  await choose(page.locator('#board [data-lot="0"]'));
   await expect(page.locator('.puzzle-instruction')).toHaveText('Bakery fits. Place Cafe directly to its right.');
   await expect(page.locator('#tray .place:visible')).toHaveCount(2);
   await expect(page.locator('#clues .clue:visible')).toHaveCount(1);
@@ -100,6 +102,14 @@ test('hints require confirmation and stay fixed through moves, undo, reset and r
   await expect(page.locator('[data-lot="0"]')).toHaveAttribute('aria-disabled', 'true');
   await expect(page.locator('[data-lot="0"]')).toHaveAccessibleName(/fixed by a hint/);
   await expect(page.locator('#hint-count')).toHaveText('1');
+  const fixed = page.locator(`#tray [data-place="${daily.solution[0]}"]`);
+  const movable = page.locator(`#tray [data-place="${daily.solution[1]}"]`);
+  await expect(fixed).toHaveAttribute('aria-disabled', 'true');
+  await expect(fixed.locator('.place-name use')).toHaveAttribute('href', './icons.svg#lock-key');
+  await expect(movable).toHaveAttribute('aria-disabled', 'false');
+  await expect(movable.locator('.place-name use')).toHaveAttribute('href', './icons.svg#check');
+  await expect(fixed.locator('.place-name svg')).toBeVisible();
+  await expect(movable.locator('.place-name svg')).toBeVisible();
   await choose(page.locator(`[data-place="${daily.solution[2]}"]`));
   await page.locator('[data-lot="0"]').click({ force: true });
   await expectBoard(page, [...daily.solution.slice(0, 2), ...Array(7).fill(null)]);

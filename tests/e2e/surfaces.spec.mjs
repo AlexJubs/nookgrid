@@ -35,6 +35,54 @@ test('archived completion offers today and has no countdown', async ({ page }) =
   await expect(page.locator('#next-puzzle')).toBeHidden();
 });
 
+test('menu help reuses the help dialog and restores the menu opener', async ({ page }) => {
+  await openGame(page);
+  for (const dismissal of ['close', 'escape', 'backdrop']) {
+    await page.locator('#menu-open').press('Enter');
+    await page.locator('#help-menu').press('Enter');
+    await expect(page.locator('#menu-dialog')).not.toBeVisible();
+    await expect(page.locator('#help-dialog')).toBeVisible();
+    await expect(page.locator('dialog[open]')).toHaveCount(1);
+    if (dismissal === 'close') await page.locator('#help-dialog [data-close]').click();
+    if (dismissal === 'escape') await page.keyboard.press('Escape');
+    if (dismissal === 'backdrop') await page.mouse.click(1, 1);
+    await expect(page.locator('#help-dialog')).not.toBeVisible();
+    await expect(page.locator('#menu-open')).toBeFocused();
+  }
+});
+
+test('reading pages return to the current puzzle through nested navigation', async ({ page }) => {
+  for (const [query, date] of [['date=2099-01-01', today], ['date=2026-09-11', '2026-09-11'], ['date=practice', 'practice']]) {
+    await openGame(page, query);
+    await place(page, 'bakery', 0);
+    await choose(page.locator('#help-open'));
+    await choose(page.getByRole('link', { name: 'Worked example', exact: true }));
+    await expect(page.locator('#worked-example')).toBeVisible();
+    expect(new URL(page.url()).pathname).toBe('/about.html');
+    expect(new URL(page.url()).hash).toBe('#worked-example');
+    expect(Object.fromEntries(new URL(page.url()).searchParams)).toMatchObject({ date, test: '1' });
+    await choose(page.locator('footer').getByRole('link', { name: 'Privacy', exact: true }));
+    await expect(page.locator('.privacy-page')).toBeVisible();
+    expect(Object.fromEntries(new URL(page.url()).searchParams)).toMatchObject({ date, test: '1' });
+    await choose(page.getByRole('link', { name: 'Back to puzzle', exact: true }));
+    await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
+    expect(new URL(page.url()).searchParams.get('date')).toBe(date);
+    await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
+    await expect(page.locator('#board-title')).toHaveText(date === 'practice' ? 'The tutorial puzzle' : date === today ? "Today's puzzle" : 'Archived puzzle');
+  }
+});
+
+test('direct reading pages return to today without a saved return destination', async ({ page }) => {
+  for (const filename of ['about.html', 'privacy.html', 'app-privacy.html']) {
+    await page.goto(`/${filename}?test=1`);
+    await choose(page.getByRole('link', { name: 'Back to puzzle', exact: true }));
+    await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
+    await expect(page.locator('#board-title')).toHaveText("Today's puzzle");
+    await expect(page.locator('#puzzle-date')).toHaveText('Sep 17, 2026');
+    expect(new URL(page.url()).searchParams.get('test')).toBe('1');
+  }
+});
+
 for (const dialog of ['menu', 'help', 'hint', 'feedback', 'settings', 'share']) {
   test(`${dialog} touch focus stays quiet and keyboard focus stays visible`, async ({ page }, testInfo) => {
     if (dialog === 'share') {
@@ -127,7 +175,8 @@ test('preferences and supporting pages preserve test mode and private analytics 
   await expect(page.locator('#metrics-setting')).toBeDisabled();
   await expect(page.locator('#privacy-signal')).toContainText('Test mode: analytics are off.');
   await page.getByRole('link', { name: 'Read the privacy notes' }).click();
-  await expect(page).toHaveURL(/privacy\.html\?test=1/);
+  await expect(page).toHaveURL(/privacy\.html\?[^#]*test=1/);
+  expect(new URL(page.url()).searchParams.get('date')).toBe(today);
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Privacy');
   expect(await page.evaluate(() => localStorage.getItem('nookgrid:analytics'))).toBe('no');
   await openGame(page);
@@ -135,7 +184,8 @@ test('preferences and supporting pages preserve test mode and private analytics 
   await page.getByText('More controls', { exact: true }).click();
   await expect(page.locator('.help-details')).toHaveAttribute('open', '');
   await page.getByRole('link', { name: 'Worked example' }).click();
-  await expect(page).toHaveURL(/about\.html\?test=1#worked-example/);
+  await expect(page).toHaveURL(/about\.html\?[^#]*test=1[^#]*#worked-example/);
+  expect(new URL(page.url()).searchParams.get('date')).toBe(today);
   await expect(page.locator('#worked-example')).toBeVisible();
 });
 
@@ -189,7 +239,8 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
       expect(bounds.height).toBeGreaterThanOrEqual(44);
     }
     await choose(privacy);
-    await expect(page).toHaveURL(/privacy\.html\?test=1/);
+    await expect(page).toHaveURL(/privacy\.html\?[^#]*test=1/);
+    expect(new URL(page.url()).searchParams.get('date')).toBe(today);
     for (const filename of ['privacy.html', 'about.html', 'app-privacy.html']) {
       if (filename !== 'privacy.html') await page.goto(`/${filename}?test=1`);
       const headingSize = await page.locator('.prose h1').evaluate(heading => parseFloat(getComputedStyle(heading).fontSize));

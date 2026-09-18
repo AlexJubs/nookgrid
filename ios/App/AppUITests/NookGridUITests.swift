@@ -58,8 +58,10 @@ final class NookGridUITests: XCTestCase {
     }
     private func openTutorial(isFresh: Bool = true) {
         tap(app.webViews.links["Tutorial"].firstMatch)
-        let instruction = isFresh ? "Place Bakery in A1, the top-left square." : "Now all nine places are available. Use the full plan to finish."
-        XCTAssertTrue(app.staticTexts[instruction].waitForExistence(timeout: 5))
+        let instruction = isFresh ? "Tap Bakery, then A1, the outlined square." : "Now all nine places are available. Use the full plan to finish."
+        let instructionText = app.staticTexts[instruction]
+        XCTAssertTrue(instructionText.waitForExistence(timeout: 5))
+        XCTAssertTrue(instructionText.isHittable)
     }
     private func reveal(_ used: Int) {
         tap(button("Hint, \(used) hint\(used == 1 ? "" : "s") used"))
@@ -145,6 +147,11 @@ final class NookGridUITests: XCTestCase {
     func testTutorialGuidanceAndSavedPuzzlesAreSeparate() {
         openArchive()
         place("Park", at: "C3")
+        tap(button("Menu"))
+        tap(app.webViews.links["Privacy"].firstMatch)
+        tap(app.webViews.links["Back to puzzle"].firstMatch)
+        XCTAssertTrue(app.staticTexts["Sep 10, 2026"].waitForExistence(timeout: 5))
+        assertLot("C3", "Park")
         openTutorial()
         XCTAssertFalse(button("Park, choose a lot").exists)
         place("Bakery", at: "A1")
@@ -244,9 +251,20 @@ final class NookGridUITests: XCTestCase {
         XCTAssertFalse(button("Close menu").exists)
         for page in ["How to play", "Privacy"] {
             tap(button("Menu"))
-            tap(app.webViews.links[page].firstMatch)
+            XCTAssertTrue(button("Close menu").waitForExistence(timeout: 5))
+            if page == "How to play" {
+                tap(button(page))
+                XCTAssertTrue(button("Close how to play").waitForExistence(timeout: 5))
+                XCTAssertFalse(button("Close menu").exists)
+                tap(app.webViews.links["Worked example"].firstMatch)
+                XCTAssertTrue(app.staticTexts["A quick example"].waitForExistence(timeout: 5))
+                XCTAssertTrue(app.staticTexts["A quick example"].isHittable)
+            } else {
+                tap(app.webViews.links[page].firstMatch)
+            }
             let returnLink = app.webViews.links["Back to puzzle"].firstMatch
             XCTAssertTrue(returnLink.waitForExistence(timeout: 5))
+            scrollTo(returnLink)
             let heading = page == "How to play" ? "The basics" : "iPhone app privacy"
             XCTAssertTrue(app.staticTexts[heading].exists)
             for target in [app.webViews.links["NookGrid"].firstMatch, returnLink] {

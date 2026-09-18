@@ -40,15 +40,15 @@ Keep the outcome, main action and supporting countdown together on the completio
 
 ## Dialogs and reading pages
 
-Use one left-aligned heading style for Menu, Settings, Feedback, Share and How to play; the short Hint confirmation stays centered. Primary actions use forest green, secondary actions use the quiet neutral surface, and close controls retain the same 44px target. Reading pages can scroll and use a visible Back to puzzle action. Their page title must not overpower the NookGrid wordmark.
+Use one left-aligned heading style for Menu, Settings, Feedback, Share and How to play; the short Hint confirmation stays centered. Primary actions use forest green, secondary actions use the quiet neutral surface, and close controls retain the same 44px target. Reading pages can scroll and use a visible Back to puzzle action. Their page title must not overpower the NookGrid wordmark. Back to puzzle returns to the actual Tutorial or archived puzzle the player left. Menu and header Help open the same short dialog; the worked example is the optional reading page.
 
-Menu rows are 48px tall with a shared soft background, a quiet separator and a trailing Phosphor chevron. The archive select retains its native picker with an explicit 48px height because WebKit can ignore its minimum height. Settings uses a labeled 44px-tall analytics switch with its explanation and live status in one group, a separate saved-progress group, and a privacy link. Changes apply immediately; do not add a redundant Save button. Keep disabled, blocked and failed-save states clear.
+Menu rows are 48px tall with a shared soft background, a quiet separator and a trailing Phosphor chevron. The archive select retains its native picker with an explicit 48px height because WebKit can ignore its minimum height. Settings uses a labeled 44px-tall analytics switch with its explanation and live status in one group, a plain saved-progress note, and a privacy link. Static explanations do not need their own card or heading. Changes apply immediately; do not add a redundant Save button. Keep disabled, blocked and failed-save states clear.
 
 ## Every state is part of the design
 
-Check loading, empty, selected, dragging, disabled, hint-locked, completed, unavailable, error and success states. Show useful feedback and recovery instead of inactive controls that look usable. Keep entered feedback on failed sends. Use selectable output styling for a read-only share result. Reference: pages 234–236, applied to this game's states.
+Check loading, empty, selected, dragging, disabled, hint-locked, completed, unavailable, error and success states. Show useful feedback and recovery instead of inactive controls that look usable. Keep entered feedback on failed sends. A failed progress save offers Retry save and clears only after a successful write. An unavailable archive says so instead of displaying an endless loading state. Fixed places use the same lock mark in the tray and on the board; movable placed pieces use a check. Use selectable output styling for a read-only share result. Reference: pages 234–236, applied to this game's states.
 
-The Tutorial must stay optional and easy to find. Its short introduction explains the mode, the next-step instruction names the move, and the selection row explains the control. Do not add a new onboarding overlay to solve a spacing problem.
+The Tutorial must stay optional and easy to find. Its short introduction explains the mode, and its first move names both the tap action and destination A1. Keep that instruction visible in native portrait. A visual outline supplements the named destination. Teach later actions when they are needed, without front-loading every control. Do not add a new onboarding overlay to solve a spacing problem.
 
 ## Before shipping any design change
 

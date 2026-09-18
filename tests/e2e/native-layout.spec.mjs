@@ -132,6 +132,8 @@ test('native phone completions and the full tutorial plan stay within safe areas
     }
     await page.evaluate(date => localStorage.removeItem(`nookgrid:test:v1:${date}`), bank.tutorial.date);
     await openGame(page, 'date=practice');
+    await expect(page.locator('.puzzle-instruction')).toHaveText('Tap Bakery, then A1, the outlined square.');
+    await expect(page.locator('.puzzle-instruction')).toBeVisible();
     await expectScreenFit(page, phone, 2, 1);
     await place(page, 'bakery', 0);
     await place(page, 'cafe', 1);

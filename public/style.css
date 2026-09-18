@@ -130,7 +130,7 @@
 .game-page #settings-dialog{width:min(360px,calc(100% - 32px))}
 .settings-section{padding:12px;background:var(--surface);border-radius:8px;margin-bottom:12px}
 .setting-row{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;font-size:var(--font-body);font-weight:600}
-.game-page .settings-section h3{font-size:var(--font-body);font-weight:600;margin:0 0 6px}
+.game-page #settings-dialog .settings-note{font-size:13px;line-height:1.5;color:var(--muted);margin:16px 0 8px}
 .game-page .settings-section p{font-size:13px;color:var(--muted);margin:0}
 .game-page #privacy-signal{font-size:var(--font-caption);margin-top:8px}
 .game-page #settings-dialog>a{display:flex;align-items:center;justify-content:center;min-height:44px;font-size:var(--font-body);font-weight:500}
@@ -154,6 +154,7 @@ input.setting-toggle{appearance:none;-webkit-appearance:none;position:relative;f
 .game-page .archive-picker select{width:100%;height:48px;min-height:48px;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);font-size:14px}
 .game-page .notice{padding:12px;margin-bottom:12px;line-height:1.5;background:#f4f6f2;border:0;color:var(--ink)}
 .game-page #save-warning{background:#fff7e8;color:#6d532a}
+.game-page #retry-save{color:inherit;text-decoration:underline;text-underline-offset:3px;padding:0;min-height:44px}
 .game-page .empty-state{max-width:360px;margin:48px auto;text-align:center;color:var(--muted);font-size:14px}
 .game-page .empty-state h2{font-size:var(--font-title);color:var(--ink);margin-bottom:8px}
 .game-page .empty-state p{font-size:14px;margin-bottom:20px}
