@@ -30,7 +30,7 @@ final class NookGridUITests: XCTestCase {
     private func tap(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
         XCTAssertTrue(element.exists || element.waitForExistence(timeout: 5), "Missing \(element)", file: file, line: line)
         scrollTo(element)
-        element.tap()
+        element.press(forDuration: 0.1)
     }
     private func scrollTo(_ element: XCUIElement) {
         let viewport = app.frame.insetBy(dx: 0, dy: 24)

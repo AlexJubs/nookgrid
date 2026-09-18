@@ -13,3 +13,7 @@ Read `DESIGN.md` before every design change. Apply Adam Wathan and Steve Schoger
 ## iOS
 
 Read `docs/RELEASING.md`. Keep web and iOS gameplay shared. Use native Preferences for app saves and preserve hint locks, elapsed time and privacy choices. Debug, live-reload and simulator tests must never send production analytics. Release bundles cannot contain a development server URL. Use personal Apple signing only; leave team selection and secrets out of source. No ads, notifications, accounts, Android target or streak interface is in the initial scope.
+
+## CI verification
+
+After every code push, verify the CI run for the exact pushed commit, including the iOS simulator job. A local pass does not establish that GitHub CI passed. Investigate failures and follow the fix through a green run before reporting completion or publishing a release. If access or infrastructure prevents verification, state the concrete blocker and keep verification pending and preserve the run’s actual status. Do not disable tests, weaken assertions or suppress failure emails to make CI appear healthy.
