@@ -53,6 +53,7 @@ final class NookGridUITests: XCTestCase {
     }
     private func place(_ name: String, at address: String) {
         tap(button("\(name), choose a lot"))
+        XCTAssertTrue(app.staticTexts["\(name) selected. Choose a lot."].waitForExistence(timeout: 5), "\(name) was not selected")
         tap(lot(address))
         assertLot(address, name)
     }
