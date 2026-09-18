@@ -17,6 +17,9 @@ test('iOS bundle is offline, isolated in development, and declares native privac
   assert.doesNotMatch(privacy,/daily changing secret/);
   assert.equal((await readdir('dist/ios-test')).some(name => name.startsWith('.')),false);
   assert.equal(JSON.parse(await readFile('dist/ios-test/puzzles.json','utf8')).puzzles.length,3660);
+  for (const file of ['icons.svg','phosphor-LICENSE.txt']) {
+    assert.equal(await readFile(`dist/ios-test/${file}`,'utf8'),await readFile(`public/${file}`,'utf8'));
+  }
 });
 
 test('production rejects live reload instead of shipping a development URL',async () => {

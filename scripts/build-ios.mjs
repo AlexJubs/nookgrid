@@ -9,7 +9,7 @@ export async function buildIos({directory = 'dist/ios',production = false} = {})
   await rm(directory,{recursive:true,force:true});
   await mkdir(directory,{recursive:true});
   for (const file of await readdir('public')) {
-    if (file.startsWith('.') || !/\.(html|mjs|css|svg|png|json)$/.test(file)) continue;
+    if (file.startsWith('.') || (!/\.(html|mjs|css|svg|png|json)$/.test(file) && file !== 'phosphor-LICENSE.txt')) continue;
     await cp(`public/${file}`,`${directory}/${file}`);
   }
   await cp('public/app-privacy.html',`${directory}/privacy.html`);

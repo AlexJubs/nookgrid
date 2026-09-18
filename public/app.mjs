@@ -5,6 +5,7 @@ import { testMode, analytics } from './session.mjs?v=20260917-x1';
 import { native, savedValue, saveValue } from './platform.mjs';
 
 const $ = id => document.getElementById(id);
+const renderIcon = (name, className = '') => `<svg class="ui-icon ${className}" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#${name}"/></svg>`;
 const ids = PLACES.map(place => place.id);
 const nameOf = id => PLACES.find(place => place.id === id)?.name || '';
 const day = () => new Date().toISOString().slice(0, 10);
@@ -258,8 +259,7 @@ function makeBoard() {
   for (const place of PLACES) {
     const button = document.createElement('button');
     button.className = 'place'; button.dataset.place = place.id;
-    button.innerHTML = `${placeArt(place.id)}<span class="place-name"></span>`;
-    button.querySelector('.place-name').textContent = place.name;
+    button.innerHTML = `${placeArt(place.id)}<span class="place-name">${place.name}${renderIcon('check','placed-check')}</span>`;
     button.addEventListener('click', () => { if (progress.hintedPlaces.includes(place.id)) return; selected = selected === place.id ? null : place.id; render(); });
     $('tray').append(button);
   }
@@ -304,7 +304,7 @@ function render() {
     'Bakery fits. Place Cafe directly to its right.',
     'Cafe fits. Use the plan to place Books.',
     'Now all nine places are available. Use the full plan to finish.'
-  ][starterStep] : shouldShowGuidance ? 'Which column fits Park? Start with the ★ items.' : 'Arrange the places to match the plan.';
+  ][starterStep] : shouldShowGuidance ? 'Which column fits Park? Start with the starred items.' : 'Arrange the places to match the plan.';
   const instructionLabel = document.querySelector('.puzzle-instruction');
   if (instructionLabel.textContent !== instruction) instructionLabel.textContent = instruction;
   [...$('board').children].forEach((button,index) => {
@@ -315,7 +315,7 @@ function render() {
     button.setAttribute('aria-disabled',String(isLocked));
     button.setAttribute('aria-label', `Lot ${address}, ${id ? nameOf(id) : 'empty'}${isLocked ? ', fixed by a hint' : id === selected && id ? ', selected' : ''}`);
     button.setAttribute('aria-pressed', String(Boolean(id && id === selected)));
-    button.innerHTML = `<span class="address">${address}</span>${id ? `${placeArt(id)}<span class="place-name">${nameOf(id)}</span>` : ''}${isLocked ? '<svg class="hint-lock" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3.5" y="7" width="9" height="7" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg>' : ''}`;
+    button.innerHTML = `<span class="address">${address}</span>${id ? `${placeArt(id)}<span class="place-name">${nameOf(id)}</span>` : ''}${isLocked ? renderIcon('lock-key','hint-lock') : ''}`;
   });
   [...$('tray').children].forEach(button => {
     const id = button.dataset.place, placed = board.includes(id), isLocked = progress.hintedPlaces.includes(id);
@@ -330,7 +330,7 @@ function render() {
     const status = clueStatus(puzzle.clues[index],board);
     const isStartingClue = shouldShowGuidance && item.dataset.teaser === 'true';
     item.className = `clue ${status}`;
-    item.querySelector('.clue-icon').textContent = isStartingClue ? '★' : {met:'✓',conflict:'!',pending:'·'}[status];
+    item.querySelector('.clue-icon').innerHTML = renderIcon(isStartingClue ? 'star' : {met:'check',conflict:'exclamation-mark',pending:'dot-outline'}[status]);
     item.querySelector('.clue-state').textContent = (isStartingClue ? ' Start here.' : '') + {met:' Matches the plan.',conflict:' Needs a move.',pending:' Required places are not placed yet.'}[status];
   });
   $('selection-status').classList.toggle('sr-only', !selected && !isLearning);

@@ -60,4 +60,8 @@ The native app keeps the shared compact game. CSS owns top and bottom safe-area 
 
 ## Phone layout
 
-Stack the neighborhood plan, board, place tray and action row in that order. Center the board at up to 300px wide and match the tray and controls to it. The tray uses two centered rows of five and four places. Keep 12px between the play sections; remove idle selection text from layout while preserving screen-reader announcements. Undo, Reset and Hint remain equal-width peers beneath the items. Completion replaces the tray beneath the solved board. The DOM order follows the mobile reading order. Desktop keeps its established columns.
+Stack the neighborhood plan, board, place tray and action row in that order. Center the board at up to 300px wide. Let the tray and action row span up to 360px independently, with two centered rows of five and four places. Place illustrations are 52 by 44px within tiles at least 72px tall, with 11px labels. Do not shrink the place tray to the board width. Keep 12px between the play sections; remove idle selection text from layout while preserving screen-reader announcements. Undo, Reset and Hint remain equal-width peers beneath the items, with 12px gaps, 48px touch targets and 6px between each icon and label. Completion replaces the tray beneath the solved board. The DOM order follows the mobile reading order. Desktop keeps its established columns.
+
+## Interface icons
+
+Use the shared, locally bundled Phosphor regular icons in `public/icons.svg` on web and iOS. Keep interface icons at 20px, header icons at 24px and status/lock marks at 12–14px. Preserve accessible text and hide decorative SVGs from assistive technology. Native input affordances and the illustrated game pieces retain their own artwork. Include the Phosphor license in every distributed bundle; do not load an icon font or CDN at runtime.
