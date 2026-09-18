@@ -18,9 +18,10 @@ Simulator checks do not replace a physical iPhone pass for gestures, sharing and
 | --- | --- | --- |
 | iPhone SE, third generation, iOS 18.2 | 10 passed | 0.84 seconds |
 | iPhone 16 Pro, iOS 18.6 | 10 passed | 0.93 seconds |
+| iPhone 17 Pro, iOS 26.4 | 10 passed | 1.09 seconds |
 
 The stacked layout keeps the plan, board, items and actions in reading order. Small screens scroll vertically; test gestures scroll through the empty gutter before interacting with offscreen controls. Empty, scrolled and solved screenshots were visually inspected; the fixed status-bar background stays clear of game content. The suite includes explicit foreground readiness and share-sheet dismissal waits. Launch numbers describe this simulator environment, not physical-device performance.
 
-On this workstation, iOS 26.4 stalled in the simulator loader before app code ran. A process sample showed the main thread blocked in `dyld_sim` opening a dependent library. The cause is unconfirmed. Current-iOS compatibility remains unverified until a clean current-runtime or CI run passes. The runner keeps selecting the newest runtime by default; use an available iOS 18.2 or 18.6 device explicitly for the verified local cycle. Find its UUID with `xcrun simctl list devices available`, then set `NOOKGRID_SIMULATOR_ID` when running the test command.
+The iOS 26.4 run verified the larger mobile tray and shared Phosphor icons inside WKWebView. It completed all ten scenarios in 168 seconds, including native share dismissal, reopening and copying. The runner waits for simulator boot readiness before testing. Native share controls use direct taps and support both a Close button and the newer popover dismissal region.
 
-Physical-device, minimum-supported-OS, iPad, rotation, text-scaling and VoiceOver checks remain release gates. No signed build or TestFlight upload has been performed.
+Physical-device, minimum-supported-OS, iPad, rotation, text-scaling and VoiceOver checks remain gates before public App Store submission. A signed internal TestFlight beta is available for owner testing.
