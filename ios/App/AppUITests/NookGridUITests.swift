@@ -66,6 +66,7 @@ final class NookGridUITests: XCTestCase {
 
     func testColdLaunchPerformance() {
         app.terminate()
+        app.launchArguments = ["nookgrid-offline"]
         let options = XCTMeasureOptions()
         options.iterationCount = 3
         measure(metrics: [XCTApplicationLaunchMetric(waitUntilResponsive: true)], options: options) {
