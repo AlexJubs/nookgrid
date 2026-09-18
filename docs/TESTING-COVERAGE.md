@@ -4,7 +4,7 @@ The browser suite runs the shared game from a local Vite server. The core game f
 
 Use Node 22.12 or newer, install dependencies with `npm ci`, then install browsers with `npx playwright install chromium webkit`. Run `npm run test:e2e`. The configuration owns port 4173 and refuses to reuse an existing server. Traces and failure screenshots appear in `test-results/`; `playwright-report/` contains the HTML report.
 
-The same 42 scenarios run on desktop Chromium at 1280 by 900 and WebKit with the iPhone 13 profile. The mobile helper uses Playwright touch taps. The drag scenarios use browser mouse pointer input on both engines. Focus restoration is checked after keyboard activation; Safari does not focus buttons on pointer clicks. The mobile keyboard test explicitly focuses the skip link because iOS Full Keyboard Access is an operating-system setting. These are web-engine checks, not physical iPhone gesture certification.
+The same browser scenarios run on desktop Chromium at 1280 by 900 and WebKit with the iPhone 13 profile. The mobile helper uses Playwright touch taps. The drag scenarios use browser mouse pointer input on both engines. Focus restoration is checked after keyboard activation; Safari does not focus buttons on pointer clicks. The mobile keyboard test explicitly focuses the skip link because iOS Full Keyboard Access is an operating-system setting. These are web-engine checks, not physical iPhone gesture certification.
 
 | Area | Executed assertions |
 | --- | --- |
@@ -16,7 +16,7 @@ The same 42 scenarios run on desktop Chromium at 1280 by 900 and WebKit with the
 | Timer | Restored elapsed time, foreground advancement, simulated hidden interval exclusion, completion freeze, reset, undo and reload |
 | Sharing | Canonical public URL, date and attribution, no QA/hash values or solution spoilers, mocked clipboard success, mocked native-share success/cancellation/failure, selected read-only fallback |
 | Navigation | Today, tutorial and past archive choices; future dates rejected; per-puzzle saves isolated; expired calendar fallback; UTC rollover preserves the active board |
-| Dialogs | Menu, help, hint, feedback, preferences and share: button, Escape and outside dismissal, inside clicks, one modal, focus restoration |
+| Dialogs | Menu, Help, Hint, Feedback, Settings and Share: button, Escape and outside dismissal, inside clicks, one modal, focus restoration |
 | Supporting pages | Help disclosure, worked example, privacy navigation, retained QA mode and saved analytics opt-out |
 | Recovery | Loading/inert state, failed or malformed puzzle request, retry, malformed/duplicate/unknown/short saved boards, repaired saved hints, unknown legacy solve time |
 | Persistence failure | Denied browser storage still allows moves, hints and undo with a visible warning |

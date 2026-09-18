@@ -4,7 +4,7 @@ The website and iOS app share the game in `public/`. CI checks both surfaces. A 
 
 ## Reproduce CI
 
-Use Node.js 22.12 or newer. On macOS, install Xcode 26 or newer with an iOS Simulator runtime and finish Xcode's first launch setup.
+Use Node.js 22.12 or newer and Python 3 available as `python3`. On macOS, install Xcode 26 or newer with an iOS Simulator runtime and finish Xcode's first launch setup.
 
 ```sh
 npm ci
@@ -24,6 +24,33 @@ Browser QA serves the local game with `?test=1` and blocks external requests. Na
 Download `browser-results` for browser reports, screenshots and traces. Download `ios-simulator-results` for `NookGrid.xcresult`, native logs and the zipped simulator app. Open the result bundle in Xcode. The simulator app cannot be installed on a physical iPhone. Artifacts expire after seven days. Passing simulator checks does not establish physical-device behavior or App Store acceptance.
 
 For a release, check a physical iPhone's touch controls, VoiceOver, large text, safe areas, background/resume, offline opening, saved progress after relaunch, sharing and the midnight puzzle change. Complete any applicable iPad checks for the supported device families. These checks need a signed development or TestFlight build.
+
+## Restore access on a new machine
+
+Start with the [README setup](../README.md) and unsigned simulator checks. The repository contains the source needed to build and test; operating the existing production services also requires separate owner credentials from the owner's chosen secure storage. GitHub environment secrets are deployment copies, not the recovery source. Keep that storage recoverable independently of this checkout and the old machine.
+
+Use the following record types as a private recovery checklist. Fill actual values only in the owner-approved credential store and provider settings, never in this document.
+
+| Private access record | Restore and verify |
+| --- | --- |
+| Personal GitHub access | Owner sign-in, second factor/recovery method and permission to manage this repository and its environments |
+| Website and domain | Hosting owner access, site/workspace selectors, owner API key, domain registrar/DNS access and last verified publication receipt |
+| Personal Apple development | Apple Account recovery, intended personal team, existing app record, signing certificate with its private key, profiles and any App Store Connect API key |
+| Analytics and support | Analytics administrator access and control of the support mailbox; the public capture token cannot restore either |
+
+Sign in to the existing services and verify the intended personal ownership before restoring deployment settings. Do not create replacement production resources merely because local access is missing. Use the secret and variable names below to populate the GitHub environments. Keep both automatic-release variables absent or `false` during setup. A manual Actions dispatch can run even while those variables are false, so dispatch only after its access and release candidate are ready.
+
+No credentials are required to clone the public source, run browser tests or build the unsigned simulator app. Do not put passwords, API secrets, recovery codes, private signing keys or exported account sessions in source, issue comments, build logs or generated public files.
+
+## Personal signing on a new Mac
+
+1. Complete the README's Xcode setup. In Xcode Settings > Accounts, add the owner's personal Apple Account and confirm the intended personal developer team is available. Leave employer accounts and teams unchanged.
+2. Build the default QA bundle with `npm run build:ios`, open `ios/App/App.xcodeproj`, and select the **App** target's Signing & Capabilities. Use automatic signing with the intended personal team. The existing app uses `com.nookgrid.app`; its owner must retain that identity. A fork needs its own available bundle identifier and matching configuration before device signing or distribution.
+3. Connect and unlock the iPhone, follow Apple's pairing and Developer Mode prompts, select it as the **App** scheme destination, and run. Review Xcode's local signing changes before committing; personal team selection must stay out of shared source. See [Apple's device setup](https://developer.apple.com/documentation/xcode/running-your-app-on-simulated-or-physical-devices).
+4. For the first manual TestFlight release on this Mac, verify personal Developer Program and App Store Connect access, use an unused build number, and clear `NOOKGRID_DEV_URL`. Run `NOOKGRID_PRODUCTION=1 npm run build:ios`, choose a physical-device archive destination, then Product > Archive. Use Organizer's distribution flow with the intended personal account. Confirm processing and actual TestFlight availability as described below.
+5. After archiving, clear any exported production/development URL values and run `npm run build:ios` to restore analytics-disabled QA assets. Keep archives and signing exports private.
+
+An archive build proves compilation and signing at that step, not account access for upload. If export reports an account-access error, preserve the archive and restore the intended personal account's access before trying another upload. A certificate without its private key cannot restore a signing identity; see [Apple's signing-identity guidance](https://developer.apple.com/documentation/xcode/sharing-your-teams-signing-certificates).
 
 ## Configure release access
 

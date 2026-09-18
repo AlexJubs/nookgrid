@@ -4,7 +4,7 @@
 
 Enroll as an **Individual** with the owner's personal Apple Account. Being an Admin on an employer's team is not a personal enrollment; leave that membership unchanged. Individual apps display the person's legal seller name. A personal paid Developer Program membership costs $99/year and is required for TestFlight and the App Store. Simulator development does not require it.
 
-After enrollment, confirm the personal team and create the explicit identifier `com.nookgrid.app` if available, then the NookGrid record in App Store Connect. Signing must use that same personal team. If the identifier is unavailable, update the project and release workflow together before signing.
+NookGrid already has the explicit identifier `com.nookgrid.app` and an App Store Connect record. On a new machine, restore access to those existing resources and confirm the personal team before signing. Do not create a replacement app or change its identifier. A separate fork needs its own available identifier and store record.
 
 ## First release
 
@@ -24,7 +24,7 @@ Complete Apple's age-rating questionnaire from actual content, select territorie
 
 The release app uses a random installation ID and gameplay events with PostHog US Cloud for analytics. Declare **Device ID** and **Product Interaction**, purpose **Analytics**, linked to the device identity, **not used for tracking across other companies' apps or websites**. No advertising ID, location enrichment, person profiles or session replay is enabled. Review the final packaged app against these answers before submission.
 
-The privacy manifest declares the matching analytics collection and UserDefaults reason `CA92.1` for on-device progress/preferences. Analytics can be disabled in Preferences. Debug/live-reload builds collect no analytics. The website keeps its existing cookieless measurement separately, so web daily visitor estimates and app installation retention are different cohorts.
+The privacy manifest declares the matching analytics collection and UserDefaults reason `CA92.1` for on-device progress/preferences. Analytics can be disabled in Settings. Debug/live-reload builds collect no analytics. The website keeps its existing cookieless measurement separately, so web daily visitor estimates and app installation retention are different cohorts.
 
 Apple guidance: [enrollment](https://developer.apple.com/help/account/membership/program-enrollment), [app privacy](https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy/), [Capacitor Preferences manifest](https://capacitorjs.com/docs/apis/preferences).
 

@@ -1,4 +1,4 @@
-# iOS implementation plan
+# iOS implementation
 
 Approved scope: one shared web/iOS game, offline iOS play, durable on-device progress, ten years of unique puzzles, existing tutorial/archive, app-specific retention measurement, live development reload, automated browser and simulator tests, CI and gated release automation. Android, streak UI, notifications and ads follow later.
 
@@ -15,7 +15,7 @@ The app uses Capacitor with bundled HTML, CSS and JavaScript. Native Preferences
 - [x] Measure launch performance and exercise gameplay on the simulator. Physical-device performance remains a release check.
 - [x] Add CI and release workflows that use the same source revision for web and iOS.
 - [x] Prepare store metadata and mobile website promotion gated on an actual App Store listing.
-- [ ] Review, run all checks, sync reviewed source to personal GitHub main and inspect CI.
+- [x] Review, run all checks, sync reviewed source to personal GitHub main and inspect both CI jobs. Repeat verification for each new release candidate.
 
 ## Test boundaries
 
@@ -23,7 +23,7 @@ Automate meaningful state transitions and failure paths. Exhaustively validate t
 
 ## Release prerequisites
 
-The owner permits their legal name on the App Store and chooses redpod22@gmail.com for Apple ownership. Developer Program enrollment, signing, App Store Connect access and distribution credentials still need verification. No placeholder App Store destination is shown to players. Signed TestFlight automation needs configured secrets; App Store release remains subject to review.
+Personal account ownership and recovery details belong in private access records outside this repository. On a fresh machine, restore and verify Developer Program, signing and App Store Connect access using [the release guide](RELEASING.md). Source alone does not restore those accounts. No placeholder App Store destination is shown to players. Signed TestFlight automation needs separately configured secrets; App Store release remains subject to review.
 
 ## Apple account
 
