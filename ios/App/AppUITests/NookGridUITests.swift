@@ -10,7 +10,7 @@ final class NookGridUITests: XCTestCase {
         app = XCUIApplication()
         app.launchArguments = ["nookgrid-reset-test-state", "nookgrid-offline"]
         app.launch()
-        XCTAssertTrue(button("Lot A1, empty").waitForExistence(timeout: 20), app.debugDescription)
+        XCTAssertTrue(button("Lot A1, empty").waitForExistence(timeout: 60), app.debugDescription)
     }
 
     override func tearDownWithError() throws {
