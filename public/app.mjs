@@ -1,7 +1,7 @@
 import { PLACES, clueText, clueStatus, isSolved } from './engine.mjs?v=20260915-teaser1';
 import { movePlace, selectPuzzle, restoreProgress, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces } from './state.mjs?v=20260916-hints1';
 import { placeArt } from './art.mjs?v=20260915-teaser1';
-import { testMode, analytics } from './session.mjs?v=20260917-x1';
+import { testMode, analytics } from './session.mjs?v=20260918-ui-system1';
 import { native, savedValue, saveValue } from './platform.mjs';
 
 const $ = id => document.getElementById(id);

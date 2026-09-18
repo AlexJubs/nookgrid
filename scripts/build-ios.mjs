@@ -18,10 +18,11 @@ export async function buildIos({directory = 'dist/ios',production = false} = {})
     if (!html.includes('src="./native.js"')) html = html.replace('<head>','<head><script src="./native.js"></script>');
     html = html.replace(/width=device-width,\s*initial-scale=1(?!,viewport-fit)/,'width=device-width,initial-scale=1,viewport-fit=cover');
     html = html.replace(/<meta name="google-(?:adsense-account|site-verification)"[^>]*>/g,'');
-    html = html.replace('Basic analytics help us improve the puzzles. We measure visits, moves and outcomes without saving a tracking ID. You can turn this off anytime.','Play analytics measure moves, results and return visits using a random app ID. You can turn this off anytime.');
+    html = html.replace('Help improve the puzzles by measuring visits, moves and results without saving a tracking ID.','Help improve the puzzles with moves, results and return visits, linked by a random app ID.');
     html = html.replace('Progress can’t be saved in this browser. You can still play, but keep this tab open.','Progress could not be saved. Keep the app open and try again.');
-    html = html.replace('Progress is saved only in this browser. Clearing browser data also clears saved boards.','Progress stays on this device and works offline. Uninstalling the app removes saved boards.');
-    html = html.replace('Feedback collection is temporarily unavailable. No feedback is being sent.','<a href="mailto:redpod22+nookgrid@gmail.com?subject=NookGrid%20feedback">Email feedback</a>');
+    html = html.replace('Your progress stays in this browser. Clearing browser data removes it.','Your progress stays on this device and works offline. Deleting the app removes it.');
+    html = html.replace('Feedback collection is temporarily unavailable. No feedback is being sent.','<a class="primary inline-button" href="mailto:redpod22+nookgrid@gmail.com?subject=NookGrid%20feedback">Email feedback</a>');
+    html = html.replace('id="feedback-unavailable" class="notice"','id="feedback-unavailable" class="feedback-email"');
     await writeFile(`${directory}/${file}`,html);
   }
   const config = JSON.parse(await readFile(`${directory}/site-config.json`,'utf8'));

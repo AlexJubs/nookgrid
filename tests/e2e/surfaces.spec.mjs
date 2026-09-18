@@ -139,6 +139,81 @@ test('preferences and supporting pages preserve test mode and private analytics 
   await expect(page.locator('#worked-example')).toBeVisible();
 });
 
+for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }]) {
+  test(`mobile navigation and typography stay consistent at ${viewport.width} by ${viewport.height}`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await openGame(page);
+    const titleSizes = await page.locator('dialog h2').evaluateAll(headings => headings.map(heading => parseFloat(getComputedStyle(heading).fontSize)));
+    expect(new Set(titleSizes)).toEqual(new Set([20]));
+    expect(titleSizes[0]).toBeLessThan(await page.locator('.brand').evaluate(brand => parseFloat(getComputedStyle(brand).fontSize)));
+    await choose(page.locator('#menu-open'));
+    const menuColor = await page.locator('#menu-dialog').evaluate(dialog => getComputedStyle(dialog).backgroundColor);
+    const rows = await page.locator('#menu-dialog .menu-links :is(a,button)').evaluateAll(elements => elements.map(element => {
+      const style = getComputedStyle(element), bounds = element.getBoundingClientRect();
+      const chevron = element.querySelector('.menu-chevron');
+      return {
+        label: element.textContent.trim(), width: bounds.width, height: bounds.height,
+        fontSize: style.fontSize, fontWeight: style.fontWeight,
+        background: getComputedStyle(element.parentElement).backgroundColor,
+        hasChevron: Boolean(chevron?.checkVisibility() && chevron.getAttribute('aria-hidden') === 'true')
+      };
+    }));
+    expect(rows).toHaveLength(6);
+    for (const row of rows) {
+      expect(row.width, row.label).toBeGreaterThanOrEqual(44);
+      expect(row.height, row.label).toBeGreaterThanOrEqual(44);
+      expect(row.fontSize, row.label).toBe('14px');
+      expect(row.fontWeight, row.label).toBe('600');
+      expect(row.background, row.label).toBe(rows[0].background);
+      expect(row.background, row.label).not.toBe('rgba(0, 0, 0, 0)');
+      expect(row.background, row.label).not.toBe(menuColor);
+      expect(row.hasChevron, row.label).toBe(true);
+    }
+    const archive = page.getByRole('combobox', { name: 'Puzzle archive' });
+    await expect(archive).toBeInViewport();
+    const archiveBounds = await archive.boundingBox();
+    expect(archiveBounds.width).toBeGreaterThanOrEqual(44);
+    expect(archiveBounds.height).toBeGreaterThanOrEqual(44);
+    await choose(page.getByRole('button', { name: 'Settings', exact: true }));
+    const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
+    const analyticsSwitch = settings.getByRole('switch', { name: 'Play analytics', exact: true });
+    await expect(analyticsSwitch).toHaveAccessibleDescription(/measuring visits.*Test mode: analytics are off\./);
+    await expect(analyticsSwitch).toBeDisabled();
+    await expect(settings.getByRole('status')).toHaveText('Test mode: analytics are off.');
+    const privacy = settings.getByRole('link', { name: 'Read the privacy notes' });
+    for (const control of [analyticsSwitch, privacy]) {
+      await control.scrollIntoViewIfNeeded();
+      await expect(control).toBeInViewport();
+      const bounds = await control.boundingBox();
+      expect(bounds.width).toBeGreaterThanOrEqual(44);
+      expect(bounds.height).toBeGreaterThanOrEqual(44);
+    }
+    await choose(privacy);
+    await expect(page).toHaveURL(/privacy\.html\?test=1/);
+    for (const filename of ['privacy.html', 'about.html', 'app-privacy.html']) {
+      if (filename !== 'privacy.html') await page.goto(`/${filename}?test=1`);
+      const headingSize = await page.locator('.prose h1').evaluate(heading => parseFloat(getComputedStyle(heading).fontSize));
+      const brandSize = await page.locator('.brand').evaluate(brand => parseFloat(getComputedStyle(brand).fontSize));
+      expect(headingSize).toBe(titleSizes[0]);
+      expect(headingSize).toBeLessThan(brandSize);
+      const paragraphs = page.locator('.prose p:not(.privacy-updated):not(.keyboard-note):not(#analytics-choice-status)');
+      const sizes = await paragraphs.evaluateAll(elements => elements.map(element => parseFloat(getComputedStyle(element).fontSize)));
+      expect(sizes.every(size => size >= 14)).toBe(true);
+      await paragraphs.last().scrollIntoViewIfNeeded();
+      await expect(paragraphs.last()).toBeInViewport();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
+      const back = page.getByRole('link', { name: 'Back to puzzle', exact: true });
+      await back.scrollIntoViewIfNeeded();
+      await expect(back).toBeInViewport();
+      const bounds = await back.boundingBox();
+      expect(bounds.width).toBeGreaterThanOrEqual(44);
+      expect(bounds.height).toBeGreaterThanOrEqual(44);
+      await choose(back);
+      await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
+    }
+  });
+}
+
 test('UTC rollover announces the next puzzle without replacing the saved board', async ({ page }) => {
   await page.clock.setSystemTime(new Date(`${today}T23:59:58Z`));
   await openGame(page);

@@ -207,11 +207,18 @@ final class NookGridUITests: XCTestCase {
     func testDialogsDismiss() {
         tap(button("How to play"))
         XCTAssertTrue(button("Close how to play").waitForExistence(timeout: 5))
+        captureScreenshot("How to play dialog")
+        tap(button("More controls"))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'Tab to move focus'")).firstMatch.exists)
+        captureScreenshot("How to play expanded controls")
+        tap(button("More controls"))
         tap(button("Close how to play"))
         tap(button("Menu"))
-        tap(button("Preferences"))
-        XCTAssertTrue(button("Close preferences").waitForExistence(timeout: 5))
-        tap(button("Close preferences"))
+        tap(button("Settings"))
+        XCTAssertTrue(button("Close settings").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Test mode: analytics are off."].exists)
+        captureScreenshot("Settings")
+        tap(button("Close settings"))
         tap(button("Hint, 0 hints used"))
         captureScreenshot("Hint touch focus")
         tap(button("Cancel"))
@@ -219,11 +226,37 @@ final class NookGridUITests: XCTestCase {
         tap(button("Menu"))
         tap(button("Feedback"))
         XCTAssertTrue(button("Close feedback").waitForExistence(timeout: 5))
+        let emailFeedback = app.webViews.links["Email feedback"].firstMatch
+        XCTAssertTrue(emailFeedback.exists)
+        XCTAssertTrue(emailFeedback.isHittable)
+        // WKWebView reports link text bounds; browser checks measure the full target.
+        XCTAssertGreaterThanOrEqual(button("Close feedback").frame.width, 44)
+        XCTAssertGreaterThanOrEqual(button("Close feedback").frame.height, 44)
+        for target in [button("Close feedback"), emailFeedback] {
+            XCTAssertGreaterThanOrEqual(target.frame.minY, 20, target.label)
+            XCTAssertLessThanOrEqual(target.frame.maxY, app.frame.maxY - 8, target.label)
+        }
+        captureScreenshot("Native feedback")
         tap(button("Close feedback"))
         tap(button("Menu"))
         captureScreenshot("Menu touch focus")
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.15)).tap()
         XCTAssertFalse(button("Close menu").exists)
+        for page in ["How to play", "Privacy"] {
+            tap(button("Menu"))
+            tap(app.webViews.links[page].firstMatch)
+            let returnLink = app.webViews.links["Back to puzzle"].firstMatch
+            XCTAssertTrue(returnLink.waitForExistence(timeout: 5))
+            let heading = page == "How to play" ? "The basics" : "iPhone app privacy"
+            XCTAssertTrue(app.staticTexts[heading].exists)
+            for target in [app.webViews.links["NookGrid"].firstMatch, returnLink] {
+                XCTAssertGreaterThanOrEqual(target.frame.minY, 20, target.label)
+                XCTAssertLessThanOrEqual(target.frame.maxY, app.frame.maxY - 8, target.label)
+            }
+            captureScreenshot(page == "How to play" ? "How to play page" : "Native privacy page")
+            tap(returnLink)
+            assertLot("A1", "empty")
+        }
     }
 
     func testSolveWithHintsAndNativeShareSheet() {

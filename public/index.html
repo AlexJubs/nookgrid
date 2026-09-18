@@ -19,8 +19,8 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="NookGrid gameplay with three places on a nine-lot neighborhood board, a tray of places, and the neighborhood plan alongside.">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=20260918-focus1">
-  <script type="module" src="./app.mjs?v=20260918-focus1"></script>
+  <link rel="stylesheet" href="./style.css?v=20260918-ui-system1">
+  <script type="module" src="./app.mjs?v=20260918-ui-system1"></script>
 </head>
 <body class="game-page">
   <a class="skip-link" href="#game" data-track="index-a-1">Skip to puzzle</a>
@@ -67,9 +67,9 @@
 
   <dialog id="menu-dialog" aria-labelledby="menu-title">
     <button class="close-dialog" data-close aria-label="Close menu" data-track="menu-close"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#x"/></svg></button><h2 id="menu-title">Menu</h2>
-    <nav class="menu-links" aria-label="Play"><a href="./" data-track="index-a-8">Today's puzzle</a><a href="?date=practice" data-track="index-a-6">Tutorial</a></nav>
+    <nav class="menu-links" aria-label="Play"><a href="./" data-track="index-a-8"><span>Today's puzzle</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#caret-right"/></svg></a><a href="?date=practice" data-track="index-a-6"><span>Tutorial</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#caret-right"/></svg></a></nav>
     <div class="archive-picker"><label for="archive">Puzzle archive</label><select id="archive"><option>Loading puzzles…</option></select></div>
-    <nav class="menu-links menu-utilities" aria-label="Help and settings"><a href="./about.html" data-track="index-a-3">How to play</a><button class="text-button" id="feedback-open">Feedback</button><button class="text-button" id="settings-open">Preferences</button><a href="./privacy.html" data-track="index-a-9">Privacy</a></nav>
+    <nav class="menu-links menu-utilities" aria-label="Help and settings"><a href="./about.html" data-track="index-a-3"><span>How to play</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#caret-right"/></svg></a><button class="text-button" id="feedback-open"><span>Feedback</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#caret-right"/></svg></button><button class="text-button" id="settings-open"><span>Settings</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#caret-right"/></svg></button><a href="./privacy.html" data-track="index-a-9"><span>Privacy</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#caret-right"/></svg></a></nav>
   </dialog>
 
   <dialog id="help-dialog" aria-labelledby="help-title">
@@ -98,6 +98,15 @@
     <form id="feedback-form" hidden><label class="sr-only" for="feedback-message">Your feedback</label><textarea id="feedback-message" name="message" maxlength="1000" rows="4" placeholder="Share your thoughts…" required autofocus></textarea><button type="submit" class="primary" id="feedback-send">Send</button></form>
     <p id="feedback-status" role="status"></p>
   </dialog>
-  <dialog id="settings-dialog" aria-labelledby="settings-title"><button class="close-dialog" data-close aria-label="Close preferences" data-track="index-button-8"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#x"/></svg></button><h2 id="settings-title">Preferences</h2><label class="check-label"><input type="checkbox" id="metrics-setting"> Basic play analytics</label><p>Basic analytics help us improve the puzzles. We measure visits, moves and outcomes without saving a tracking ID. You can turn this off anytime.</p><p id="privacy-signal"></p><p>Progress is saved only in this browser. Clearing browser data also clears saved boards.</p><a href="./privacy.html" data-track="index-a-12">Read the privacy notes</a></dialog>
+  <dialog id="settings-dialog" aria-labelledby="settings-title">
+    <button class="close-dialog" data-close aria-label="Close settings" data-track="index-button-8"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#x"/></svg></button><h2 id="settings-title">Settings</h2>
+    <div class="settings-section">
+      <label class="setting-row" for="metrics-setting"><span>Play analytics</span><input type="checkbox" role="switch" class="setting-toggle" id="metrics-setting" aria-describedby="analytics-description privacy-signal"></label>
+      <p id="analytics-description">Help improve the puzzles by measuring visits, moves and results without saving a tracking ID.</p>
+      <p id="privacy-signal" role="status"></p>
+    </div>
+    <section class="settings-section" aria-labelledby="saved-progress-title"><h3 id="saved-progress-title">Saved progress</h3><p>Your progress stays in this browser. Clearing browser data removes it.</p></section>
+    <a class="settings-privacy" href="./privacy.html" data-track="index-a-12">Read the privacy notes</a>
+  </dialog>
 </body>
 </html>

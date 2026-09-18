@@ -18,7 +18,7 @@ The board and neighborhood plan are the main task. Puzzle number, date, coordina
 
 Choose emphasis from the player's task, not from a mandatory primary/secondary/tertiary template. One solid primary action can sit alongside several equally quiet controls. Reset and Feedback are peer utilities: use matching borderless styling, target sizes, hover and focus treatment. An outline or secondary surface is useful only when an action genuinely needs intermediate emphasis. A state-changing action does not automatically need a red, heavy button. Avoid redundant actions and keep labels concise.
 
-Keep the outcome, main action and supporting countdown together on the completion surface, with the utility row beneath it. Share stays above the countdown; the countdown is smaller and lighter than the outcome. In the menu, group Today's puzzle, Tutorial and Archive together, then separate the quieter help/settings links. A navigation menu needs a clear reading order, not a promotional headline or a filled button.
+Keep the outcome, main action and supporting countdown together on the completion surface, with the utility row beneath it. Share stays above the countdown; the countdown is smaller and lighter than the outcome. In the menu, group Today's puzzle and Tutorial together, followed by Archive and a separate group of utility destinations. Every destination uses the same visible row treatment, type weight and chevron. Grouping supplies hierarchy without making some actions look like plain text.
 
 ## Spacing and proportions
 
@@ -31,12 +31,18 @@ Keep the outcome, main action and supporting countdown together on the completio
 
 ## Typography, color and surfaces
 
-- Reuse the current system body font and heading family. Use weight and contrast for hierarchy before introducing another font or size. Keep supporting copy quieter without making it unreadable.
+- Use the system font for all interface text and headings. Reserve Trebuchet for the NookGrid wordmark. Dialog and reading-page titles are 20px/700, below the 24px phone wordmark. Use 14px body and action text, 13px supporting descriptions and 12px captions. Compact gameplay geometry has its own readable type sizes below.
 - Reuse the forest accent, dark ink and green-tinted neutrals. Avoid unrelated palettes in different dialogs. Reserve warning treatment for an actual warning, such as unavailable local saving.
 - Small text must remain readable. Aim for at least 4.5:1 contrast for ordinary text, including actionable placed-piece labels and board coordinates. Keep status icons/text alongside colors.
 - Use spacing or a subtle surface before adding borders and shadows. Borders may still identify controls; shadows should indicate layers or movement. Reference: pages 142–168, 180–184 and 238–241.
 - Touch and mouse interaction must not show keyboard focus rings, including automatic dialog focus and focus restoration. Keep focus in place for accessibility; restore visible outlines on keyboard navigation. Typing in a touch-opened text field stays visually quiet. Selected pieces and Tutorial destinations retain their purposeful outlines.
 - Every action needs visible keyboard focus. Preserve accessible names, minimum 44px standalone touch targets, native controls, reduced-motion behavior and Escape/backdrop dialog dismissal.
+
+## Dialogs and reading pages
+
+Use one left-aligned heading style for Menu, Settings, Feedback, Share and How to play; the short Hint confirmation stays centered. Primary actions use forest green, secondary actions use the quiet neutral surface, and close controls retain the same 44px target. Reading pages can scroll and use a visible Back to puzzle action. Their page title must not overpower the NookGrid wordmark.
+
+Menu rows are 48px tall with a shared soft background, a quiet separator and a trailing Phosphor chevron. The archive select retains its native picker with an explicit 48px height because WebKit can ignore its minimum height. Settings uses a labeled 44px-tall analytics switch with its explanation and live status in one group, a separate saved-progress group, and a privacy link. Changes apply immediately; do not add a redundant Save button. Keep disabled, blocked and failed-save states clear.
 
 ## Every state is part of the design
 

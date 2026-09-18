@@ -109,8 +109,8 @@ export function createAnalytics({testMode = false} = {}) {
   function renderChoice() {
     const checkbox = document.getElementById('metrics-setting');
     if (checkbox) { checkbox.checked = permitted(); checkbox.disabled = !available || testMode || privacy(); }
-    let message = testMode ? 'Test mode: analytics are off.' : privacy() ? 'Your browser requests privacy, so analytics are off.' : !available ? 'Analytics are not connected yet.' : choice !== 'no' ? native ? 'Play analytics are on. A random app ID measures repeat play.' : 'Basic analytics are on. No tracking ID is saved in your browser.' : 'Basic analytics are off. The puzzle works the same either way.';
-    if (!choiceSaved) message += ' We could not save your choice in this browser. Check this setting again next time.';
+    let message = testMode ? 'Test mode: analytics are off.' : privacy() ? 'Your browser requests privacy, so analytics are off.' : !available ? 'Analytics are not connected yet.' : choice !== 'no' ? 'Play analytics are on.' : 'Play analytics are off. The puzzle works the same either way.';
+    if (!choiceSaved) message += ` We could not save your choice ${native ? 'on this device' : 'in this browser'}. Check this setting again next time.`;
     for (const id of ['privacy-signal','analytics-choice-status']) {
       const status = document.getElementById(id);
       if (status) status.textContent = message;

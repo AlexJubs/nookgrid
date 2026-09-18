@@ -40,7 +40,16 @@ async function expectScreenFit(page, phone, ruleCount, placeCount = 9) {
       return { x, y, width, height, name: element.id || element.getAttribute('aria-label') || element.textContent.trim() };
     };
     const visible = element => element.checkVisibility() && element.getBoundingClientRect().width > 0;
-    const targets = [...document.querySelectorAll('.lot,.place,.icon-button,.board-actions button,#remove-place,.completion button,#play-today,.puzzle-switch')].filter(visible);
+    const targets = [...document.querySelectorAll('.brand,.lot,.place,.icon-button,.board-actions button,#remove-place,.completion button,#play-today,.puzzle-switch')].filter(visible);
+    const headerHits = [...document.querySelectorAll('.brand,.icon-button,.puzzle-switch')].map(element => {
+      const { left, top, width, height } = element.getBoundingClientRect();
+      return {
+        name: bounds(element).name,
+        hits: [4, width / 2, width - 4].flatMap(x => [4, height / 2, height - 4].map(y =>
+          document.elementFromPoint(left + x, top + y)?.closest('a,button') === element
+        ))
+      };
+    });
     const content = [...document.querySelectorAll('.puzzle-heading,.clues-header,.clue-text,#selection-status:not(.sr-only),.puzzle-instruction[role="status"],.completion h2,.completion p,#next-puzzle-time')]
       .filter(element => visible(element) && element.getBoundingClientRect().height > 1);
     const ruleLines = [...document.querySelectorAll('.clue-text')].filter(visible).flatMap(element => {
@@ -53,6 +62,7 @@ async function expectScreenFit(page, phone, ruleCount, placeCount = 9) {
       scrollWidth: document.documentElement.scrollWidth,
       scrollY,
       targets: targets.map(bounds),
+      headerHits,
       content: content.map(bounds),
       ruleLines,
       plan: bounds(document.querySelector('#clue-list')),
@@ -73,6 +83,7 @@ async function expectScreenFit(page, phone, ruleCount, placeCount = 9) {
     expect(target.width, `${target.name} touch width`).toBeGreaterThanOrEqual(44);
     expect(target.height, `${target.name} touch height`).toBeGreaterThanOrEqual(44);
   }
+  for (const target of geometry.headerHits) expect(target.hits, `${target.name} touch area`).toEqual(Array(9).fill(true));
   for (const line of geometry.ruleLines) {
     expect(line.y, `${line.name} within plan`).toBeGreaterThanOrEqual(geometry.plan.y - 1);
     expect(line.y + line.height, `${line.name} within plan`).toBeLessThanOrEqual(geometry.plan.y + geometry.plan.height + 1);

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { buildIos } from '../../scripts/build-ios.mjs';
 
 test.beforeEach(async ({page}) => {
   await page.route('**/*',route => new URL(route.request().url()).hostname === '127.0.0.1' ? route.continue() : route.abort());
@@ -20,6 +21,30 @@ test.beforeEach(async ({page}) => {
   });
 });
 
+test('native feedback link keeps a full touch target in the built bundle', async ({ page, baseURL }, testInfo) => {
+  const directory = `dist/ios-contract-${testInfo.project.name}-${testInfo.workerIndex}`;
+  await buildIos({ directory });
+  await page.route(`${baseURL}/**`, route => route.fulfill({
+    path: `${directory}/${new URL(route.request().url()).pathname.slice(1) || 'index.html'}`
+  }));
+  await page.goto('/?test=1');
+  await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
+  await page.evaluate(() => document.documentElement.classList.add('native-app'));
+  for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    await page.locator('#menu-open').click();
+    await page.locator('#feedback-open').click();
+    await expect(page.locator('#feedback-form')).toBeHidden();
+    const feedback = page.getByRole('link', { name: 'Email feedback', exact: true });
+    await expect(feedback).toBeInViewport();
+    await expect(feedback).toHaveAttribute('href', /^mailto:/);
+    const bounds = await feedback.boundingBox();
+    expect(bounds.width).toBeGreaterThanOrEqual(44);
+    expect(bounds.height).toBeGreaterThanOrEqual(44);
+    await page.getByRole('button', { name: 'Close feedback' }).click();
+  }
+});
+
 test('native production measures installations, preserves opt-out, and keeps saves across reload',async ({page}) => {
   await page.goto('/');
   await expect(page.locator('#game')).toHaveAttribute('aria-busy','false');
@@ -34,7 +59,7 @@ test('native production measures installations, preserves opt-out, and keeps sav
   await page.locator('#settings-open').click();
   await page.locator('#metrics-setting').uncheck();
   const count = await page.evaluate(() => window.captured.length);
-  await page.locator('[aria-label="Close preferences"]').click();
+  await page.locator('[aria-label="Close settings"]').click();
   await page.locator('#clear').click();
   expect(await page.evaluate(() => window.captured.length)).toBe(count);
   await page.reload();
