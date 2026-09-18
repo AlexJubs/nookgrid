@@ -42,7 +42,7 @@ final class NookGridUITests: XCTestCase {
             .matching(NSPredicate(format: "label BEGINSWITH 'Choose a puzzle'")).firstMatch
         let isPuzzleLink = element.elementType == .link && puzzleList.exists
         let scrollArea: XCUIElement = isPuzzleLink ? puzzleList : app
-        let viewport = scrollArea.frame.intersection(app.frame).insetBy(dx: 0, dy: isPuzzleLink ? 4 : 24)
+        let viewport = scrollArea.frame.intersection(app.frame).insetBy(dx: 0, dy: isPuzzleLink ? 4 : 0)
         for _ in 0..<4 {
             let frame = element.frame
             if frame.minY >= viewport.minY && frame.maxY <= viewport.maxY && element.isHittable { return }
