@@ -277,13 +277,13 @@ final class NookGridUITests: XCTestCase {
         tap(button("Menu"))
         tap(button("Feedback"))
         XCTAssertTrue(button("Close feedback").waitForExistence(timeout: 5))
-        let emailFeedback = app.webViews.links["Email feedback"].firstMatch
-        XCTAssertTrue(emailFeedback.exists)
-        XCTAssertTrue(emailFeedback.isHittable)
+        let emailLink = app.webViews.links["Email us"].firstMatch
+        XCTAssertTrue(emailLink.exists)
+        XCTAssertTrue(emailLink.isHittable)
         // WKWebView reports link text bounds; browser checks measure the full target.
         XCTAssertGreaterThanOrEqual(button("Close feedback").frame.width, 44)
         XCTAssertGreaterThanOrEqual(button("Close feedback").frame.height, 44)
-        for target in [button("Close feedback"), emailFeedback] {
+        for target in [button("Close feedback"), emailLink] {
             XCTAssertGreaterThanOrEqual(target.frame.minY, 20, target.label)
             XCTAssertLessThanOrEqual(target.frame.maxY, app.frame.maxY - 8, target.label)
         }

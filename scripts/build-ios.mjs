@@ -21,7 +21,7 @@ export async function buildIos({directory = 'dist/ios',production = false} = {})
     html = html.replace('Help improve the puzzles by measuring visits, moves and results without saving a tracking ID.','Help improve the puzzles with moves, results and return visits, linked by a random app ID.');
     html = html.replace('Progress can’t be saved in this browser. Keep this tab open.','Progress could not be saved. Keep the app open.');
     html = html.replace('Your progress stays in this browser. Clearing browser data removes it.','Your progress stays on this device and works offline. Deleting the app removes it.');
-    html = html.replace('Feedback collection is temporarily unavailable. No feedback is being sent.','<a class="primary inline-button" href="mailto:redpod22+nookgrid@gmail.com?subject=NookGrid%20feedback">Email feedback</a>');
+    html = html.replace('Feedback collection is temporarily unavailable. No feedback is being sent.','<a class="primary inline-button" href="mailto:alexjabbour7@outlook.com">Email us</a>');
     html = html.replace('id="feedback-unavailable" class="notice"','id="feedback-unavailable" class="feedback-email"');
     await writeFile(`${directory}/${file}`,html);
   }

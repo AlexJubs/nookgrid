@@ -35,13 +35,18 @@ test('native feedback link keeps a full touch target in the built bundle', async
     await page.locator('#menu-open').click();
     await page.locator('#feedback-open').click();
     await expect(page.locator('#feedback-form')).toBeHidden();
-    const feedback = page.getByRole('link', { name: 'Email feedback', exact: true });
+    const feedback = page.getByRole('link', { name: 'Email us', exact: true });
     await expect(feedback).toBeInViewport();
-    await expect(feedback).toHaveAttribute('href', /^mailto:/);
+    await expect(feedback).toHaveAttribute('href', 'mailto:alexjabbour7@outlook.com');
     const bounds = await feedback.boundingBox();
     expect(bounds.width).toBeGreaterThanOrEqual(44);
     expect(bounds.height).toBeGreaterThanOrEqual(44);
     await page.getByRole('button', { name: 'Close feedback' }).click();
+  }
+  for (const path of ['privacy.html', 'app-privacy.html']) {
+    await page.goto(`/${path}?test=1`);
+    await expect(page.getByRole('link', { name: 'Email us', exact: true })).toHaveAttribute('href', 'mailto:alexjabbour7@outlook.com');
+    await expect(page.locator('body')).not.toContainText(/redpod22|alexjabbour7@/);
   }
 });
 

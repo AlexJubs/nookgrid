@@ -246,7 +246,10 @@ test('preferences and supporting pages preserve test mode and private analytics 
   await expect(page.locator('#metrics-setting')).not.toBeChecked();
   await expect(page.locator('#metrics-setting')).toBeDisabled();
   await expect(page.locator('#privacy-signal')).toContainText('Test mode: analytics are off.');
-  await page.getByRole('link', { name: 'Read the privacy notes' }).click();
+  await expect(page.locator('#settings-dialog a')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Close settings' }).click();
+  await page.locator('#menu-open').click();
+  await page.locator('#menu-dialog').getByRole('link', { name: 'Privacy', exact: true }).click();
   await expect(page).toHaveURL(/privacy\.html\?[^#]*test=1/);
   expect(new URL(page.url()).searchParams.get('date')).toBe(today);
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Privacy');
@@ -304,15 +307,14 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
     await expect(analyticsSwitch).toHaveAccessibleDescription(/measuring visits.*Test mode: analytics are off\./);
     await expect(analyticsSwitch).toBeDisabled();
     await expect(settings.getByRole('status')).toHaveText('Test mode: analytics are off.');
-    const privacy = settings.getByRole('link', { name: 'Read the privacy notes' });
-    for (const control of [analyticsSwitch, privacy]) {
-      await control.scrollIntoViewIfNeeded();
-      await expect(control).toBeInViewport();
-      const bounds = await control.boundingBox();
-      expect(bounds.width).toBeGreaterThanOrEqual(44);
-      expect(bounds.height).toBeGreaterThanOrEqual(44);
-    }
-    await choose(privacy);
+    await expect(settings.getByRole('link')).toHaveCount(0);
+    await expect(analyticsSwitch).toBeInViewport();
+    const switchBounds = await analyticsSwitch.boundingBox();
+    expect(switchBounds.width).toBeGreaterThanOrEqual(44);
+    expect(switchBounds.height).toBeGreaterThanOrEqual(44);
+    await choose(settings.getByRole('button', { name: 'Close settings' }));
+    await choose(page.locator('#menu-open'));
+    await choose(page.locator('#menu-dialog').getByRole('link', { name: 'Privacy', exact: true }));
     await expect(page).toHaveURL(/privacy\.html\?[^#]*test=1/);
     expect(new URL(page.url()).searchParams.get('date')).toBe(today);
     for (const filename of ['privacy.html', 'about.html', 'app-privacy.html']) {
