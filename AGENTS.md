@@ -16,4 +16,6 @@ Read `docs/RELEASING.md`. Keep web and iOS gameplay shared. Use native Preferenc
 
 ## CI verification
 
+Run local iOS tests headlessly without opening Simulator.app unless the owner asks to watch. Use one dedicated NookGrid device for focused local checks, shut it down afterward even on failure, and leave unrelated devices alone. Use GitHub CI for the full native regression suite.
+
 After every code push, verify the CI run for the exact pushed commit, including the iOS simulator job. A local pass does not establish that GitHub CI passed. Investigate failures and follow the fix through a green run before reporting completion or publishing a release. If access or infrastructure prevents verification, state the concrete blocker and keep verification pending and preserve the run’s actual status. Do not disable tests, weaken assertions or suppress failure emails to make CI appear healthy.

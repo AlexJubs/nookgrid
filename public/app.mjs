@@ -99,14 +99,18 @@ function preparePuzzleList() {
       link.setAttribute('aria-label', date === today ? `Today, ${label}` : label);
       if (date === (mode === 'practice' ? 'practice' : puzzle.date)) link.setAttribute('aria-current','page');
       const text = document.createElement('span');
-      text.textContent = date === today ? 'Today' : label;
+      text.textContent = label;
       if (date === today) {
         const detail = document.createElement('small');
-        detail.textContent = label;
+        detail.textContent = 'Today';
         text.append(detail);
       }
       link.append(text);
-      link.insertAdjacentHTML('beforeend',renderIcon(link.hasAttribute('aria-current') ? 'check' : 'caret-right','menu-chevron'));
+      const trailing = document.createElement('span');
+      trailing.className = 'puzzle-trailing';
+      if (link.hasAttribute('aria-current')) trailing.innerHTML = `<span class="puzzle-current" aria-hidden="true">${renderIcon('dot-outline')}Current</span>`;
+      trailing.insertAdjacentHTML('beforeend',renderIcon('caret-right','menu-chevron'));
+      link.append(trailing);
       $('puzzle-list').append(link);
       count++;
     }

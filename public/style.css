@@ -151,7 +151,9 @@ input.setting-toggle{appearance:none;-webkit-appearance:none;position:relative;f
 .game-page .menu-footer a,.game-page .menu-footer button{display:inline-flex;align-items:center;min-height:44px;padding:0;font-size:var(--font-body);font-weight:500;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
 #puzzle-list{max-height:min(50dvh,360px);overflow:auto;overscroll-behavior:contain}
 .game-page #puzzle-list a{font-weight:500}
-.game-page #puzzle-list a[aria-current="page"]{background:var(--grass);font-weight:600}
+#puzzle-list .puzzle-trailing{display:inline-flex;align-items:center;gap:8px;flex:none}
+.puzzle-current{display:inline-flex;align-items:center;color:var(--blue);font-size:var(--font-caption);font-weight:500}
+.puzzle-current .ui-icon{width:20px;height:20px}
 #puzzle-list small{display:block;font-size:var(--font-caption);font-weight:400;color:var(--muted)}
 .game-page #puzzles-more{display:block;width:100%;margin-top:8px;font-size:var(--font-body)}
 .game-page .notice{padding:12px;margin-bottom:12px;line-height:1.5;background:#f4f6f2;border:0;color:var(--ink)}

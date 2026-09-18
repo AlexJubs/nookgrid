@@ -17,6 +17,18 @@ test('puzzle navigation preserves progress and exposes only released dates', asy
   ]);
   await expect(page.locator('#puzzle-list [aria-current="page"]')).toHaveCount(1);
   await expect(page.locator('#puzzle-list [aria-current="page"]')).toHaveAccessibleName('Today, Sep 17, 2026');
+  const current = page.locator('#puzzle-list [aria-current="page"]');
+  await expect(current.locator('small')).toHaveText('Today');
+  expect(await current.evaluate(item => item.firstElementChild.firstChild.textContent)).toBe('Sep 17, 2026');
+  await expect(current.locator('.puzzle-current')).toHaveText('Current');
+  await expect(page.locator('#puzzle-list .puzzle-current')).toHaveCount(1);
+  expect(await links.evaluateAll(items => items.every(item => {
+    const label = item.firstElementChild;
+    const style = getComputedStyle(label);
+    return style.fontSize === '14px' && style.fontWeight === '500' &&
+      item.querySelector('.menu-chevron use')?.getAttribute('href') === './icons.svg#caret-right' &&
+      !item.querySelector('use[href$="#check"]');
+  }))).toBe(true);
   expect(await links.evaluateAll(items => items.every(item => new URL(item.href).searchParams.get('test') === '1'))).toBe(true);
   await expect(page.locator('#puzzles-more')).toBeHidden();
   await page.getByRole('link', { name: 'Sep 11, 2026', exact: true }).click();
@@ -27,6 +39,8 @@ test('puzzle navigation preserves progress and exposes only released dates', asy
   await page.locator('#menu-open').click();
   await page.locator('#puzzles-open').click();
   await expect(page.locator('#puzzle-list [aria-current="page"]')).toHaveAccessibleName('Sep 11, 2026');
+  await expect(page.locator('#puzzle-list [aria-current="page"] .puzzle-current')).toHaveText('Current');
+  await expect(page.locator('#puzzle-list .puzzle-current')).toHaveCount(1);
   await page.locator('#puzzles-dialog').getByRole('link', { name: 'Tutorial', exact: true }).click();
   await expect(page.locator('#puzzle-label')).toHaveText('Tutorial');
   expect(Object.fromEntries(new URL(page.url()).searchParams)).toMatchObject({ date: 'practice', test: '1' });
@@ -34,6 +48,7 @@ test('puzzle navigation preserves progress and exposes only released dates', asy
   await page.locator('#menu-open').click();
   await page.locator('#puzzles-open').click();
   await expect(page.locator('#puzzle-list [aria-current="page"]')).toHaveAccessibleName('Tutorial');
+  await expect(page.locator('#puzzle-list [aria-current="page"] .puzzle-current')).toHaveText('Current');
   await page.getByRole('link', { name: 'Today, Sep 17, 2026', exact: true }).click();
   await expect(page.locator('#board-title')).toHaveText("Today's puzzle");
   await expectBoard(page, ['cafe', ...Array(8).fill(null)]);
