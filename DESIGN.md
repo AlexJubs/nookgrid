@@ -2,6 +2,10 @@
 
 Use Adam Wathan and Steve Schoger's **Refactoring UI** as the design reference for every NookGrid interface, page and visual asset. Apply its principles to this compact puzzle game rather than copying the book's sample screens. The supplied book stays private; this file contains our own practical interpretation.
 
+## Brand mark
+
+Use the approved **One Move** mark: three cream tiles and one tilted gold tile on forest green. `public/favicon.svg` is the vector source. Preserve its geometry and colors; the Trebuchet NookGrid wordmark remains unchanged. Browser favicons use the rounded background. The 180px Apple touch icon and 1024px iOS AppIcon derive from the same artwork with a full opaque forest background, allowing the platform to apply its corner mask. Keep all four page icon links on the same cache version when replacing the mark. Do not replace the illustrated game pieces with the brand mark.
+
 ## Hierarchy before decoration
 
 The board and neighborhood plan are the main task. Puzzle number, date, coordinates, help and countdown support that task. Reduce competing weight and contrast before making important content larger. Use correct semantic headings without letting their HTML level dictate visual size. Reference: pages 36–47 and 54–62.

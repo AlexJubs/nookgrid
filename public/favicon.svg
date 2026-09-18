@@ -1,1 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#F2F6FC"/><path fill="#3158B8" d="M9 29 32 9l23 20v27H9z"/><path fill="#FFD275" d="M19 29h9v10h-9zm17 0h9v10h-9zM27 46h10v10H27z"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320">
+<title>NookGrid: One Move</title>
+<rect width="320" height="320" rx="69" fill="#315A48"/>
+<rect x="66" y="68" width="84" height="84" rx="13" fill="#F6F2E7"/>
+<rect x="66" y="168" width="84" height="84" rx="13" fill="#F6F2E7"/>
+<rect x="166" y="168" width="84" height="84" rx="13" fill="#F6F2E7"/>
+<g transform="rotate(9 218 105)">
+<rect x="176" y="63" width="84" height="84" rx="13" fill="#E7BC6B"/>
+</g>
+</svg>
