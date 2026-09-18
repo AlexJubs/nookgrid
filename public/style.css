@@ -148,7 +148,7 @@
   .game-page .brand{font-size:28px}
   .puzzle-meta{font-size:10px;gap:5px}
   .game-page .game-layout{grid-template-columns:minmax(0,1fr);gap:10px}
-  .game-page .clue-panel{grid-column:1;grid-row:2;width:100%}
+  .game-page .clue-panel{grid-column:1;grid-row:2;width:100%;padding-bottom:8px}
   .game-page .clues-header{margin:0 0 6px}
   .game-page .clues{gap:2px}
   .game-page .clue{font-size:12px;line-height:1.4;padding:2px 0}
