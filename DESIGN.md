@@ -26,7 +26,7 @@ Keep the outcome, main action and supporting countdown together on the completio
 - Fit panels to real content. Preserve the compact board and bounded plan width instead of stretching them into unused space. Reference: pages 76–82.
 - Prefer existing spacing choices: 4, 8, 12, 16, 24 and 32px. Existing board geometry and 44px interaction targets are functional exceptions, not a reason to scale everything uniformly.
 - Preserve the established desktop 400px board, 192px tray/result panel and 248px plan unless a real layout problem calls for a change.
-- Desktop and regular laptop game states should fit without page scrolling. Phones use the vertical layout below; short screens and solved states may scroll instead of shrinking pieces or hiding content.
+- Desktop and regular laptop game states should fit without page scrolling. Native portrait phone gameplay must fit within the usable screen height, including completion and selected-piece states. Browser phones use the vertical layout below; enlarged text, error notices and landscape must remain accessible rather than being clipped.
 - Adapt widths, type and panel order independently on mobile. Long labels may wrap; controls must not collide. Reference: pages 92–95.
 
 ## Typography, color and surfaces
@@ -60,8 +60,16 @@ The native app keeps the shared compact game. CSS owns top and bottom safe-area 
 
 ## Phone layout
 
-Stack the neighborhood plan, board, place tray and action row in that order. Balance the visible space above and below the plan list: the phone plan panel has 8px bottom padding so the final rule has about the same breathing room before the board as the heading has before the first rule. Center the board at up to 300px wide. Let the tray and action row span up to 360px independently, with two centered rows of five and four places. Place illustrations are 52 by 44px within tiles at least 72px tall, with 11px labels. Do not shrink the place tray to the board width. Keep 12px between the play sections; remove idle selection text from layout while preserving screen-reader announcements. Undo, Reset and Hint remain equal-width peers beneath the items, with 12px gaps, 48px touch targets and 6px between each icon and label. Completion replaces the tray beneath the solved board. The DOM order follows the mobile reading order. Desktop keeps its established columns.
+Stack the neighborhood plan, board, place tray and action row in that order. The dimensions in this paragraph describe the mobile website; the native portrait adjustments follow. Balance the visible space above and below the plan list: the phone plan panel has 8px bottom padding so the final rule has about the same breathing room before the board as the heading has before the first rule. Center the board at up to 300px wide. Let the tray and action row span up to 360px independently, with two centered rows of five and four places. Place illustrations are 52 by 44px within tiles at least 72px tall, with 11px labels. Do not shrink the place tray to the board width. Keep 12px between the play sections; remove idle selection text from layout while preserving screen-reader announcements. Undo, Reset and Hint remain equal-width peers beneath the items, with 12px gaps, 48px touch targets and 6px between each icon and label. Completion replaces the tray beneath the solved board. The DOM order follows the mobile reading order. Desktop keeps its established columns.
 
 ## Interface icons
 
 Use the shared, locally bundled Phosphor regular icons in `public/icons.svg` on web and iOS. Keep interface icons at 20px, header icons at 24px and status/lock marks at 12–14px. Preserve accessible text and hide decorative SVGs from assistive technology. Native input affordances and the illustrated game pieces retain their own artwork. Include the Phosphor license in every distributed bundle; do not load an icon font or CDN at runtime.
+
+## Native portrait fit
+
+Use the screen height after the status-bar and home-indicator insets. Keep every plan statement, all nine places and Undo/Reset/Hint visible together. A compact 24px brand and puzzle metadata identify the puzzle; the repeated daily objective stays in Help while Tutorial instructions remain visible. The board uses the remaining height, up to 300px wide, with every lot at least 44px. Do not scale the whole screen or hide overflow to force a pass.
+
+Use 6–8px section gaps and a 60px place tile, reduced to 54px on short phones. Art remains separate from the smaller Phosphor status marks. Put back joins the bottom controls when a placed piece is selected, while selection announcements remain available to screen readers. Completion uses two compact columns with Share above the countdown and matching Reset/Feedback utilities below. Preserve scrollable dialogs and readable recovery messages.
+
+Verify seven- and ten-statement plans, selection, hints, daily/archive completion and every Tutorial stage at 393×852, 402×874 and 375×667, including safe-area insets. Browser checks must assert actual content bounds and 44px targets; simulator checks must also verify that a swipe does not move the main page.

@@ -85,6 +85,15 @@ final class NookGridUITests: XCTestCase {
             XCTAssertGreaterThanOrEqual(button("\(name), choose a lot").frame.width, 44)
             XCTAssertGreaterThanOrEqual(button("\(name), choose a lot").frame.height, 44)
         }
+        let controls = [button("How to play"), button("Menu"), button("Undo"), button("Reset"), button("Hint, 0 hints used")]
+        for target in controls + lots.map(lot) + places.map({ button("\($0), choose a lot") }) {
+            XCTAssertGreaterThanOrEqual(target.frame.minY, 20, target.label)
+            XCTAssertLessThanOrEqual(target.frame.maxY, app.frame.maxY - 8, target.label)
+        }
+        let headerY = app.webViews.links["NookGrid home"].frame.minY
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.8))
+            .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.2)))
+        XCTAssertEqual(app.webViews.links["NookGrid home"].frame.minY, headerY, accuracy: 1)
     }
 
     func testMovesSwapsRemovalUndoAndReset() {
