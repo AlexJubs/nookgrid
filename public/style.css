@@ -136,7 +136,7 @@ input.setting-toggle{appearance:none;-webkit-appearance:none;position:relative;f
 .setting-toggle:disabled{cursor:default;opacity:.55}
 .game-page .primary:hover{background:#2b513e}
 .game-page #menu-dialog,.game-page #puzzles-dialog{width:min(360px,calc(100% - 32px))}
-.game-page #menu-dialog{padding-top:52px}
+.game-page #menu-dialog .close-dialog{position:static;margin:0 auto 12px}
 
 .game-page .menu-links{display:grid;grid-template-columns:1fr;gap:0;background:var(--surface);border-radius:8px}
 .game-page .menu-links a,.game-page .menu-links .text-button{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;margin:0;padding:12px;font-size:var(--font-body);font-weight:600;color:var(--ink);text-align:left;text-decoration:none;border-radius:0}
