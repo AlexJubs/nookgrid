@@ -8,6 +8,8 @@ Use the approved **One Move** mark: three cream tiles and one tilted gold tile o
 
 ## Hierarchy before decoration
 
+Daily streaks use one quiet text line in the completion result group and the Puzzles dialog. Keep the phone header and game layout unchanged. The next-puzzle label names local midnight. Do not add badges, streak overlays or another primary action.
+
 The board and neighborhood plan are the main task. Puzzle number, date, coordinates, help and countdown support that task. Reduce competing weight and contrast before making important content larger. Use correct semantic headings without letting their HTML level dictate visual size. Reference: pages 36–47 and 54–62.
 
 | Surface | Primary action | Quieter actions |

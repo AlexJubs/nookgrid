@@ -1,6 +1,6 @@
 # Native iOS checks
 
-Run `npm run build:ios`, then `npm run test:ios` on a Mac with Xcode and an installed iPhone Simulator runtime. The runner creates a dedicated NookGrid QA simulator. It never erases an existing device.
+Run `npm run build:ios`, then `npm run test:ios` on a Mac with Xcode and an installed iPhone Simulator runtime. The runner uses two build jobs and a headless, dedicated NookGrid QA simulator. It never erases an existing device.
 
 Use `NOOKGRID_TEST_ALL_SIZES=1 npm run test:ios` to also run the suite on an available smaller iPhone. Use `NOOKGRID_SIMULATOR_ID=<UUID>` to select a simulator explicitly. `NOOKGRID_IOS_TEST=<method>` narrows a diagnosis to one test method.
 

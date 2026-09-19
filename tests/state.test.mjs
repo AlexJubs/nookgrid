@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { movePlace, validBoard, selectPuzzle, nextPuzzleCountdown, restoreProgress, shareText, advanceSolveTimer, formatSolveTime, restoreHintedPlaces } from '../public/state.mjs';
+import { movePlace, validBoard, selectPuzzle, puzzleDay, nextPuzzleCountdown, restoreStreakDays, addDailyCompletion, streakLength, restoreProgress, shareText, advanceSolveTimer, formatSolveTime, restoreHintedPlaces } from '../public/state.mjs';
 
 const ids = ['bakery','cafe','books','florist','park','pond','homes','bikes','market'];
 const empty = Array(9).fill(null);
@@ -20,11 +20,62 @@ assert.deepEqual(selectPuzzle(bank,'2026-09-10','2026-09-11'),{puzzle:bank.puzzl
 assert.deepEqual(selectPuzzle(bank,'2026-09-11','2026-09-10'),{puzzle:bank.puzzles[0],mode:'archive'});
 assert.deepEqual(selectPuzzle(bank,'2027-01-01'),{puzzle:bank.tutorial,mode:'practice'});
 assert.deepEqual(selectPuzzle(bank,'2026-09-10','practice'),{puzzle:bank.tutorial,mode:'practice'});
-assert.equal(nextPuzzleCountdown(new Date('2026-09-12T23:59:59.999Z')),'00:00:01');
-assert.equal(nextPuzzleCountdown(new Date('2026-09-13T00:00:00Z')),'24:00:00');
-assert.equal(nextPuzzleCountdown(new Date('2026-09-12T19:30:00-04:00')),'00:30:00');
-assert.equal(nextPuzzleCountdown(new Date('2026-09-30T23:00:00Z')),'01:00:00');
-assert.equal(nextPuzzleCountdown(new Date('2026-12-31T23:59:58.500Z')),'00:00:02');
+const originalTimezone = process.env.TZ;
+try {
+  process.env.TZ = 'America/New_York';
+  assert.equal(nextPuzzleCountdown(new Date('2026-09-19T16:00:00-04:00')),'08:00:00');
+  assert.equal(nextPuzzleCountdown(new Date('2026-09-19T23:59:59.999-04:00')),'00:00:01');
+  assert.equal(nextPuzzleCountdown(new Date('2026-09-20T00:00:00-04:00')),'24:00:00');
+  assert.equal(nextPuzzleCountdown(new Date('2026-03-08T00:00:00-05:00')),'23:00:00');
+  assert.equal(nextPuzzleCountdown(new Date('2026-11-01T00:00:00-04:00')),'25:00:00');
+  assert.equal(puzzleDay(new Date('2026-09-20T00:00:00Z')),'2026-09-19');
+  assert.equal(puzzleDay(new Date('2026-09-20T00:00:00-04:00')),'2026-09-20');
+  assert.equal(puzzleDay(new Date('2026-03-08T01:59:59-05:00')),'2026-03-08');
+  assert.equal(puzzleDay(new Date('2026-03-08T03:00:00-04:00')),'2026-03-08');
+  assert.equal(streakLength(['2026-03-07','2026-03-08','2026-03-09'],'2026-03-09'),3);
+  assert.equal(streakLength(['2026-10-31','2026-11-01','2026-11-02'],'2026-11-02'),3);
+  process.env.TZ = 'UTC';
+  assert.equal(nextPuzzleCountdown(new Date('2026-09-12T23:59:59.999Z')),'00:00:01');
+  assert.equal(nextPuzzleCountdown(new Date('2026-09-13T00:00:00Z')),'24:00:00');
+  assert.equal(nextPuzzleCountdown(new Date('2026-09-12T19:30:00-04:00')),'00:30:00');
+  assert.equal(nextPuzzleCountdown(new Date('2026-09-30T23:00:00Z')),'01:00:00');
+  assert.equal(nextPuzzleCountdown(new Date('2026-12-31T23:59:58.500Z')),'00:00:02');
+  assert.equal(puzzleDay(new Date('0001-01-01T12:00:00Z')),'0001-01-01');
+  process.env.TZ = 'Asia/Tokyo';
+  assert.equal(puzzleDay(new Date('2026-09-19T15:00:00Z')),'2026-09-20');
+  assert.equal(nextPuzzleCountdown(new Date('2026-09-19T23:59:59.999+09:00')),'00:00:01');
+} finally {
+  if (originalTimezone === undefined) delete process.env.TZ;
+  else process.env.TZ = originalTimezone;
+}
+for (const raw of [null,undefined,'{bad','null','{}','true','"2026-09-19"']) assert.deepEqual(restoreStreakDays(raw),[]);
+const savedDays = ['2026-09-19','2026-09-18','2026-09-19',null,123,{},'tutorial','2026-9-01','2026-09-00','2026-13-01',
+  '2026-04-31','2026-02-29','1900-02-29','2100-02-29','0000-01-01','10000-01-01','2026-09-19T00:00:00Z','2026-09-19\n','2000-02-29','2028-02-29'];
+assert.deepEqual(restoreStreakDays(JSON.stringify(savedDays)),['2000-02-29','2026-09-18','2026-09-19','2028-02-29']);
+assert.deepEqual(restoreStreakDays('["9999-12-31","0001-01-01"]'),['0001-01-01','9999-12-31']);
+const earnedDays = Object.freeze(['2026-09-17','2026-09-18']);
+const completedDays = addDailyCompletion(earnedDays,'2026-09-19','2026-09-19');
+assert.deepEqual(completedDays,['2026-09-17','2026-09-18','2026-09-19']);
+assert.deepEqual(earnedDays,['2026-09-17','2026-09-18']);
+assert.equal(addDailyCompletion(completedDays,'2026-09-19','2026-09-19'),completedDays);
+for (const date of ['tutorial','practice','2026-09-17','2026-09-20']) assert.equal(addDailyCompletion(earnedDays,date,'2026-09-19'),earnedDays);
+for (const date of ['2026-02-29','2026-09-00','0000-01-01','not-a-date',null]) assert.equal(addDailyCompletion(earnedDays,date,date),earnedDays);
+assert.equal(streakLength(completedDays,'2026-09-19'),3);
+assert.equal(streakLength(completedDays,'2026-09-20'),3);
+assert.equal(streakLength(completedDays,'2026-09-21'),0);
+assert.equal(streakLength(['2026-09-15','2026-09-17','2026-09-19'],'2026-09-19'),1);
+assert.equal(streakLength(['2026-09-17','2026-09-18','2026-09-19','2026-09-20'],'2026-09-18'),2);
+assert.equal(streakLength(['2026-09-20'],'2026-09-19'),0);
+assert.equal(streakLength(['2026-09-18','2026-09-18'],'2026-09-19'),1);
+assert.equal(streakLength(['2026-12-30','2026-12-31','2027-01-01'],'2027-01-02'),3);
+assert.equal(streakLength(['2028-02-28','2028-02-29','2028-03-01'],'2028-03-01'),3);
+assert.equal(streakLength(['2100-02-28','2100-03-01'],'2100-03-01'),2);
+assert.equal(streakLength(['0001-01-01'],'0001-01-01'),1);
+for (const date of ['2026-02-29','tutorial','',null]) assert.equal(streakLength(completedDays,date),0);
+const clockMovedBack = Object.freeze(['2026-09-17','2026-09-19','2026-09-20']);
+assert.deepEqual(addDailyCompletion(clockMovedBack,'2026-09-18','2026-09-18'),['2026-09-17','2026-09-18','2026-09-19','2026-09-20']);
+assert.equal(streakLength(clockMovedBack,'2026-09-18'),1);
+assert.deepEqual(clockMovedBack,['2026-09-17','2026-09-19','2026-09-20']);
 assert.deepEqual(restoreProgress('{bad',ids),{board:empty,moves:0,hints:0,hintedPlaces:[],reported:false,elapsedMs:0});
 assert.deepEqual(restoreProgress(JSON.stringify({board:placed,moves:5,hints:2,reported:true}),ids),{board:placed,moves:5,hints:2,hintedPlaces:[],reported:true,elapsedMs:null});
 assert.equal(restoreProgress(JSON.stringify({board:placed,moves:-1,hints:'2'}),ids).moves,0);
@@ -72,4 +123,4 @@ assert.equal(shareText('2026-09-10',0,'https://example.com/',61000), 'NookGrid Â
 assert.match(shareText('2026-09-10',1,'https://example.com/',3661000), /Solved in 1:01:01 with 1 hint\./);
 assert.match(shareText('2026-09-10',2,'https://example.com/',100), /Solved in 0:01 with 2 hints\./);
 for (const elapsedMs of [null,0,undefined]) assert.match(shareText('2026-09-10',0,'https://example.com/',elapsedMs), /\nSolved without hints\.\n/);
-console.log('State checks passed: placement, swaps, validation, dates, UTC countdown, persistence, spoiler-free sharing.');
+console.log('State checks passed: placement, swaps, validation, local dates, daily streaks, persistence, spoiler-free sharing.');

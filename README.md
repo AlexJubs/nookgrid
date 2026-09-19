@@ -22,7 +22,7 @@ Open the local URL printed by Vite with `?test=1`. This uses separate test saves
 | Location | Responsibility |
 | --- | --- |
 | `public/index.html`, `public/style.css`, `public/app.mjs` | Shared game interface, interactions and responsive layout |
-| `public/engine.mjs`, `public/state.mjs` | Puzzle rules, board state and share text |
+| `public/engine.mjs`, `public/state.mjs` | Puzzle rules, board state, daily schedule, streaks and share text |
 | `public/puzzles.json`, `scripts/generate.mjs` | Bundled calendar and its generator; preserve published puzzles |
 | `public/platform.mjs`, `public/session.mjs`, `public/analytics.mjs` | Storage boundary, test mode and web measurement |
 | `public/navigation.mjs`, supporting HTML pages | Reading-page navigation, instructions and privacy information |
@@ -74,6 +74,10 @@ The last two commands require macOS and Xcode. On Linux, use `npx playwright ins
 `npm test` independently checks all 3,660 puzzles, published-puzzle preservation, game state, native storage and build/release safeguards. Browser tests cover gameplay and recovery. Native tests exercise the actual WKWebView and device persistence on dedicated simulators. Use `NOOKGRID_TEST_ALL_SIZES=1 npm run test:ios` for an additional small-device run when that simulator is installed. See [test coverage](docs/TESTING-COVERAGE.md) and [native test options and results](docs/NATIVE-TESTING.md).
 
 ## Shipping
+
+Daily puzzles unlock at midnight in the player's device time zone. An open board stays saved at midnight, with a link to the new puzzle. The countdown follows calendar midnight, including 23-hour and 25-hour daylight-saving days.
+
+Solving today's puzzle earns one streak day, with or without hints. Tutorial and archived solves earn none. Reset and replay keep earned days. Yesterday's streak remains active until the next midnight; missing a day starts the next streak at one. Completion dates live in a separate versioned local save, using native Preferences on iOS. They are not uploaded or shared across devices. Older saves have no completion timestamp, so only a restored solved current-day board can start a streak; historical solves are not backfilled.
 
 The site and iOS app share `public/`. The iOS build bundles the game for offline play and uses native storage, app lifecycle and sharing. No player account or game server is required. Daily puzzles are bundled through September 16, 2036. Existing published puzzles remain unchanged.
 

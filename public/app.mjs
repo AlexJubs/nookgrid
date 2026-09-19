@@ -1,5 +1,5 @@
 import { PLACES, clueText, clueStatus, isSolved } from './engine.mjs?v=20260915-teaser1';
-import { movePlace, selectPuzzle, restoreProgress, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces } from './state.mjs?v=20260919-share1';
+import { movePlace, selectPuzzle, restoreProgress, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces, puzzleDay, restoreStreakDays, addDailyCompletion, streakLength } from './state.mjs?v=20260919-daily1';
 import { placeArt } from './art.mjs?v=20260915-teaser1';
 import { testMode, analytics } from './session.mjs?v=20260918-simple1';
 import { native, savedValue, saveValue } from './platform.mjs';
@@ -9,10 +9,12 @@ const $ = id => document.getElementById(id);
 const renderIcon = (name, className = '') => `<svg class="ui-icon ${className}" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#${name}"/></svg>`;
 const ids = PLACES.map(place => place.id);
 const nameOf = id => PLACES.find(place => place.id === id)?.name || '';
-const day = () => new Date().toISOString().slice(0, 10);
-const today = day();
+const openedDay = puzzleDay();
+let today = openedDay;
 const params = new URLSearchParams(location.search);
 const progressPrefix = testMode ? 'nookgrid:test:v1:' : 'nookgrid:v1:';
+const streakKey = `${progressPrefix}streak`;
+let streakDays = restoreStreakDays(read(streakKey));
 let config = {feedbackEnabled:false};
 let puzzle, mode, bank, progress, selected = null, history = [], started = false;
 let wasSolved = false, feedbackKey = null, feedbackPayload = null;
@@ -35,20 +37,14 @@ function showAppStoreLink(identifier) {
   });
 }
 
-async function write(key, value) {
-  try {
-    await saveValue(key,value);
-    $('save-warning').hidden = !native || Boolean(native.storage);
-  }
-  catch { $('save-warning').hidden = false; }
-}
-
 $('retry-save').addEventListener('click', () => save());
 
 async function navigateTo(url) {
   if (native && progress) {
-    save(false);
-    try { await native.storage?.flush(); }
+    try {
+      if (!await save(false)) throw new Error('Progress was not saved');
+      await native.storage?.flush();
+    }
     catch {
       save();
       document.querySelector('dialog[open]')?.close();
@@ -71,6 +67,8 @@ for (const [button, dialog] of [['help-open','help-dialog'],['menu-open','menu-d
 $('help-tutorial').href = `?date=practice${testMode ? '&test=1' : ''}`;
 
 function preparePuzzleList() {
+  const focusedDate = document.activeElement?.dataset.puzzleDate;
+  $('puzzle-list').replaceChildren();
   const dates = ['practice', ...bank.puzzles.map(item => item.date).filter(date => date <= today).sort().reverse()];
   let count = 0;
   function showEarlierPuzzles() {
@@ -102,9 +100,10 @@ function preparePuzzleList() {
     $('puzzles-more').hidden = count >= dates.length;
   }
   showEarlierPuzzles();
-  $('puzzles-more').addEventListener('click', showEarlierPuzzles);
+  $('puzzles-more').onclick = showEarlierPuzzles;
   $('puzzles-status').hidden = true;
   $('puzzle-list').hidden = false;
+  if (focusedDate) ($('puzzle-list').querySelector(`[data-puzzle-date="${focusedDate}"]`) || $('puzzles-dialog').querySelector('[data-close]')).focus({preventScroll:true});
 }
 
 document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => button.closest('dialog').close()));
@@ -139,7 +138,8 @@ async function postRecord(collection, record, key) {
 }
 
 function track(event, properties = {}) {
-  analytics.track(event,{moves:progress?.moves || 0,hints:progress?.hints || 0,...properties});
+  const currentMode = mode === 'practice' ? mode : puzzle?.date === puzzleDay() ? 'daily' : 'archive';
+  analytics.track(event,{moves:progress?.moves || 0,hints:progress?.hints || 0,puzzle_mode:currentMode,...properties});
 }
 
 function startPlay(action) {
@@ -148,10 +148,20 @@ function startPlay(action) {
   track('puzzle_start',{action,elapsed_active_ms:analytics.activeMilliseconds()});
 }
 
-function save(shouldRun = !document.hidden) {
+async function save(shouldRun = !document.hidden) {
   solveTimer = advanceSolveTimer(solveTimer,performance.now(),progress.board.some(Boolean),shouldRun && !isSolved(puzzle,progress.board));
   progress.elapsedMs = solveTimer.elapsedMs;
-  write(`${progressPrefix}${puzzle.date}`, JSON.stringify(progress));
+  streakDays = [...new Set([...restoreStreakDays(read(streakKey)),...streakDays])].sort();
+  try {
+    const writes = [saveValue(`${progressPrefix}${puzzle.date}`, JSON.stringify(progress))];
+    if (streakDays.length) writes.push(saveValue(streakKey, JSON.stringify(streakDays)));
+    await Promise.all(writes);
+    $('save-warning').hidden = !native || Boolean(native.storage);
+    return true;
+  } catch {
+    $('save-warning').hidden = false;
+    return false;
+  }
 }
 
 function celebrateSolve() {
@@ -333,16 +343,40 @@ function makeBoard() {
 function updateReturnPrompt() {
   if (!puzzle) return;
   const now = new Date();
-  const currentDay = now.toISOString().slice(0,10);
-  const nextDay = new Date(Date.parse(`${currentDay}T00:00:00Z`) + 86400000).toISOString().slice(0,10);
+  const currentDay = puzzleDay(now);
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const nextDay = puzzleDay(tomorrow);
   const hasToday = bank.puzzles.some(item => item.date === currentDay);
   const hasTomorrow = bank.puzzles.some(item => item.date === nextDay);
   const isToday = puzzle.date === currentDay;
-  $('new-day').hidden = currentDay === today || !hasToday;
+  if (currentDay !== today) {
+    today = currentDay;
+    if (mode !== 'practice') {
+      mode = isToday ? 'daily' : 'archive';
+      $('board-title').textContent = isToday ? "Today's puzzle" : 'Archived puzzle';
+      analytics.setContext({puzzle_date:puzzle.date,puzzle_mode:mode,puzzle_version:bank.version,has_guidance:hasGuidance});
+      const number = bank.puzzles.findIndex(item => item.date === puzzle.date) + 1;
+      document.title = `NookGrid | ${isToday ? 'Free daily brain game' : `Brain game ${number}`}`;
+    }
+    preparePuzzleList();
+  }
+  $('new-day').hidden = currentDay === openedDay || isToday || !hasToday || mode === 'practice';
   $('play-today').hidden = isToday || !hasToday;
   $('next-puzzle').hidden = !isToday || !hasTomorrow;
   if (isToday && hasTomorrow) $('next-puzzle-time').textContent = nextPuzzleCountdown(now);
+  const streak = streakLength(streakDays,currentDay);
+  for (const id of ['daily-streak','puzzles-streak']) {
+    $(id).textContent = `${streak}-day streak`;
+    $(id).hidden = streak === 0 || (id === 'daily-streak' && !isToday);
+  }
 }
+
+window.addEventListener('storage',event => {
+  if (event.key !== streakKey) return;
+  streakDays = [...new Set([...restoreStreakDays(event.newValue),...streakDays])].sort();
+  updateReturnPrompt();
+});
 
 function render() {
   if (!puzzle) return;
@@ -410,7 +444,12 @@ function render() {
     $('completion-time').textContent = solveTime ? `Solved in ${solveTime}` : '';
     $('completion-time').hidden = !solveTime;
     $('selection-status').textContent = 'The neighborhood plan is complete.';
-    if (!progress.reported) { track('puzzle_complete',{active_ms_this_page:analytics.activeMilliseconds()}); progress.reported = true; save(); }
+    const earnedDays = addDailyCompletion(streakDays,puzzle.date,puzzleDay());
+    const hasEarnedDay = earnedDays !== streakDays;
+    streakDays = earnedDays;
+    const shouldReport = !progress.reported;
+    if (shouldReport) { track('puzzle_complete',{active_ms_this_page:analytics.activeMilliseconds()}); progress.reported = true; }
+    if (shouldReport || hasEarnedDay) save();
     if (shouldFocusCompletion) {
       $('completion').focus({preventScroll:true});
       $('completion').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',block:'nearest'});
@@ -503,6 +542,7 @@ async function init() {
     if (!Array.isArray(bank.puzzles) || !bank.tutorial) throw new Error('Puzzle bank invalid');
     config = {feedbackEnabled:settings.feedbackEnabled === true};
     showAppStoreLink(settings.appStoreId);
+    today = puzzleDay();
     ({puzzle,mode} = selectPuzzle(bank,today,params.get('date')));
     updatePuzzleLinks(mode === 'practice' ? 'practice' : puzzle.date);
     progress = restoreProgress(read(`${progressPrefix}${puzzle.date}`),ids,puzzle.solution);
@@ -530,7 +570,7 @@ async function init() {
       $('play-today').classList.replace('text-button','primary');
     }
     $('board-title').textContent = {daily:"Today's puzzle",archive:'Archived puzzle',practice:'The tutorial puzzle'}[mode];
-    document.title = `NookGrid | ${mode === 'daily' ? 'Free daily spatial logic puzzle' : mode === 'practice' ? 'Tutorial logic puzzle' : `Logic puzzle ${number}`}`;
+    document.title = `NookGrid | ${mode === 'daily' ? 'Free daily brain game' : mode === 'practice' ? 'Tutorial brain game' : `Brain game ${number}`}`;
     preparePuzzleList();
     if (native) document.addEventListener('click',event => {
       const anchor = event.target.closest('a[href]');

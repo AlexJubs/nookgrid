@@ -1,6 +1,6 @@
 # iOS implementation
 
-Approved scope: one shared web/iOS game, offline iOS play, durable on-device progress, ten years of unique puzzles, existing tutorial/archive, app-specific retention measurement, live development reload, automated browser and simulator tests, CI and gated release automation. Android, streak UI, notifications and ads follow later.
+Approved scope: one shared web/iOS game, offline iOS play, durable on-device progress, ten years of unique puzzles, existing tutorial/archive, app-specific retention measurement, live development reload, automated browser and simulator tests, CI and gated release automation. Daily puzzles change at local midnight, with a local daily-completion streak. Android, notifications and ads follow later.
 
 The app uses Capacitor with bundled HTML, CSS and JavaScript. Native Preferences holds small progress records. iOS lifecycle signals preserve timing and saved games. Shares always link to nookgrid.com. No account or game server is added.
 

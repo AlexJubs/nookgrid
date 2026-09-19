@@ -370,8 +370,8 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
   });
 }
 
-test('UTC rollover announces the next puzzle without replacing the saved board', async ({ page }) => {
-  await page.clock.setSystemTime(new Date(`${today}T23:59:58Z`));
+test('local midnight announces the next puzzle without replacing the saved board', async ({ page }) => {
+  await page.clock.setSystemTime(new Date(`${today}T23:59:58-04:00`));
   await openGame(page);
   await place(page, 'bakery', 0);
   await page.clock.fastForward(4000);

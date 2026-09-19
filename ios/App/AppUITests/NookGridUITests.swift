@@ -154,6 +154,34 @@ final class NookGridUITests: XCTestCase {
         XCTAssertTrue(button("Hint, 1 hint used").exists)
     }
 
+    func testDailyStreakSurvivesResetRestartAndReplay() throws {
+        for count in 0..<8 { reveal(count) }
+        let remainingPlace = try XCTUnwrap(places.first { button("\($0), choose a lot").exists })
+        let remainingLot = try XCTUnwrap(lots.first { button("Lot \($0), empty").exists })
+        place(remainingPlace, at: remainingLot)
+        XCTAssertTrue(app.staticTexts["Solved!"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["1-day streak"].exists)
+        XCTAssertTrue(button("Reset").isEnabled)
+        tap(button("Reset"))
+        assertLot(remainingLot, "empty")
+        openPuzzles()
+        XCTAssertTrue(app.staticTexts["1-day streak"].exists)
+        tap(button("Close puzzles"))
+
+        app.terminate()
+        app.launchArguments = ["nookgrid-offline"]
+        app.launch()
+        XCTAssertTrue(button("Lot \(remainingLot), empty").waitForExistence(timeout: 15))
+        XCTAssertTrue(button("Hint, 8 hints used").exists)
+        openPuzzles()
+        XCTAssertTrue(app.staticTexts["1-day streak"].exists)
+        tap(button("Close puzzles"))
+        place(remainingPlace, at: remainingLot)
+        XCTAssertTrue(app.staticTexts["Solved!"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["1-day streak"].exists)
+        XCTAssertFalse(app.staticTexts["2-day streak"].exists)
+    }
+
     func testTutorialGuidanceAndSavedPuzzlesAreSeparate() {
         openArchive()
         place("Park", at: "C3")

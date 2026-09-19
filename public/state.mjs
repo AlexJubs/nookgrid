@@ -17,11 +17,45 @@ export function selectPuzzle(bank, today, requested) {
   return puzzle ? {puzzle,mode:puzzle.date === today ? 'daily' : 'archive'} : {puzzle:bank.tutorial,mode:'practice'};
 }
 
+export function puzzleDay(now = new Date()) {
+  return [now.getFullYear(),now.getMonth() + 1,now.getDate()].map((value,index) => String(value).padStart(index ? 2 : 4,'0')).join('-');
+}
+
 export function nextPuzzleCountdown(now = new Date()) {
   const nextMidnight = new Date(now);
-  nextMidnight.setUTCHours(24,0,0,0);
+  nextMidnight.setHours(24,0,0,0);
   const remainingSeconds = Math.ceil((nextMidnight - now) / 1000);
   return [Math.floor(remainingSeconds / 3600),Math.floor(remainingSeconds / 60) % 60,remainingSeconds % 60].map(value => String(value).padStart(2,'0')).join(':');
+}
+
+function isPuzzleDay(value) {
+  if (typeof value !== 'string' || !/^(?!0000)\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0,10) === value;
+}
+
+export function restoreStreakDays(raw) {
+  try {
+    const days = JSON.parse(raw);
+    return Array.isArray(days) ? [...new Set(days.filter(isPuzzleDay))].sort() : [];
+  } catch { return []; }
+}
+
+export function addDailyCompletion(days, puzzleDate, today) {
+  if (puzzleDate !== today || !isPuzzleDay(today) || days.includes(today)) return days;
+  return [...days,today].sort();
+}
+
+export function streakLength(days, today) {
+  if (!isPuzzleDay(today)) return 0;
+  const earnedDays = new Set(days), date = new Date(`${today}T00:00:00Z`);
+  if (!earnedDays.has(today)) date.setUTCDate(date.getUTCDate() - 1);
+  let count = 0;
+  while (earnedDays.has(date.toISOString().slice(0,10))) {
+    count++;
+    date.setUTCDate(date.getUTCDate() - 1);
+  }
+  return count;
 }
 
 export function restoreHintedPlaces(board, hintedPlaces, solution) {

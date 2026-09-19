@@ -19,8 +19,8 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="NookGrid gameplay with three places on a nine-lot neighborhood board, a tray of places, and the neighborhood plan alongside.">
   <link rel="icon" href="./favicon.svg?v=20260918-logo1" type="image/svg+xml"><link rel="apple-touch-icon" href="./apple-touch-icon.png?v=20260918-logo1" sizes="180x180">
-  <link rel="stylesheet" href="./style.css?v=20260918-menu2">
-  <script type="module" src="./app.mjs?v=20260919-share1"></script>
+  <link rel="stylesheet" href="./style.css?v=20260919-daily1">
+  <script type="module" src="./app.mjs?v=20260919-daily1"></script>
 </head>
 <body class="game-page">
   <a class="skip-link" href="#game" data-track="index-a-1">Skip to puzzle</a>
@@ -53,10 +53,10 @@
         </div>
         <section class="completion" id="completion" hidden aria-labelledby="completion-title" tabindex="-1">
           <div class="completion-summary">
-            <div><h2 id="completion-title">Solved!</h2><p id="completion-time" hidden></p><p id="completion-detail">The neighborhood plan is complete.</p></div>
+            <div><h2 id="completion-title">Solved!</h2><p id="completion-time" hidden></p><p id="completion-detail">The neighborhood plan is complete.</p><p id="daily-streak" hidden></p></div>
             <button class="primary" id="share">Share result</button>
             <p id="share-status" role="status"></p>
-            <div id="next-puzzle" hidden><span>Next puzzle in</span><strong id="next-puzzle-time" role="timer" aria-live="off">00:00:00</strong></div>
+            <div id="next-puzzle" hidden><span>Next puzzle at midnight</span><strong id="next-puzzle-time" role="timer" aria-live="off">00:00:00</strong></div>
             <a class="text-button inline-button" id="play-today" href="./" hidden>Play today's puzzle</a>
           </div>
           <div class="completion-actions"><button class="text-button" id="clear-win">Reset</button><button class="text-button" id="feedback-win">Feedback</button></div>
@@ -91,6 +91,7 @@
   </dialog>
   <dialog id="puzzles-dialog" aria-labelledby="puzzles-title">
     <button class="close-dialog" data-close aria-label="Close puzzles"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#x"/></svg></button><h2 id="puzzles-title">Puzzles</h2>
+    <p class="puzzle-schedule">New puzzle daily at midnight, your time.<span id="puzzles-streak" hidden></span></p>
     <p id="puzzles-status" role="status">Loading puzzles…</p>
     <nav id="puzzle-list" class="menu-links" aria-label="Choose a puzzle" hidden></nav>
     <button id="puzzles-more" class="text-button" hidden>Earlier puzzles</button>
@@ -114,7 +115,7 @@
       <p id="analytics-description">Help improve the puzzles by measuring visits, moves and results without saving a tracking ID.</p>
       <p id="privacy-signal" role="status"></p>
     </div>
-    <p class="settings-note">Your progress stays in this browser. Clearing browser data removes it.</p>
+    <p class="settings-note">Your progress and streak stay in this browser. Clearing browser data removes them.</p>
   </dialog>
 </body>
 </html>

@@ -71,6 +71,9 @@
 .game-page .completion h2{font-size:22px;margin-bottom:3px}
 .game-page .completion p{font-size:12px;line-height:1.4}
 .game-page #completion-detail{color:#5c685d}
+.game-page #daily-streak{color:var(--blue);font-weight:600;margin-top:4px}
+.game-page dialog .puzzle-schedule{font-size:13px;color:var(--muted)}
+#puzzles-streak{display:block;color:var(--blue);font-weight:600;margin-top:4px}
 .game-page #completion-time{font-weight:650;font-variant-numeric:tabular-nums;margin-bottom:3px}
 .confetti{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:30}
 .confetti i{position:absolute;top:0;left:0;width:8px;height:12px;border-radius:2px}
