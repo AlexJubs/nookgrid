@@ -53,7 +53,8 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
       assert.doesNotMatch(text['privacy.html'], /It runs by default|Private feedback|here\.now receives|Ads and questions|use Menu → Feedback/);
       assert.match(text['privacy.html'], /does not load PostHog or send play analytics/);
       const {shareText} = await import(`data:text/javascript;base64,${Buffer.from(text['state.js']).toString('base64')}`);
-      const share = shareText('2026-09-18', 0, 'https://embed.invalid/?test=1');
+      const share = shareText('2026-09-18', 0, 'https://embed.invalid/?test=1', 61000);
+      assert.match(share, /Solved in 1:01 without hints\./);
       if (platform === 'itch') {
         assert.match(text['index.html'], /the main NookGrid game/);
         assert.match(text['privacy.html'], /For private questions, open/);

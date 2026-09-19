@@ -9,12 +9,12 @@ NookGrid already has the explicit identifier `com.nookgrid.app` and an App Store
 ## First release
 
 - Name: NookGrid
-- Subtitle: A daily neighborhood puzzle
+- Subtitle: Your daily brain game
 - Category: Games, Puzzle
 - Price: Free
 - Account: None
 - Ads, purchases and reminders: None in version 1
-- Description: Arrange nine little places to match the neighborhood plan. Play a fresh puzzle each day, learn with a guided Tutorial, and revisit past puzzles. Progress stays on your device, and the game works offline.
+- Description: NookGrid is a free daily brain game. Arrange nine places to match the neighborhood plan. Play a fresh puzzle each day, learn with a guided Tutorial, and revisit past puzzles. Progress stays on your device, and the game works offline.
 - Privacy URL: `https://nookgrid.com/app-privacy.html`, only after the reviewed page is published
 - Support: `https://nookgrid.com/about.html` and the feedback email shown in the app
 

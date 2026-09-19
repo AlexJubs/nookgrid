@@ -339,7 +339,7 @@ final class NookGridUITests: XCTestCase {
         tap(button("Share result"))
         let copy = app.cells["Copy"].firstMatch
         XCTAssertTrue(copy.waitForExistence(timeout: 60), app.debugDescription)
-        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS 'https://nookgrid.com/' AND label CONTAINS '9 hints'")).firstMatch.exists, app.debugDescription)
+        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS 'https://nookgrid.com/' AND label CONTAINS '9 hints' AND label CONTAINS 'Solved in '")).firstMatch.exists, app.debugDescription)
         let close = app.buttons.matching(NSPredicate(format: "label ==[c] 'close'")).firstMatch
         if close.exists { close.tap() }
         else {

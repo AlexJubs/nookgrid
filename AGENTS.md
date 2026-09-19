@@ -8,6 +8,8 @@ The public repository tracks reviewed game source, native iOS source, build help
 
 ## Design
 
+Describe NookGrid as a "brain game" in promotional copy, store listings and social previews. Keep copy concise and focused on play. Do not mention development-process details or claim cognitive or health benefits.
+
 Read `DESIGN.md` before every design change. Apply Adam Wathan and Steve Schoger's Refactoring UI principles to the game, dialogs, supporting pages, states and growth visuals. Preserve the compact layout, clear action hierarchy and accessibility. Inspect the actual desktop and phone states before shipping. The source book stays private and must never be committed.
 
 ## iOS

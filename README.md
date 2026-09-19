@@ -1,6 +1,6 @@
 # NookGrid
 
-A daily spatial logic puzzle. Arrange nine places to match the neighborhood plan.
+A daily brain game. Arrange nine places to match the neighborhood plan.
 
 [Play NookGrid](https://nookgrid.com/)
 

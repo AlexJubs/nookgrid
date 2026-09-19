@@ -81,8 +81,11 @@ test('cancelling the native share sheet leaves the solved board visible',async (
     await page.locator('#confirm-hint').click();
   }
   await expect(page.locator('#completion')).toBeVisible();
-  await page.evaluate(() => { window.nookgridNative.share = async () => { throw new Error('Share canceled'); }; });
+  const solveTime = await page.locator('#completion-time').textContent();
+  expect(solveTime).toMatch(/^Solved in \d+:\d{2}/);
+  await page.evaluate(() => { window.nookgridNative.share = async text => { window.sharedResult = text; throw new Error('Share canceled'); }; });
   await page.locator('#share').click();
+  expect(await page.evaluate(() => window.sharedResult)).toContain(`${solveTime} with 9 hints.`);
   await expect(page.locator('#share-dialog')).not.toBeVisible();
   await expect(page.locator('#completion')).toBeVisible();
   expect(await page.evaluate(() => window.captured.filter(item => item.event === 'share_result').at(-1).properties.result)).toBe('cancelled');

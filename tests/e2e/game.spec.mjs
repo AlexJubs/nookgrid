@@ -241,7 +241,8 @@ test('share uses the canonical daily URL and handles copy, native cancellation a
   await page.locator('#share').click();
   await expect(page.locator('#share-status')).toHaveText('Copied.');
   const result = await page.evaluate(() => window.copiedResult);
-  expect(result).toContain('Solved with 2 hints.');
+  expect(result).toContain('Solved in 1:01 with 2 hints.');
+  expect(result).toContain('Your daily brain game.');
   const link = new URL(result.split('\n').at(-1));
   expect(link.origin).toBe('https://nookgrid.com');
   expect(link.pathname).toBe('/');
