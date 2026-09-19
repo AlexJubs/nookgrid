@@ -26,7 +26,7 @@ def package(platform="itch"):
         if source.is_symlink():
             raise ValueError(f"Refusing a symlink: {source}")
         relative = source.relative_to(ROOT / "public")
-        if not source.is_file() or any(part.startswith(".") for part in relative.parts) or relative.name in {"robots.txt", "sitemap.xml", "ads.txt"}:
+        if not source.is_file() or any(part.startswith(".") for part in relative.parts) or relative.name in {"robots.txt", "sitemap.xml", "ads.txt", "app-privacy.html"}:
             continue
         name = relative.as_posix().replace(".mjs", ".js")
         text = source.read_bytes()
@@ -38,6 +38,7 @@ def package(platform="itch"):
         files[name] = text
 
     files["site-config.json"] = json.dumps({"feedbackEnabled": False, "eventsEnabled": False, "analytics": {"enabled": False}}) + "\n"
+    files["privacy.html"] = replace_once(files["privacy.html"], r'<p>[^<]*<a href="\./app-privacy\.html">.*?</p>', "")
     files["state.js"] = replace_once(files["state.js"], re.escape("const link = new URL(base);"), f"const link = new URL('{MAIN_URL}');")
     files["analytics.js"] = replace_once(files["analytics.js"], re.escape("Analytics are not connected yet."), "Analytics are disabled in this itch.io build.")
     files["index.html"] = replace_once(files["index.html"], r'<p id="feedback-unavailable"[^>]*>.*?</p>', f'<p id="feedback-unavailable" class="notice">To send a private note, open {MAIN_LINK} and choose Give feedback. You can also leave a public comment on this itch.io game page.</p>')
@@ -50,8 +51,9 @@ def package(platform="itch"):
         files["index.html"] = replace_once(files["index.html"], r'<p id="feedback-unavailable"[^>]*>.*?</p>', '<p id="feedback-unavailable" class="notice">Use the game rating controls on CrazyGames to leave feedback.</p>')
         files["index.html"] = files["index.html"].replace("This itch.io build does not collect play analytics.", "This build does not send play analytics to NookGrid. CrazyGames provides its own platform metrics.")
         files["privacy.html"] = replace_once(files["privacy.html"], r'<h2>Play analytics</h2>.*?(?=<h2>Ads and questions</h2>)', '<h2>Play analytics</h2><p>This build does not load PostHog or send play analytics to NookGrid. Progress stays in this browser.</p><h2>Feedback</h2><p>This build does not send feedback to NookGrid directly. You can use the game rating controls on CrazyGames.</p><h2>Hosting</h2><p>When this game is hosted on CrazyGames, its platform analytics and feedback are covered by <a href="https://www.crazygames.com/privacy-policy" target="_blank" rel="noopener noreferrer">CrazyGames\' privacy policy</a>. Saved progress is separate from other versions of NookGrid.</p>')
-        for name in ("index.html", "about.html", "privacy.html"):
-            files[name] = re.sub(r'<(?:link rel="canonical"|meta property="og:)[^>]*>', "", files[name])
+        for name in files:
+            if name.endswith(".html"):
+                files[name] = re.sub(r'<(?:link rel="canonical"|meta property="og:)[^>]*>', "", files[name])
         files["style.css"] += b'''
 @media(min-width:681px) and (max-height:720px){
   .site-header{height:40px}.intro{display:none}.game-layout{padding:8px 16px;gap:24px}
@@ -63,6 +65,8 @@ def package(platform="itch"):
   .clues{gap:4px}.clue{min-height:28px;padding:5px 8px;font-size:12px}.clue-key{margin-top:6px}
 }
 '''
+    questions = f'For private questions, open {MAIN_LINK} and choose Feedback.' if platform == "itch" else 'For privacy questions about hosting, see <a href="https://www.crazygames.com/privacy-policy" target="_blank" rel="noopener noreferrer">CrazyGames\' privacy policy</a>.'
+    files["privacy.html"] = replace_once(files["privacy.html"], r'<h2>Ads and questions</h2>\s*<p>.*?</p>', f'<h2>Questions</h2><p>{questions}</p>')
     encoded = {name: text.encode("utf-8") if isinstance(text, str) else text for name, text in files.items()}
     if "index.html" not in encoded or len(encoded) > 1000 or any(len(name) > 240 for name in encoded):
         raise ValueError("The ZIP does not meet itch.io entry-point or filename limits")
