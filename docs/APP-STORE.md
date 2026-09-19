@@ -22,9 +22,9 @@ Complete Apple's age-rating questionnaire from actual content, select territorie
 
 ## Privacy answers
 
-The release app uses a random installation ID and gameplay events with PostHog US Cloud for analytics. Declare **Device ID** and **Product Interaction**, purpose **Analytics**, linked to the device identity, **not used for tracking across other companies' apps or websites**. No advertising ID, location enrichment, person profiles or session replay is enabled. Review the final packaged app against these answers before submission.
+The release app sends a random installation ID, gameplay events and puzzle-loading failures to PostHog US Cloud. Declare **Device ID** for **Analytics** and **App Functionality**, **Product Interaction** for **Analytics**, and **Other Diagnostic Data** for **App Functionality**. All three are linked to the device identity and **not used for tracking across other companies' apps or websites**. No advertising ID, location enrichment, person profiles or session replay is enabled. Review the final packaged app against these answers before submission.
 
-The privacy manifest declares the matching analytics collection and UserDefaults reason `CA92.1` for on-device progress/preferences. Analytics can be disabled in Settings. Debug/live-reload builds collect no analytics. The website keeps its existing cookieless measurement separately, so web daily visitor estimates and app installation retention are different cohorts.
+The privacy manifest declares the matching collection and UserDefaults reason `CA92.1` for on-device progress/preferences. Turning analytics off in Settings stops both gameplay events and diagnostic events. Debug/live-reload builds collect neither. The website keeps its existing cookieless measurement separately, so web daily visitor estimates and app installation retention are different cohorts.
 
 Apple guidance: [enrollment](https://developer.apple.com/help/account/membership/program-enrollment), [app privacy](https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy/), [Capacitor Preferences manifest](https://capacitorjs.com/docs/apis/preferences).
 
