@@ -100,9 +100,6 @@ export function shareText(date, hints, base, elapsedMs) {
   const link = new URL(base);
   link.search = date === 'tutorial' ? '?date=practice' : `?date=${date}`;
   link.searchParams.set('utm_source','share');
-  link.searchParams.set('utm_medium','result');
-  link.searchParams.set('utm_campaign','daily');
-  link.searchParams.set('utm_content','result_card');
   link.hash = '';
   return `NookGrid · ${label}\n🏡 Your daily brain game.\nSolved${solveTime ? ` in ${solveTime}` : ''} ${hints ? `with ${hints} hint${hints === 1 ? '' : 's'}.` : 'without hints.'}\n${link.href}`;
 }

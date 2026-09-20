@@ -305,7 +305,7 @@ test('share uses the canonical daily URL and handles copy, native cancellation a
     Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { window.copiedResult = text; } } });
   });
-  await openGame(page, 'utm_source=playtest#private');
+  await openGame(page, 'utm_source=playtest&utm_medium=social&utm_campaign=old&utm_content=post&utm_term=puzzle#private');
   await page.locator('#share').click();
   await expect(page.locator('#share-status')).toHaveText('Copied.');
   const result = await page.evaluate(() => window.copiedResult);
@@ -314,7 +314,7 @@ test('share uses the canonical daily URL and handles copy, native cancellation a
   const link = new URL(result.split('\n').at(-1));
   expect(link.origin).toBe('https://nookgrid.com');
   expect(link.pathname).toBe('/');
-  expect(Object.fromEntries(link.searchParams)).toEqual({ date: today, utm_source: 'share', utm_medium: 'result', utm_campaign: 'daily', utm_content: 'result_card' });
+  expect(Object.fromEntries(link.searchParams)).toEqual({ date: today, utm_source: 'share' });
   expect(link.hash).toBe('');
   expect(result).not.toMatch(/Bakery|Cafe|Books|Florist|Pond|Market/);
   await page.evaluate(() => Object.defineProperty(navigator, 'share', { configurable: true, value: async value => { window.nativeResult = value; } }));
