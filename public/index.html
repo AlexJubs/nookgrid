@@ -20,7 +20,7 @@
   <meta property="og:image:alt" content="NookGrid gameplay with three places on a nine-lot neighborhood board, a tray of places, and the neighborhood plan alongside.">
   <link rel="icon" href="./favicon.svg?v=20260918-logo1" type="image/svg+xml"><link rel="apple-touch-icon" href="./apple-touch-icon.png?v=20260918-logo1" sizes="180x180">
   <link rel="stylesheet" href="./style.css?v=20260919-polish1">
-  <script type="module" src="./app.mjs?v=20260919-polish1"></script>
+  <script type="module" src="./app.mjs?v=20260920-reset1"></script>
 </head>
 <body class="game-page">
   <a class="skip-link" href="#game" data-track="index-a-1">Skip to puzzle</a>
@@ -75,7 +75,7 @@
     <p class="help-note">A–C are rows; 1–3 are columns.</p>
     <div class="help-controls">
       <p><strong>Remove:</strong> Drag to the tray, or select a place and tap Put back.</p>
-      <p><strong>Hints:</strong> Reveal and lock a place, even after Reset. Each counts in your result.</p>
+      <p><strong>Hints:</strong> Lock a place until you solve. Reset then clears every place. Each hint counts in your result.</p>
       <p class="help-note">Keyboard: Tab to move focus, Enter or Space to select, Escape to cancel.</p>
     </div>
     <nav class="help-links" aria-label="Tutorial help"><a id="help-tutorial" href="?date=practice">Play tutorial</a></nav>
@@ -99,7 +99,7 @@
   <dialog id="share-dialog" aria-labelledby="share-title"><button class="close-dialog" data-close aria-label="Close share result" data-track="share-close"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#x"/></svg></button><h2 id="share-title">Share your result</h2><p>Copy this result and send it to a friend.</p><label class="sr-only" for="share-text">Result text</label><textarea id="share-text" rows="6" readonly></textarea></dialog>
   <dialog id="hint-dialog" aria-labelledby="hint-title" aria-describedby="hint-description">
     <h2 id="hint-title">Reveal a place?</h2>
-    <p id="hint-description">One place stays fixed in its correct lot, even after Reset. Adds 1 hint to your result.</p>
+    <p id="hint-description">One place stays fixed until you solve, even after Reset. Adds 1 hint to your result.</p>
     <div class="hint-actions"><button class="secondary" data-close data-track="index-button-4" autofocus>Cancel</button><button class="primary" id="confirm-hint">Reveal</button></div>
   </dialog>
   <dialog id="feedback-dialog" aria-labelledby="feedback-title">

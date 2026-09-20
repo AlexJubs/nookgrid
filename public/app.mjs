@@ -197,7 +197,8 @@ function celebrateSolve() {
 }
 
 function applyBoard(board, message, action = 'place') {
-  if (progress.hintedPlaces.some(id => board[puzzle.solution.indexOf(id)] !== id)) return false;
+  const shouldClearHints = action === 'reset' && isSolved(puzzle,progress.board);
+  if (!shouldClearHints && progress.hintedPlaces.some(id => board[puzzle.solution.indexOf(id)] !== id)) return false;
   const hasChanged = board.some((id,index) => id !== progress.board[index]);
   if (!hasChanged && action !== 'reset') return false;
   if (hasChanged) {
@@ -205,12 +206,17 @@ function applyBoard(board, message, action = 'place') {
     if (action === 'reset') {
       save(false);
       previous.elapsedMs = progress.elapsedMs;
+      if (shouldClearHints) {
+        previous.hints = progress.hints;
+        previous.hintedPlaces = [...progress.hintedPlaces];
+      }
     }
     history.push(previous);
     if (history.length > 100) history.shift();
     progress.moves++;
   }
   if (action === 'reset') solveTimer = {elapsedMs:0,startedAt:null};
+  if (shouldClearHints) { progress.hints = 0; progress.hintedPlaces = []; }
   progress.board = board;
   shouldShowGuidance = false;
   selected = null;
@@ -436,7 +442,7 @@ function render() {
   $('selection-status').textContent = selected ? `${nameOf(selected)} selected. Choose a lot.` : isLearning ? `Drag ${nameOf(starterPlaces[starterStep])}, or tap it then a square.` : 'Drag a place, or tap a place then a square.';
   $('remove-place').hidden = !selected || !board.includes(selected);
   $('undo').disabled = !history.some(previous => restoreHintedPlaces(previous.board,progress.hintedPlaces,puzzle.solution).some((id,index) => id !== board[index]));
-  for (const id of ['clear','clear-win']) $(id).disabled = !board.some(Boolean) || progress.hintedPlaces.length === 9;
+  for (const id of ['clear','clear-win']) $(id).disabled = !board.some(Boolean);
   $('game').classList.toggle('is-solved', solved);
   $('game').classList.toggle('has-selection', Boolean(selected));
   $('hint').disabled = solved;
@@ -475,15 +481,17 @@ $('undo').addEventListener('click', () => {
   do {
     previous = history.pop();
     if (!previous) return;
-    board = restoreHintedPlaces(previous.board,progress.hintedPlaces,puzzle.solution);
+    board = restoreHintedPlaces(previous.board,previous.hintedPlaces ?? progress.hintedPlaces,puzzle.solution);
   } while (board.every((id,index) => id === progress.board[index]));
   progress.board = board; progress.moves = previous.moves; selected = null;
+  if (previous.hintedPlaces) { progress.hintedPlaces = previous.hintedPlaces; progress.hints = previous.hints; }
   if ('elapsedMs' in previous) solveTimer = {elapsedMs:previous.elapsedMs,startedAt:null};
   track('board_undo');
   save(); render();
 });
 for (const id of ['clear','clear-win']) $(id).addEventListener('click', () => {
-  applyBoard(restoreHintedPlaces(Array(9).fill(null),progress.hintedPlaces,puzzle.solution),progress.hints ? 'Board reset. Hinted places stay fixed.' : 'Board cleared.','reset');
+  const hintsToKeep = isSolved(puzzle,progress.board) ? [] : progress.hintedPlaces;
+  applyBoard(restoreHintedPlaces(Array(9).fill(null),hintsToKeep,puzzle.solution),hintsToKeep.length ? 'Board reset. Hinted places stay fixed.' : 'Board cleared.','reset');
   ($('undo').disabled ? $('hint') : $('undo')).focus({preventScroll:true});
 });
 $('confirm-hint').addEventListener('click', () => {

@@ -162,7 +162,9 @@ final class NookGridUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["1-day streak"].exists)
         XCTAssertTrue(button("Reset").isEnabled)
         tap(button("Reset"))
-        assertLot(remainingLot, "empty")
+        for address in lots { assertLot(address, "empty") }
+        XCTAssertTrue(button("Hint, 0 hints used").exists)
+        XCTAssertTrue(button("Undo").isEnabled)
         openPuzzles()
         XCTAssertTrue(app.staticTexts["1-day streak"].exists)
         XCTAssertTrue(app.webViews.links.matching(NSPredicate(format: "label BEGINSWITH 'Today, ' AND label ENDSWITH ', completed'")).firstMatch.exists, app.debugDescription)
@@ -172,15 +174,59 @@ final class NookGridUITests: XCTestCase {
         app.launchArguments = ["nookgrid-offline"]
         app.launch()
         XCTAssertTrue(button("Lot \(remainingLot), empty").waitForExistence(timeout: 15))
-        XCTAssertTrue(button("Hint, 8 hints used").exists)
+        for address in lots { assertLot(address, "empty") }
+        XCTAssertTrue(button("Hint, 0 hints used").exists)
+        XCTAssertFalse(button("Undo").isEnabled)
         openPuzzles()
         XCTAssertTrue(app.staticTexts["1-day streak"].exists)
         XCTAssertTrue(app.webViews.links.matching(NSPredicate(format: "label BEGINSWITH 'Today, ' AND label ENDSWITH ', completed'")).firstMatch.exists, app.debugDescription)
         tap(button("Close puzzles"))
-        place(remainingPlace, at: remainingLot)
+        reveal(0)
+        let fixed = app.webViews.firstMatch.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH 'Lot ' AND label ENDSWITH 'fixed by a hint'")).firstMatch
+        XCTAssertTrue(fixed.waitForExistence(timeout: 5))
+        let fixedLabel = fixed.label
+        tap(button("Reset"))
+        XCTAssertTrue(button(fixedLabel).exists)
+        XCTAssertFalse(button(fixedLabel).isEnabled)
+        XCTAssertTrue(button("Hint, 1 hint used").exists)
+        for count in 1..<8 { reveal(count) }
+        let replayPlace = try XCTUnwrap(places.first { button("\($0), choose a lot").exists })
+        let replayLot = try XCTUnwrap(lots.first { button("Lot \($0), empty").exists })
+        place(replayPlace, at: replayLot)
         XCTAssertTrue(app.staticTexts["Solved!"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["1-day streak"].exists)
         XCTAssertFalse(app.staticTexts["2-day streak"].exists)
+    }
+
+    func testTutorialResetClearsAllHintsAfterCompletionAndRestart() {
+        openTutorial()
+        for count in 0..<9 { reveal(count) }
+        XCTAssertTrue(app.staticTexts["Nice work!"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["9 hints used."].exists)
+        XCTAssertTrue(button("Reset").isEnabled)
+        tap(button("Reset"))
+        for address in lots { assertLot(address, "empty") }
+        XCTAssertTrue(button("Hint, 0 hints used").exists)
+        XCTAssertTrue(button("Undo").isEnabled)
+        XCTAssertFalse(app.staticTexts["Nice work!"].exists)
+        tap(button("Undo"))
+        XCTAssertTrue(app.staticTexts["Nice work!"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["9 hints used."].exists)
+        XCTAssertEqual(app.webViews.firstMatch.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH 'Lot ' AND label ENDSWITH 'fixed by a hint'")).count, 9)
+        tap(button("Reset"))
+        for address in lots { assertLot(address, "empty") }
+
+        app.terminate()
+        app.launchArguments = ["nookgrid-offline"]
+        app.launch()
+        XCTAssertTrue(button("Menu").waitForExistence(timeout: 15))
+        openPuzzles()
+        XCTAssertTrue(app.webViews.links["Tutorial, completed"].firstMatch.exists, app.debugDescription)
+        openTutorial()
+        for address in lots { assertLot(address, "empty") }
+        XCTAssertTrue(button("Hint, 0 hints used").exists)
+        XCTAssertFalse(button("Undo").isEnabled)
+        XCTAssertTrue(button("Bakery, choose a lot").isEnabled)
     }
 
     func testTutorialGuidanceAndSavedPuzzlesAreSeparate() {

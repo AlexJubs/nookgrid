@@ -184,7 +184,7 @@ test('hints require confirmation and stay fixed through moves, undo, reset and r
   expect((await readProgress(page)).hintedPlaces).toEqual([daily.solution[0]]);
 });
 
-test('nine hints complete the puzzle and disable destructive no-op controls', async ({ page }) => {
+test('reset clears solved hints, Undo restores them and unfinished replay hints stay fixed', async ({ page }) => {
   await openGame(page);
   for (let count = 1; count <= 9; count++) {
     await page.locator('#hint').click();
@@ -193,10 +193,51 @@ test('nine hints complete the puzzle and disable destructive no-op controls', as
   }
   await expectBoard(page, daily.solution);
   await expect(page.locator('#completion-detail')).toHaveText('9 hints used.');
-  await expect(page.locator('#clear-win')).toBeDisabled();
+  await expect(page.locator('#clear-win')).toBeEnabled();
   await expect(page.locator('#hint')).toBeDisabled();
   await expect(page.locator('#board .locked')).toHaveCount(9);
+  await page.locator('#clear-win').click();
+  await expectBoard(page, emptyBoard);
+  await expect(page.locator('#board .locked')).toHaveCount(0);
+  expect(await readProgress(page)).toMatchObject({ hints: 0, hintedPlaces: [], reported: true, elapsedMs: 0 });
+  await page.locator('#undo').click();
+  await expectBoard(page, daily.solution);
+  await expect(page.locator('#board .locked')).toHaveCount(9);
+  await expect(page.locator('#completion-detail')).toHaveText('9 hints used.');
+  await page.locator('#clear-win').click();
+  await page.locator('#hint').click();
+  await page.locator('#confirm-hint').click();
+  await page.locator('#undo').click();
+  await expectBoard(page, daily.solution);
+  await expect(page.locator('#board .locked')).toHaveCount(9);
+  await expect(page.locator('#completion-detail')).toHaveText('9 hints used.');
+  await page.locator('#clear-win').click();
+  await page.reload();
+  await expectBoard(page, emptyBoard);
+  await expect(page.locator('#hint-count')).toHaveText('0');
+  await page.locator('#hint').click();
+  await page.locator('#confirm-hint').click();
+  await page.locator('#clear').click();
+  await page.reload();
+  await expectBoard(page, [daily.solution[0], ...Array(8).fill(null)]);
+  await expect(page.locator('#board .locked')).toHaveCount(1);
+  expect(await readProgress(page)).toMatchObject({ hints: 1, hintedPlaces: [daily.solution[0]], reported: true });
 });
+
+for (const puzzle of [bank.tutorial, bank.puzzles.find(item => item.date === '2026-09-16')]) {
+  test(`reset starts a hint-free replay after completing ${puzzle.date}`, async ({ page }) => {
+    await seedProgress(page, { board: [...puzzle.solution.slice(0, 8), null], hints: 1, hintedPlaces: [puzzle.solution[0]], elapsedMs: 62_000 }, puzzle.date);
+    await openGame(page, `date=${puzzle.date === 'tutorial' ? 'practice' : puzzle.date}`);
+    await place(page, puzzle.solution[8], 8);
+    await expect(page.locator('#completion')).toBeVisible();
+    await page.locator('#clear-win').click();
+    await expectBoard(page, emptyBoard);
+    await page.reload();
+    await expectBoard(page, emptyBoard);
+    await expect(page.locator('#board .locked')).toHaveCount(0);
+    expect(await readProgress(page, puzzle.date)).toMatchObject({ hints: 0, hintedPlaces: [], reported: true, elapsedMs: 0 });
+  });
+}
 
 test('a full incorrect board remains playable and a correct board completes', async ({ page }) => {
   await openGame(page);

@@ -81,6 +81,8 @@ Solving today's puzzle earns one streak day, with or without hints. Tutorial and
 
 The Puzzles list separately shows completed daily, archived and Tutorial puzzles using their existing saved completion state. Reset and replay preserve those checkmarks. A play icon identifies the currently open puzzle, independently of completion. These markers stay on the device and do not award archive or Tutorial streak credit.
 
+Hints stay fixed through Reset during an unfinished attempt. Reset on a solved board clears every place, hint count and timer for a fresh replay, including Tutorial and archived puzzles. Undo restores the prior completed board with its original hints and time. Hints used during an unfinished replay stay fixed until that replay is solved.
+
 The site and iOS app share `public/`. The iOS build bundles the game for offline play and uses native storage, app lifecycle and sharing. No player account or game server is required. Daily puzzles are bundled through September 16, 2036. Existing published puzzles remain unchanged.
 
 CI checks both surfaces. Leave `ENABLE_WEB_RELEASE` and `ENABLE_TESTFLIGHT_RELEASE` absent or `false` until access is separately configured and the corresponding manual release is verified. Release workflows are distinct from local builds and ordinary CI. See [release instructions and access recovery](docs/RELEASING.md). App Store publication still requires Apple's review. [Store preparation](docs/APP-STORE.md) lists the remaining steps.
