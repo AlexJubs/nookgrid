@@ -19,8 +19,8 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="NookGrid gameplay with three places on a nine-lot neighborhood board, a tray of places, and the neighborhood plan alongside.">
   <link rel="icon" href="./favicon.svg?v=20260918-logo1" type="image/svg+xml"><link rel="apple-touch-icon" href="./apple-touch-icon.png?v=20260918-logo1" sizes="180x180">
-  <link rel="stylesheet" href="./style.css?v=20260919-daily1">
-  <script type="module" src="./app.mjs?v=20260919-daily1"></script>
+  <link rel="stylesheet" href="./style.css?v=20260919-polish1">
+  <script type="module" src="./app.mjs?v=20260919-polish1"></script>
 </head>
 <body class="game-page">
   <a class="skip-link" href="#game" data-track="index-a-1">Skip to puzzle</a>
@@ -39,7 +39,7 @@
     <noscript><p class="notice">NookGrid needs JavaScript to play. Enable it, then reload this page.</p></noscript>
     <section class="game-layout" id="game" aria-label="Neighborhood puzzle" aria-busy="true" inert>
       <p class="puzzle-instruction">Arrange the places to match the plan.</p>
-      <section class="clue-panel" id="clue-list" aria-labelledby="clues-title"><p id="tutorial-intro" hidden>Learn with three guided moves, then finish on your own.</p><div class="clues-header"><h2 id="clues-title">Neighborhood plan</h2><a class="puzzle-switch" id="puzzle-switch" href="?date=practice" data-track="puzzle-switch">Tutorial</a></div><ol class="clues" id="clues" aria-label="Neighborhood plan"></ol></section>
+      <section class="clue-panel" id="clue-list" aria-labelledby="clues-title"><div class="clues-header"><h2 id="clues-title">Neighborhood plan</h2><a class="puzzle-switch" id="puzzle-switch" href="?date=practice" data-track="puzzle-switch">Tutorial</a></div><ol class="clues" id="clues" aria-label="Neighborhood plan"></ol></section>
       <div class="play-area">
         <div class="board-wrap"><div class="board" id="board" role="group" aria-label="Neighborhood lots, three rows and three columns"></div></div>
         <div class="play-controls"><div class="place-tray" id="tray" role="group" aria-label="Places to arrange"></div></div>
@@ -70,7 +70,7 @@
     <h2 id="help-title">How to play</h2>
     <p>Match all nine places to the neighborhood plan.</p>
     <p>Drag a place, or tap it then a square. Occupied squares swap places.</p>
-    <div class="help-status"><span><span class="key-dot met"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#check"/></svg></span> Fits this layout</span><span><span class="key-dot conflict"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#exclamation-mark"/></svg></span> Needs a change</span></div>
+    <div class="help-status"><span><span class="plan-status met"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#check-square"/></svg></span> Fits this layout</span><span><span class="plan-status conflict"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#x-square"/></svg></span> Needs a change</span></div>
     <dl class="help-terms"><dt>Directly left</dt><dd>One square left, same row.</dd><dt>Above</dt><dd>Anywhere higher, same column.</dd><dt>Touching</dt><dd>Sharing a side, never a diagonal.</dd></dl>
     <p class="help-note">A–C are rows; 1–3 are columns.</p>
     <div class="help-controls">
@@ -78,7 +78,7 @@
       <p><strong>Hints:</strong> Reveal and lock a place, even after Reset. Each counts in your result.</p>
       <p class="help-note">Keyboard: Tab to move focus, Enter or Space to select, Escape to cancel.</p>
     </div>
-    <nav class="help-links" aria-label="Tutorial help"><a id="help-tutorial" href="?date=practice">Play tutorial</a><a href="./about.html#worked-example" data-track="help-example">Worked example</a></nav>
+    <nav class="help-links" aria-label="Tutorial help"><a id="help-tutorial" href="?date=practice">Play tutorial</a></nav>
   </dialog>
 
   <dialog id="menu-dialog" aria-label="Menu">
@@ -91,7 +91,7 @@
   </dialog>
   <dialog id="puzzles-dialog" aria-labelledby="puzzles-title">
     <button class="close-dialog" data-close aria-label="Close puzzles"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#x"/></svg></button><h2 id="puzzles-title">Puzzles</h2>
-    <p class="puzzle-schedule">New puzzle daily at midnight, your time.<span id="puzzles-streak" hidden></span></p>
+    <p class="puzzle-schedule">New puzzles daily.<span id="puzzles-streak" hidden></span></p>
     <p id="puzzles-status" role="status">Loading puzzles…</p>
     <nav id="puzzle-list" class="menu-links" aria-label="Choose a puzzle" hidden></nav>
     <button id="puzzles-more" class="text-button" hidden>Earlier puzzles</button>

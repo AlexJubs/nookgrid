@@ -79,6 +79,8 @@ Daily puzzles unlock at midnight in the player's device time zone. An open board
 
 Solving today's puzzle earns one streak day, with or without hints. Tutorial and archived solves earn none. Reset and replay keep earned days. Yesterday's streak remains active until the next midnight; missing a day starts the next streak at one. Completion dates live in a separate versioned local save, using native Preferences on iOS. They are not uploaded or shared across devices. Older saves have no completion timestamp, so only a restored solved current-day board can start a streak; historical solves are not backfilled.
 
+The Puzzles list separately shows completed daily, archived and Tutorial puzzles using their existing saved completion state. Reset and replay preserve those checkmarks. A play icon identifies the currently open puzzle, independently of completion. These markers stay on the device and do not award archive or Tutorial streak credit.
+
 The site and iOS app share `public/`. The iOS build bundles the game for offline play and uses native storage, app lifecycle and sharing. No player account or game server is required. Daily puzzles are bundled through September 16, 2036. Existing published puzzles remain unchanged.
 
 CI checks both surfaces. Leave `ENABLE_WEB_RELEASE` and `ENABLE_TESTFLIGHT_RELEASE` absent or `false` until access is separately configured and the corresponding manual release is verified. Release workflows are distinct from local builds and ordinary CI. See [release instructions and access recovery](docs/RELEASING.md). App Store publication still requires Apple's review. [Store preparation](docs/APP-STORE.md) lists the remaining steps.

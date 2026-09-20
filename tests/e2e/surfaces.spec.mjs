@@ -20,16 +20,18 @@ test('puzzle navigation preserves progress and exposes only released dates', asy
   const current = page.locator('#puzzle-list [aria-current="page"]');
   await expect(current.locator('small')).toHaveText('Today');
   expect(await current.evaluate(item => item.firstElementChild.firstChild.textContent)).toBe('Sep 17, 2026');
-  await expect(current.locator('.puzzle-current')).toHaveText('Current');
+  await expect(current.locator('.puzzle-current')).toHaveText('');
+  await expect(current.locator('.puzzle-current use')).toHaveAttribute('href', /#play-circle$/);
   await expect(page.locator('#puzzle-list .puzzle-current')).toHaveCount(1);
   expect(await links.evaluateAll(items => items.every(item => {
     const label = item.firstElementChild;
     const style = getComputedStyle(label);
     return style.fontSize === '14px' && style.fontWeight === '500' &&
-      item.querySelector('.menu-chevron use')?.getAttribute('href') === './icons.svg#caret-right' &&
-      !item.querySelector('use[href$="#check"]');
+      !item.querySelector('.menu-chevron') && !item.querySelector('.puzzle-completed');
   }))).toBe(true);
   expect(await links.evaluateAll(items => items.every(item => new URL(item.href).searchParams.get('test') === '1'))).toBe(true);
+  await expect(page.locator('.puzzle-schedule')).toContainText('New puzzles daily.');
+  await expect(page.locator('.puzzle-schedule')).not.toContainText(/midnight/i);
   await expect(page.locator('#puzzles-more')).toBeHidden();
   await page.getByRole('link', { name: 'Sep 11, 2026', exact: true }).click();
   await expect(page).toHaveURL(/date=2026-09-11/);
@@ -39,7 +41,7 @@ test('puzzle navigation preserves progress and exposes only released dates', asy
   await page.locator('#menu-open').click();
   await page.locator('#puzzles-open').click();
   await expect(page.locator('#puzzle-list [aria-current="page"]')).toHaveAccessibleName('Sep 11, 2026');
-  await expect(page.locator('#puzzle-list [aria-current="page"] .puzzle-current')).toHaveText('Current');
+  await expect(page.locator('#puzzle-list [aria-current="page"] .puzzle-current use')).toHaveAttribute('href', /#play-circle$/);
   await expect(page.locator('#puzzle-list .puzzle-current')).toHaveCount(1);
   await page.locator('#puzzles-dialog').getByRole('link', { name: 'Tutorial', exact: true }).click();
   await expect(page.locator('#puzzle-label')).toHaveText('Tutorial');
@@ -48,7 +50,7 @@ test('puzzle navigation preserves progress and exposes only released dates', asy
   await page.locator('#menu-open').click();
   await page.locator('#puzzles-open').click();
   await expect(page.locator('#puzzle-list [aria-current="page"]')).toHaveAccessibleName('Tutorial');
-  await expect(page.locator('#puzzle-list [aria-current="page"] .puzzle-current')).toHaveText('Current');
+  await expect(page.locator('#puzzle-list [aria-current="page"] .puzzle-current use')).toHaveAttribute('href', /#play-circle$/);
   await page.getByRole('link', { name: 'Today, Sep 17, 2026', exact: true }).click();
   await expect(page.locator('#board-title')).toHaveText("Today's puzzle");
   await expectBoard(page, ['cafe', ...Array(8).fill(null)]);
@@ -59,6 +61,74 @@ test('puzzle navigation preserves progress and exposes only released dates', asy
   await openGame(page, 'date=2099-01-01');
   await expect(page.locator('#puzzle-date')).toHaveText('Sep 17, 2026');
   await expectBoard(page, ['cafe', ...Array(8).fill(null)]);
+});
+
+test('completed puzzles stay marked after selection changes, Reset and reload', async ({ page }) => {
+  test.setTimeout(60_000);
+  const archive = bank.puzzles.find(puzzle => puzzle.date === '2026-09-11');
+  for (const puzzle of [daily, archive, bank.tutorial]) {
+    await seedProgress(page, { board: [...puzzle.solution.slice(0, 8), null], moves: 8 }, puzzle.date);
+  }
+  for (const puzzle of [daily, archive, bank.tutorial]) {
+    const date = puzzle === bank.tutorial ? 'practice' : puzzle.date;
+    await openGame(page, `date=${date}`);
+    await place(page, puzzle.solution[8], 8);
+    await expect(page.locator('#completion')).toBeVisible();
+    await page.locator('#menu-open').click();
+    await page.locator('#puzzles-open').click();
+    await expect(page.locator(`[data-puzzle-date="${date}"]`)).toHaveAccessibleName(/, completed$/);
+    await page.locator('#puzzles-dialog [data-close]').click();
+    await page.locator('#clear-win').click();
+    await expectBoard(page, emptyBoard);
+    await page.reload();
+    await expectBoard(page, emptyBoard);
+    await page.locator('#menu-open').click();
+    await page.locator('#puzzles-open').click();
+    const row = page.locator(`[data-puzzle-date="${date}"]`);
+    await expect(row).toHaveAttribute('aria-current', 'page');
+    await expect(row.locator('.puzzle-current use')).toHaveAttribute('href', /#play-circle$/);
+    await expect(row.locator('.puzzle-completed use')).toHaveAttribute('href', /#check-circle$/);
+    await expect(row).toHaveAccessibleName(/, completed$/);
+    await expect(row.locator('.puzzle-current')).toHaveText('');
+    await expect(row.locator('.puzzle-completed')).toHaveText('');
+    await expect(row.locator('.menu-chevron')).toHaveCount(0);
+  }
+  await page.locator('#puzzles-dialog [data-close]').click();
+  await openGame(page, 'date=2026-09-16');
+  await page.locator('#menu-open').click();
+  await page.locator('#puzzles-open').click();
+  await expect(page.locator('#puzzle-list .puzzle-completed')).toHaveCount(3);
+  await expect(page.locator('[aria-current="page"] .puzzle-completed')).toHaveCount(0);
+  await expect(page.locator('#puzzle-list .puzzle-current')).toHaveCount(1);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('nookgrid:test:v1:streak')))).toEqual([today]);
+});
+
+test('a stale tab cannot erase an earned completion badge', async ({ page }) => {
+  await seedProgress(page, { board: [...daily.solution.slice(0, 8), null], moves: 8 });
+  await openGame(page);
+  const stale = await page.context().newPage();
+  const errors = [];
+  stale.on('pageerror', error => errors.push(error.message));
+  try {
+    await stale.clock.install({ time: new Date(`${today}T12:00:00Z`) });
+    await openGame(stale);
+    await place(page, daily.solution[8], 8);
+    await expect(page.locator('#completion')).toBeVisible();
+    await expect.poll(async () => (await readProgress(page)).reported).toBe(true);
+    await expectBoard(stale, [...daily.solution.slice(0, 8), null]);
+    await place(stale, daily.solution[8], 0);
+    await expect(stale.locator('#completion')).toBeHidden();
+    await expect.poll(async () => (await readProgress(stale)).reported).toBe(true);
+    await stale.reload();
+    await expect(stale.locator('#completion')).toBeHidden();
+    await stale.locator('#menu-open').click();
+    await stale.locator('#puzzles-open').click();
+    await expect(stale.locator(`[data-puzzle-date="${today}"]`)).toHaveAccessibleName(/, completed$/);
+    await expect(stale.locator(`[data-puzzle-date="${today}"] .puzzle-completed use`)).toHaveAttribute('href', /#check-circle$/);
+    expect(errors).toEqual([]);
+  } finally {
+    await stale.close();
+  }
 });
 
 test('earlier puzzles append in bounded pages without duplicates or future dates', async ({ page }) => {
@@ -124,10 +194,10 @@ for (const [mode, query, date] of [
     await expect(help).toContainText('Touching');
     await expect(help).toContainText('Keyboard');
     await expect(help.locator('.help-status')).toContainText('Fits this layout');
-    await expect(help.locator('.help-status .met use')).toHaveAttribute('href', /\/icons\.svg#check$/);
+    await expect(help.locator('.help-status .met use')).toHaveAttribute('href', /\/icons\.svg#check-square$/);
     await expect(help.locator('.help-status')).toContainText('Needs a change');
-    await expect(help.locator('.help-status .conflict use')).toHaveAttribute('href', /\/icons\.svg#exclamation-mark$/);
-    await expect(help.getByRole('link', { name: 'Worked example', exact: true })).toBeVisible();
+    await expect(help.locator('.help-status .conflict use')).toHaveAttribute('href', /\/icons\.svg#x-square$/);
+    await expect(help.getByRole('link', { name: 'Worked example', exact: true })).toHaveCount(0);
     const tutorial = help.getByRole('link', { name: 'Play tutorial', exact: true });
     if (mode === 'tutorial') await expect(tutorial).toBeHidden();
     else {
@@ -154,20 +224,22 @@ for (const [mode, query, date] of [
   });
 }
 
-test('reading pages keep explicit puzzle context through nested navigation', async ({ page }) => {
+test('privacy keeps explicit puzzle context and returns to the saved board', async ({ page }) => {
   for (const [query, date] of [['date=2099-01-01', today], ['date=2026-09-11', '2026-09-11'], ['date=practice', 'practice']]) {
     await openGame(page, query);
     await place(page, 'bakery', 0);
-    await page.getByRole('button', { name: 'How to play', exact: true }).click();
-    await choose(page.locator('#help-dialog').getByRole('link', { name: 'Worked example', exact: true }));
-    await expect(page.locator('#worked-example')).toBeVisible();
-    expect(new URL(page.url()).pathname).toBe('/about.html');
-    expect(new URL(page.url()).hash).toBe('#worked-example');
+    await page.locator('#menu-open').click();
+    await choose(page.locator('#menu-dialog').getByRole('link', { name: 'Privacy', exact: true }));
+    await expect(page.locator('.privacy-page')).toBeVisible();
+    expect(Object.fromEntries(new URL(page.url()).searchParams)).toMatchObject({ date, test: '1' });
+    await choose(page.locator('footer').getByRole('link', { name: 'How to play', exact: true }));
+    await expect(page.locator('.about-page')).toBeVisible();
+    await expect(page.locator('#worked-example')).toHaveCount(0);
     expect(Object.fromEntries(new URL(page.url()).searchParams)).toMatchObject({ date, test: '1' });
     await choose(page.locator('footer').getByRole('link', { name: 'Privacy', exact: true }));
     await expect(page.locator('.privacy-page')).toBeVisible();
     expect(Object.fromEntries(new URL(page.url()).searchParams)).toMatchObject({ date, test: '1' });
-    await choose(page.getByRole('link', { name: 'Back to puzzle', exact: true }));
+    await choose(page.getByRole('link', { name: 'Back', exact: true }));
     await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
     expect(new URL(page.url()).searchParams.get('date')).toBe(date);
     await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
@@ -178,7 +250,7 @@ test('reading pages keep explicit puzzle context through nested navigation', asy
 test('direct reading pages return to today without a saved return destination', async ({ page }) => {
   for (const filename of ['about.html', 'privacy.html', 'app-privacy.html']) {
     await page.goto(`/${filename}?test=1`);
-    await choose(page.getByRole('link', { name: 'Back to puzzle', exact: true }));
+    await choose(page.getByRole('link', { name: filename === 'about.html' ? 'Back to puzzle' : 'Back', exact: true }));
     await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
     await expect(page.locator('#board-title')).toHaveText("Today's puzzle");
     await expect(page.locator('#puzzle-date')).toHaveText('Sep 17, 2026');
@@ -288,10 +360,34 @@ test('preferences and supporting pages preserve test mode and private analytics 
   await openGame(page);
   await page.locator('#help-open').click();
   await expect(page.locator('#help-dialog')).toBeVisible();
-  await page.getByRole('link', { name: 'Worked example' }).click();
-  await expect(page).toHaveURL(/about\.html\?[^#]*test=1[^#]*#worked-example/);
-  expect(new URL(page.url()).searchParams.get('date')).toBe(today);
-  await expect(page.locator('#worked-example')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Worked example' })).toHaveCount(0);
+  await page.locator('#help-dialog [data-close]').click();
+  await expect(page.locator('#game')).toBeVisible();
+});
+
+test('Tutorial and today links read as neutral controls', async ({ page }) => {
+  const checkControl = async control => {
+    await expect(control).toBeVisible();
+    const style = await control.evaluate(element => {
+      const style = getComputedStyle(element), bounds = element.getBoundingClientRect();
+      return { decoration: style.textDecorationLine, color: style.color, background: style.backgroundColor, width: bounds.width, height: bounds.height };
+    });
+    expect(style.decoration).toBe('none');
+    expect(style.background).not.toBe('rgba(0, 0, 0, 0)');
+    expect(style.width).toBeGreaterThanOrEqual(44);
+    expect(style.height).toBeGreaterThanOrEqual(44);
+    expect(style.color).toBe(await page.locator('#undo').evaluate(element => getComputedStyle(element).color));
+  };
+  await openGame(page);
+  await checkControl(page.locator('#puzzle-switch'));
+  await page.locator('#help-open').click();
+  await checkControl(page.locator('#help-tutorial'));
+  await page.locator('#help-tutorial').click();
+  await expect(page.locator('#puzzle-label')).toHaveText('Tutorial');
+  await expect(page.locator('#puzzle-switch')).toHaveText("Today's puzzle");
+  await checkControl(page.locator('#puzzle-switch'));
+  await page.locator('#puzzle-switch').click();
+  await expect(page.locator('#puzzle-date')).toHaveText('Sep 17, 2026');
 });
 
 for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }]) {
@@ -348,6 +444,7 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
     expect(new URL(page.url()).searchParams.get('date')).toBe(today);
     for (const filename of ['privacy.html', 'about.html', 'app-privacy.html']) {
       if (filename !== 'privacy.html') await page.goto(`/${filename}?test=1`);
+      if (filename === 'about.html') await expect(page.locator('#worked-example')).toHaveCount(0);
       const headingSize = await page.locator('.prose h1').evaluate(heading => parseFloat(getComputedStyle(heading).fontSize));
       const brandSize = await page.locator('.brand').evaluate(brand => parseFloat(getComputedStyle(brand).fontSize));
       expect(headingSize).toBe(titleSizes[0]);
@@ -358,7 +455,7 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
       await paragraphs.last().scrollIntoViewIfNeeded();
       await expect(paragraphs.last()).toBeInViewport();
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
-      const back = page.getByRole('link', { name: 'Back to puzzle', exact: true });
+      const back = page.getByRole('link', { name: filename === 'about.html' ? 'Back to puzzle' : 'Back', exact: true });
       await back.scrollIntoViewIfNeeded();
       await expect(back).toBeInViewport();
       const bounds = await back.boundingBox();
@@ -471,7 +568,7 @@ test('phone layout stacks the plan, board, items and actions without overlap', a
   await expect(page.locator('#tray')).toBeVisible();
   await verifyStack();
   await openGame(page, 'date=practice');
-  await expect(page.locator('#tutorial-intro')).toBeVisible();
+  await expect(page.locator('#tutorial-intro')).toHaveCount(0);
   await expect(page.locator('#selection-status')).toContainText('Drag Bakery');
   await verifyStack();
 });

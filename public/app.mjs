@@ -1,5 +1,5 @@
 import { PLACES, clueText, clueStatus, isSolved } from './engine.mjs?v=20260915-teaser1';
-import { movePlace, selectPuzzle, restoreProgress, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces, puzzleDay, restoreStreakDays, addDailyCompletion, streakLength } from './state.mjs?v=20260919-daily1';
+import { movePlace, selectPuzzle, restoreProgress, hasPuzzleCompletion, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces, puzzleDay, restoreStreakDays, addDailyCompletion, streakLength } from './state.mjs?v=20260919-polish1';
 import { placeArt } from './art.mjs?v=20260915-teaser1';
 import { testMode, analytics } from './session.mjs?v=20260918-simple1';
 import { native, savedValue, saveValue } from './platform.mjs';
@@ -58,6 +58,7 @@ async function navigateTo(url) {
 function openDialog(id, opener) {
   const isFromMenu = $('menu-dialog').open;
   if (isFromMenu) $('menu-dialog').close();
+  if (id === 'puzzles-dialog' && bank && puzzle) preparePuzzleList();
   $(id).showModal();
   $(id).addEventListener('close', () => (isFromMenu ? $('menu-open') : opener).focus({preventScroll:true}), {once:true});
 }
@@ -79,7 +80,8 @@ function preparePuzzleList() {
       link.href = `?date=${date}${testMode ? '&test=1' : ''}`;
       link.dataset.puzzleDate = date;
       link.setAttribute('aria-label', date === today ? `Today, ${label}` : label);
-      if (date === (mode === 'practice' ? 'practice' : puzzle.date)) link.setAttribute('aria-current','page');
+      const isCurrent = date === (mode === 'practice' ? 'practice' : puzzle.date);
+      if (isCurrent) link.setAttribute('aria-current','page');
       const text = document.createElement('span');
       text.textContent = label;
       if (date === today) {
@@ -90,8 +92,13 @@ function preparePuzzleList() {
       link.append(text);
       const trailing = document.createElement('span');
       trailing.className = 'puzzle-trailing';
-      if (link.hasAttribute('aria-current')) trailing.innerHTML = `<span class="puzzle-current" aria-hidden="true">${renderIcon('dot-outline')}Current</span>`;
-      trailing.insertAdjacentHTML('beforeend',renderIcon('caret-right','menu-chevron'));
+      if (isCurrent) trailing.innerHTML = `<span class="puzzle-current" aria-hidden="true" title="Current puzzle">${renderIcon('play-circle')}</span>`;
+      const listedPuzzle = date === 'practice' ? bank.tutorial : bank.puzzles.find(item => item.date === date);
+      const isCompleted = (isCurrent && (progress.reported || isSolved(puzzle,progress.board))) || hasPuzzleCompletion(read(`${progressPrefix}${listedPuzzle.date}`),ids,listedPuzzle.solution);
+      if (isCompleted) {
+        trailing.insertAdjacentHTML('beforeend',`<span class="puzzle-completed" aria-hidden="true" title="Completed">${renderIcon('check-circle')}</span>`);
+        link.setAttribute('aria-label',`${link.getAttribute('aria-label')}, completed`);
+      }
       link.append(trailing);
       $('puzzle-list').append(link);
       count++;
@@ -151,6 +158,7 @@ function startPlay(action) {
 async function save(shouldRun = !document.hidden) {
   solveTimer = advanceSolveTimer(solveTimer,performance.now(),progress.board.some(Boolean),shouldRun && !isSolved(puzzle,progress.board));
   progress.elapsedMs = solveTimer.elapsedMs;
+  progress.reported ||= restoreProgress(read(`${progressPrefix}${puzzle.date}`),ids,puzzle.solution).reported;
   streakDays = [...new Set([...restoreStreakDays(read(streakKey)),...streakDays])].sort();
   try {
     const writes = [saveValue(`${progressPrefix}${puzzle.date}`, JSON.stringify(progress))];
@@ -212,7 +220,7 @@ function applyBoard(board, message, action = 'place') {
   render();
   if (message && !wasSolved) {
     $('selection-status').textContent = message;
-    if (action === 'hint') $('selection-status').classList.remove('sr-only');
+    if (action === 'hint' && mode !== 'practice') $('selection-status').classList.remove('sr-only');
   }
   return hasChanged;
 }
@@ -387,14 +395,13 @@ function render() {
   const nextStarterIndex = starterPlaces.findIndex((id,index) => board[index] !== id);
   const starterStep = mode !== 'practice' ? -1 : nextStarterIndex < 0 || board.some(id => id && !starterPlaces.includes(id)) ? 3 : nextStarterIndex;
   const isLearning = starterStep >= 0 && starterStep < 3;
-  $('tutorial-intro').hidden = !isLearning;
   const shouldFocusCompletion = solved && (!wasSolved || (!selected && Boolean(document.activeElement?.closest('.play-controls'))));
   $('game').classList.toggle('has-guidance', shouldShowGuidance);
   const instruction = mode === 'practice' && selected && board.includes(selected) ? 'Tap another square to move or swap, or choose Put back.' : mode === 'practice' && solved ? 'Your neighborhood is complete.' : starterStep >= 0 ? [
     selected === 'bakery' ? 'Tap A1 to place Bakery.' : 'Tap Bakery, then A1, the outlined square.',
     'Place Cafe in the next square to the right of Bakery.',
     'Cafe fits. Use the plan to place Books.',
-    'Finish the plan. ✓ fits; ! needs a change.'
+    'Finish the plan. A checked square fits; a crossed square needs a change.'
   ][starterStep] : shouldShowGuidance ? 'Which column fits Park? Start with the starred items.' : 'Arrange the places to match the plan.';
   const instructionLabel = document.querySelector('.puzzle-instruction');
   if (instructionLabel.textContent !== instruction) instructionLabel.textContent = instruction;
@@ -422,10 +429,10 @@ function render() {
     const status = clueStatus(puzzle.clues[index],board);
     const isStartingClue = shouldShowGuidance && item.dataset.teaser === 'true';
     item.className = `clue ${status}`;
-    item.querySelector('.clue-icon').innerHTML = renderIcon(isStartingClue ? 'star' : {met:'check',conflict:'exclamation-mark',pending:'dot-outline'}[status]);
+    item.querySelector('.clue-icon').innerHTML = renderIcon(isStartingClue ? 'star' : {met:'check-square',conflict:'x-square',pending:'minus'}[status]);
     item.querySelector('.clue-state').textContent = (isStartingClue ? ' Start here.' : '') + {met:' Matches the plan.',conflict:' Needs a move.',pending:' Required places are not placed yet.'}[status];
   });
-  $('selection-status').classList.toggle('sr-only', !selected && !isLearning);
+  $('selection-status').classList.toggle('sr-only', mode === 'practice' || (!selected && !isLearning));
   $('selection-status').textContent = selected ? `${nameOf(selected)} selected. Choose a lot.` : isLearning ? `Drag ${nameOf(starterPlaces[starterStep])}, or tap it then a square.` : 'Drag a place, or tap a place then a square.';
   $('remove-place').hidden = !selected || !board.includes(selected);
   $('undo').disabled = !history.some(previous => restoreHintedPlaces(previous.board,progress.hintedPlaces,puzzle.solution).some((id,index) => id !== board[index]));
@@ -559,12 +566,15 @@ async function init() {
     $('feedback-form').hidden = !config.feedbackEnabled;
     const number = bank.puzzles.findIndex(item => item.date === puzzle.date) + 1;
     $('puzzle-label').textContent = mode === 'practice' ? 'Tutorial' : `Puzzle #${number}`;
-    $('puzzle-date').textContent = mode === 'practice' ? 'Learn by playing' : new Date(`${puzzle.date}T12:00:00Z`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
+    $('puzzle-date').textContent = mode === 'practice' ? '' : new Date(`${puzzle.date}T12:00:00Z`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
+    $('puzzle-date').hidden = mode === 'practice';
+    $('puzzle-date').previousElementSibling.hidden = mode === 'practice';
     $('help-tutorial').hidden = mode === 'practice';
     if (mode === 'practice') {
       $('puzzle-switch').textContent = "Today's puzzle";
       $('puzzle-switch').href = `./index.html${testMode ? '?test=1' : ''}`;
       document.querySelector('.puzzle-instruction').setAttribute('role','status');
+      document.querySelector('.puzzle-instruction').classList.add('sr-only');
       $('completion-title').textContent = 'Nice work!';
       $('share').hidden = true;
       $('play-today').classList.replace('text-button','primary');

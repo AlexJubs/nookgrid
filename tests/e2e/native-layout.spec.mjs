@@ -133,7 +133,8 @@ test('native phone completions and the full tutorial plan stay within safe areas
     await page.evaluate(date => localStorage.removeItem(`nookgrid:test:v1:${date}`), bank.tutorial.date);
     await openGame(page, 'date=practice');
     await expect(page.locator('.puzzle-instruction')).toHaveText('Tap Bakery, then A1, the outlined square.');
-    await expect(page.locator('.puzzle-instruction')).toBeVisible();
+    await expect(page.locator('.puzzle-instruction')).toHaveClass(/sr-only/);
+    expect(await page.locator('.puzzle-instruction').evaluate(element => element.getBoundingClientRect().height)).toBeLessThanOrEqual(1);
     await expectScreenFit(page, phone, 2, 1);
     await place(page, 'bakery', 0);
     await place(page, 'cafe', 1);
@@ -144,6 +145,14 @@ test('native phone completions and the full tutorial plan stay within safe areas
     await openGame(page, 'date=practice');
     await expect(page.locator('#completion-title')).toHaveText('Nice work!');
     await expectScreenFit(page, phone, bank.tutorial.clues.length, 0);
+    const alignment = await page.locator('#play-today').evaluate(button => {
+      const bounds = button.getBoundingClientRect(), container = button.closest('.completion-summary').getBoundingClientRect(), text = document.createRange();
+      text.selectNodeContents(button);
+      const label = text.getBoundingClientRect();
+      return { buttonCenter: bounds.y + bounds.height / 2, labelCenter: label.y + label.height / 2, containerCenter: container.y + container.height / 2 };
+    });
+    expect(Math.abs(alignment.buttonCenter - alignment.labelCenter)).toBeLessThanOrEqual(3);
+    expect(Math.abs(alignment.buttonCenter - alignment.containerCenter)).toBeLessThanOrEqual(3);
   }
 });
 
@@ -169,7 +178,8 @@ test('native How to play stays within the screen without scrolling the puzzle', 
       expect(bounds.y + bounds.height).toBeLessThanOrEqual(phone.height - phone.bottom);
       const close = help.getByRole('button', { name: 'Close how to play', exact: true });
       await expect(close).toBeInViewport();
-      const controls = [close, help.getByRole('link', { name: 'Worked example', exact: true })];
+      await expect(help.getByRole('link', { name: 'Worked example', exact: true })).toHaveCount(0);
+      const controls = [close];
       if (!isTutorial) controls.push(help.getByRole('link', { name: 'Play tutorial', exact: true }));
       for (const control of controls) {
         await control.scrollIntoViewIfNeeded();

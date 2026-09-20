@@ -77,6 +77,11 @@ export function restoreProgress(raw, ids, solution) {
   } catch { return clean; }
 }
 
+export function hasPuzzleCompletion(raw, ids, solution) {
+  const progress = restoreProgress(raw,ids,solution);
+  return progress.reported || (validBoard(solution,ids) && solution.every((id,index) => id !== null && progress.board[index] === id));
+}
+
 export function advanceSolveTimer(timer, now, hasPlaces, shouldRun) {
   if (!hasPlaces) return {elapsedMs:0,startedAt:null};
   const elapsedMs = timer.elapsedMs === null ? null : timer.elapsedMs + (timer.startedAt === null ? 0 : Math.max(0,now - timer.startedAt));

@@ -3,7 +3,11 @@ import { test, expect, bank, daily, emptyBoard, today, openGame, choose, place, 
 test('tutorial guides all three moves, unlocks the full plan and completes', async ({ page }) => {
   await openGame(page, 'date=practice');
   await expect(page.locator('#puzzle-label')).toHaveText('Tutorial');
-  await expect(page.locator('#tutorial-intro')).toBeVisible();
+  await expect(page.locator('#tutorial-intro')).toHaveCount(0);
+  await expect(page.locator('.puzzle-instruction')).toHaveClass(/sr-only/);
+  expect(await page.locator('.puzzle-instruction').evaluate(element => element.getBoundingClientRect().height)).toBeLessThanOrEqual(1);
+  await expect(page.locator('#puzzle-date')).toBeHidden();
+  await expect(page.locator('#board [data-lot="0"]')).toHaveClass(/starter-target/);
   await expect(page.locator('#tray .place:visible')).toHaveCount(1);
   await expect(page.locator('#clues .clue:visible')).toHaveCount(2);
   await expect(page.locator('.puzzle-instruction')).toHaveText('Tap Bakery, then A1, the outlined square.');
@@ -17,8 +21,8 @@ test('tutorial guides all three moves, unlocks the full plan and completes', asy
   await expect(page.locator('.puzzle-instruction')).toHaveText('Cafe fits. Use the plan to place Books.');
   await expect(page.locator('#tray .place:visible')).toHaveCount(3);
   await place(page, 'books', 2);
-  await expect(page.locator('#tutorial-intro')).toBeHidden();
-  await expect(page.locator('.puzzle-instruction')).toHaveText('Finish the plan. ✓ fits; ! needs a change.');
+  await expect(page.locator('#tutorial-intro')).toHaveCount(0);
+  await expect(page.locator('.puzzle-instruction')).toHaveText('Finish the plan. A checked square fits; a crossed square needs a change.');
   await expect(page.locator('#tray .place:visible')).toHaveCount(9);
   await expect(page.locator('#clues .clue:visible')).toHaveCount(bank.tutorial.clues.length);
   await solvePuzzle(page, bank.tutorial.solution, 3);
@@ -55,16 +59,33 @@ test('Tutorial wrong moves and undo keep guidance aligned with the current board
   await expect(page.locator('#tray .place:visible')).toHaveCount(2);
   await place(page, 'cafe', 1);
   await place(page, 'books', 2);
-  await expect(page.locator('.puzzle-instruction')).toHaveText('Finish the plan. ✓ fits; ! needs a change.');
+  await expect(page.locator('.puzzle-instruction')).toHaveText('Finish the plan. A checked square fits; a crossed square needs a change.');
   await choose(page.locator('#board [data-lot="1"]'));
   await expect(page.locator('.puzzle-instruction')).toHaveText('Tap another square to move or swap, or choose Put back.');
   await expect(page.getByRole('button', { name: 'Put back', exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect(page.locator('.puzzle-instruction')).toHaveText('Finish the plan. ✓ fits; ! needs a change.');
+  await expect(page.locator('.puzzle-instruction')).toHaveText('Finish the plan. A checked square fits; a crossed square needs a change.');
   await page.locator('#undo').click();
   await expectBoard(page, ['bakery', 'cafe', ...Array(7).fill(null)]);
   await expect(page.locator('.puzzle-instruction')).toHaveText('Cafe fits. Use the plan to place Books.');
   await expect(page.locator('#tray .place:visible')).toHaveCount(3);
+});
+
+test('Tutorial hint and selection messages remain screen-reader-only on phone and wide layouts', async ({ page }) => {
+  for (const viewport of [{ width: 375, height: 667 }, { width: 1024, height: 768 }]) {
+    await page.setViewportSize(viewport);
+    await openGame(page, 'date=practice');
+    const previousHints = Number(await page.locator('#hint-count').textContent());
+    await page.locator('#hint').click();
+    await page.locator('#confirm-hint').click();
+    await expect(page.locator('#hint-count')).toHaveText(String(previousHints + 1));
+    await expect(page.locator('#selection-status')).toHaveClass(/sr-only/);
+    expect(await page.locator('#selection-status').evaluate(element => element.getBoundingClientRect().height)).toBeLessThanOrEqual(1);
+    await choose(page.locator('#tray .place[aria-disabled="false"]:visible').last());
+    await expect(page.locator('#selection-status')).toHaveClass(/sr-only/);
+    await expect(page.locator('#selection-status')).toContainText('selected. Choose a lot.');
+    await expect(page.locator('#tray [aria-pressed="true"]')).toHaveCount(1);
+  }
 });
 
 test('tap controls select, deselect, swap, remove, undo and reset', async ({ page }) => {
@@ -179,15 +200,21 @@ test('nine hints complete the puzzle and disable destructive no-op controls', as
 
 test('a full incorrect board remains playable and a correct board completes', async ({ page }) => {
   await openGame(page);
+  await expect(page.locator('#clues .pending .clue-icon use').first()).toHaveAttribute('href', /#minus$/);
+  expect(await page.locator('#clues .pending .clue-icon').first().evaluate(icon => getComputedStyle(icon).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
   const wrong = [...daily.solution.slice(1), daily.solution[0]];
   for (let index = 0; index < 9; index++) await place(page, wrong[index], index);
   await expect(page.locator('#completion')).toBeHidden();
   expect(await page.locator('#clues .conflict').count()).toBeGreaterThan(0);
   await expect(page.locator('#clues .conflict .clue-state').first()).toHaveText(' Needs a move.');
+  await expect(page.locator('#clues .conflict .clue-icon use').first()).toHaveAttribute('href', /#x-square$/);
+  expect(await page.locator('#clues .conflict .clue-icon').first().evaluate(icon => getComputedStyle(icon).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
   await page.locator('#clear').click();
   await solvePuzzle(page);
   await expectBoard(page, daily.solution);
   await expect(page.locator('#clues .met')).toHaveCount(daily.clues.length);
+  await expect(page.locator('#clues .met .clue-icon use').first()).toHaveAttribute('href', /#check-square$/);
+  expect(await page.locator('#clues .clue-icon').evaluateAll(icons => icons.every(icon => getComputedStyle(icon).backgroundColor === 'rgba(0, 0, 0, 0)'))).toBe(true);
   await expect(page.locator('#completion-title')).toHaveText('Solved!');
   await expect(page.locator('#completion-detail')).toHaveText('Solved without hints.');
   await expect(page.locator('#next-puzzle')).toBeVisible();

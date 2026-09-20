@@ -105,7 +105,8 @@ test('local midnight refreshes Today without replacing the current board', async
   const previous = page.locator('[data-puzzle-date="2026-09-17"]');
   const current = page.locator('[data-puzzle-date="2026-09-18"]');
   await expect(previous).toHaveAttribute('aria-current', 'page');
-  await expect(previous.locator('.puzzle-current')).toContainText('Current');
+  await expect(previous.locator('.puzzle-current')).toHaveText('');
+  await expect(previous.locator('.puzzle-current use')).toHaveAttribute('href', /#play-circle$/);
   await expect(previous.locator('small')).toHaveCount(0);
   await expect(current.locator('small')).toHaveText('Today');
   await expect(current).not.toHaveAttribute('aria-current', 'page');
