@@ -11,6 +11,11 @@ test.beforeEach(async ({page}) => {
     };
     window.captured = [];
     window.nookgridNative = {isDevelopment:false,storage,onStateChange:async () => {},share:async () => {},installationId:async () => 'd724bf4c-89bb-4bce-bf3f-9d4d96ccf199'};
+    window.metadataCalls = 0;
+    window.nookgridNative.getAnalyticsMetadata = async () => {
+      window.metadataCalls++;
+      return {distribution_channel:'sandbox',app_version:'1.0',app_build:'19'};
+    };
     window.posthog = {
       init(token,options) { window.analyticsOptions = options; options.loaded(this); },
       capture(event,properties) {
@@ -56,6 +61,7 @@ test('native production measures installations, preserves opt-out, and keeps sav
   await expect.poll(() => page.evaluate(() => window.captured.length)).toBeGreaterThan(0);
   expect(await page.evaluate(() => window.analyticsOptions.bootstrap.distinctID)).toBe('d724bf4c-89bb-4bce-bf3f-9d4d96ccf199');
   expect(await page.evaluate(() => window.captured.every(item => item.properties.platform === 'ios' && item.properties.measurement_mode === 'installation'))).toBe(true);
+  expect(await page.evaluate(() => window.captured.every(item => item.properties.distribution_channel === 'sandbox' && item.properties.app_version === '1.0' && item.properties.app_build === '19'))).toBe(true);
   await page.locator('#tray [data-place="bakery"]').click();
   await page.locator('#board [data-lot="0"]').click();
   await page.reload();
@@ -69,6 +75,50 @@ test('native production measures installations, preserves opt-out, and keeps sav
   expect(await page.evaluate(() => window.captured.length)).toBe(count);
   await page.reload();
   await expect(page.locator('#game')).toHaveAttribute('aria-busy','false');
+  expect(await page.evaluate(() => window.captured)).toEqual([]);
+  expect(await page.evaluate(() => window.metadataCalls)).toBe(0);
+});
+
+test('unknown native distribution never becomes public when metadata fails or stalls',async ({page}) => {
+  await page.addInitScript(() => { window.nookgridNative.getAnalyticsMetadata = () => new Promise(() => {}); });
+  await page.goto('/');
+  await expect(page.locator('#game')).toHaveAttribute('aria-busy','false');
+  await page.locator('#tray [data-place="bakery"]').click();
+  await page.locator('#board [data-lot="0"]').click();
+  await expect.poll(() => page.evaluate(() => window.captured.some(item => item.event === 'board_move'))).toBe(true);
+  expect(await page.evaluate(() => window.captured.every(item => item.properties.distribution_channel === 'unknown'))).toBe(true);
+  await page.addInitScript(() => { window.nookgridNative.getAnalyticsMetadata = async () => { throw new Error('Unavailable'); }; });
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => window.captured.length)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.captured.every(item => item.properties.distribution_channel === 'unknown'))).toBe(true);
+});
+
+test('native debug never requests analytics metadata or sends events',async ({page}) => {
+  await page.addInitScript(() => { window.nookgridNative.isDevelopment = true; });
+  await page.goto('/');
+  await expect(page.locator('#game')).toHaveAttribute('aria-busy','false');
+  await page.locator('#tray [data-place="bakery"]').click();
+  await page.locator('#board [data-lot="0"]').click();
+  expect(await page.evaluate(() => window.metadataCalls)).toBe(0);
+  expect(await page.evaluate(() => window.captured)).toEqual([]);
+});
+
+test('native public tags wait for metadata and respect opt-out while it is pending',async ({page}) => {
+  await page.addInitScript(() => {
+    window.nookgridNative.getAnalyticsMetadata = () => new Promise(resolve => { window.resolveMetadata = resolve; });
+  });
+  await page.goto('/');
+  await expect(page.locator('#game')).toHaveAttribute('aria-busy','false');
+  await expect.poll(() => page.evaluate(() => typeof window.resolveMetadata)).toBe('function');
+  await page.evaluate(() => window.resolveMetadata({distribution_channel:'app_store',app_version:'1.0',app_build:'19'}));
+  await expect.poll(() => page.evaluate(() => window.captured.length)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.captured.every(item => item.properties.distribution_channel === 'app_store'))).toBe(true);
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => typeof window.resolveMetadata)).toBe('function');
+  await page.locator('#menu-open').click();
+  await page.locator('#settings-open').click();
+  await page.locator('#metrics-setting').uncheck();
+  await page.evaluate(() => window.resolveMetadata({distribution_channel:'app_store',app_version:'1.0',app_build:'19'}));
   expect(await page.evaluate(() => window.captured)).toEqual([]);
 });
 

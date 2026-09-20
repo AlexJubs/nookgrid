@@ -1,9 +1,11 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { Preferences } from '@capacitor/preferences';
 import { Share } from '@capacitor/share';
 import posthog from 'posthog-js/dist/module.no-external';
 import { createNativeStorage } from './storage.mjs';
+
+const AnalyticsMetadata = registerPlugin('AnalyticsMetadata');
 
 window.nookgridReady = (async () => {
   if (!Capacitor.isNativePlatform()) return;
@@ -16,6 +18,7 @@ window.nookgridReady = (async () => {
     storage,
     share:text => Share.share({title:'NookGrid',text,dialogTitle:'Share your result'}),
     onStateChange:listener => App.addListener('appStateChange',listener),
+    getAnalyticsMetadata:() => AnalyticsMetadata.getMetadata(),
     async installationId() {
       if (!storage) throw new Error('Analytics storage unavailable');
       const saved = storage.getItem('nookgrid:installation');

@@ -22,6 +22,8 @@ function safeProperties(properties = {}) {
     else if (['has_guidance','$process_person_profile'].includes(key) && typeof value === 'boolean') clean[key] = value;
     else if (key === 'measurement_mode' && ['cookieless','installation'].includes(value)) clean[key] = value;
     else if (key === 'platform' && value === 'ios') clean[key] = value;
+    else if (key === 'distribution_channel' && ['app_store','sandbox','development','unknown'].includes(value)) clean[key] = value;
+    else if (['app_version','app_build'].includes(key) && typeof value === 'string' && /^\d+(?:\.\d+){0,3}$/.test(value) && value.length <= 40) clean[key] = value;
     else if (key === 'puzzle_date' && typeof value === 'string' && /^(\d{4}-\d{2}-\d{2}|tutorial)$/.test(value)) clean[key] = value;
     else if (key === 'puzzle_mode' && ['daily','archive','practice'].includes(value)) clean[key] = value;
     else if (key === 'device_type' && ['mobile','desktop'].includes(value)) clean[key] = value;
@@ -103,6 +105,7 @@ export function createAnalytics({testMode = false} = {}) {
   if (choice === 'yes' && !choiceSaved) choice = null;
   let context = {}, pending = [], source = null, entrySource = null, lastReport = clock.sample(performance.now()), activeOrigin = lastReport.active;
   let available = false;
+  let appMetadata = native ? {distribution_channel:'unknown'} : {};
   const permitted = () => available && choice !== 'no' && !testMode && !privacy();
   const sample = () => clock.sample(performance.now());
 
@@ -141,7 +144,7 @@ export function createAnalytics({testMode = false} = {}) {
   }
 
   function send(event,instant = false) {
-    try { client.capture(event.name,event.properties,instant ? {send_instantly:true,transport:'sendBeacon'} : undefined); } catch {}
+    try { client.capture(event.name,{...event.properties,...appMetadata},instant ? {send_instantly:true,transport:'sendBeacon'} : undefined); } catch {}
   }
 
   function flush(instant = false) {
@@ -173,7 +176,21 @@ export function createAnalytics({testMode = false} = {}) {
         document.head.append(script);
       });
       const sdk = await load;
+      if (!permitted() || currentEpoch !== epoch) return;
       const installationId = native ? await native.installationId() : null;
+      if (!permitted() || currentEpoch !== epoch) return;
+      if (native) {
+        let timeout, metadata;
+        try {
+          metadata = await Promise.race([
+            native.getAnalyticsMetadata?.(),
+            new Promise(resolve => { timeout = setTimeout(resolve,1500); })
+          ]);
+        } catch {}
+        finally { clearTimeout(timeout); }
+        if (!permitted() || currentEpoch !== epoch) return;
+        appMetadata = {distribution_channel:'unknown',...safeProperties(metadata)};
+      }
       if (!permitted() || currentEpoch !== epoch) return;
       function onReady(instance) {
         if (!permitted() || currentEpoch !== epoch) return;

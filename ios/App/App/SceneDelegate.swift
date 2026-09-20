@@ -1,6 +1,7 @@
 import UIKit
 import WebKit
 import Capacitor
+import StoreKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
@@ -45,9 +46,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 class GameViewController: CAPBridgeViewController {
     var blockingRules: WKContentRuleList?
 
-    #if DEBUG
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
+        bridge?.registerPluginInstance(AnalyticsMetadataPlugin())
+        #if DEBUG
         guard let content = webView?.configuration.userContentController else { preconditionFailure("Missing game web view") }
         let debug = WKUserScript(source: "Object.defineProperty(window, 'nookgridDebug', {value:true})", injectionTime: .atDocumentStart, forMainFrameOnly: true)
         content.addUserScript(debug)
@@ -68,6 +70,38 @@ class GameViewController: CAPBridgeViewController {
             content.addUserScript(inputTrace)
         }
         if let blockingRules { content.add(blockingRules) }
+        #endif
     }
-    #endif
+}
+
+@objc(AnalyticsMetadataPlugin)
+class AnalyticsMetadataPlugin: CAPPlugin, CAPBridgedPlugin {
+    let identifier = "AnalyticsMetadataPlugin"
+    let jsName = "AnalyticsMetadata"
+    let pluginMethods: [CAPPluginMethod] = [CAPPluginMethod(name: "getMetadata", returnType: CAPPluginReturnPromise)]
+
+    @objc func getMetadata(_ call: CAPPluginCall) {
+        var metadata = [
+            "app_version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "",
+            "app_build": Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "",
+            "distribution_channel": "unknown"
+        ]
+        #if DEBUG
+        metadata["distribution_channel"] = "development"
+        call.resolve(metadata)
+        #else
+        Task {
+            if case .verified(let transaction) = try? await AppTransaction.shared,
+               transaction.bundleID == Bundle.main.bundleIdentifier {
+                switch transaction.environment {
+                case .production: metadata["distribution_channel"] = "app_store"
+                case .sandbox: metadata["distribution_channel"] = "sandbox"
+                case .xcode: metadata["distribution_channel"] = "development"
+                default: break
+                }
+            }
+            call.resolve(metadata)
+        }
+        #endif
+    }
 }
