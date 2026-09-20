@@ -27,7 +27,7 @@ For a release, check a physical iPhone's touch controls, VoiceOver, large text, 
 
 ## Restore access on a new machine
 
-Start with the [README setup](../README.md) and unsigned simulator checks. The repository contains the source needed to build and test; operating the existing production services also requires separate owner credentials from the owner's chosen secure storage. GitHub environment secrets are deployment copies, not the recovery source. Keep that storage recoverable independently of this checkout and the old machine.
+Start with the [development setup](DEVELOPMENT.md#start-on-a-fresh-machine) and unsigned simulator checks. The repository contains the source needed to build and test; operating the existing production services also requires separate owner credentials from the owner's chosen secure storage. GitHub environment secrets are deployment copies, not the recovery source. Keep that storage recoverable independently of this checkout and the old machine.
 
 Use the following record types as a private recovery checklist. Fill actual values only in the owner-approved credential store and provider settings, never in this document.
 
@@ -44,7 +44,7 @@ No credentials are required to clone the public source, run browser tests or bui
 
 ## Personal signing on a new Mac
 
-1. Complete the README's Xcode setup. In Xcode Settings > Accounts, add the owner's personal Apple Account and confirm the intended personal developer team is available. Leave employer accounts and teams unchanged.
+1. Complete the [Xcode setup](DEVELOPMENT.md#ios-development). In Xcode Settings > Accounts, add the owner's personal Apple Account and confirm the intended personal developer team is available. Leave employer accounts and teams unchanged.
 2. Build the default QA bundle with `npm run build:ios`, open `ios/App/App.xcodeproj`, and select the **App** target's Signing & Capabilities. Use automatic signing with the intended personal team. The existing app uses `com.nookgrid.app`; its owner must retain that identity. A fork needs its own available bundle identifier and matching configuration before device signing or distribution.
 3. Connect and unlock the iPhone, follow Apple's pairing and Developer Mode prompts, select it as the **App** scheme destination, and run. Review Xcode's local signing changes before committing; personal team selection must stay out of shared source. See [Apple's device setup](https://developer.apple.com/documentation/xcode/running-your-app-on-simulated-or-physical-devices).
 4. For the first manual TestFlight release on this Mac, verify personal Developer Program and App Store Connect access, use an unused build number, and clear `NOOKGRID_DEV_URL`. Run `NOOKGRID_PRODUCTION=1 npm run build:ios`, choose a physical-device archive destination, then Product > Archive. Use Organizer's distribution flow with the intended personal account. Confirm processing and actual TestFlight availability as described below.
