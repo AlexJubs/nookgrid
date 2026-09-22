@@ -300,6 +300,7 @@ test('timer starts with play, excludes hidden time and remains stopped after sol
 });
 
 test('share uses the canonical daily URL and handles copy, native cancellation and fallback', async ({ page }) => {
+  await seedProgress(page, ['2026-09-15', '2026-09-16'], 'streak');
   await seedProgress(page, { board: daily.solution, moves: 9, hints: 2, elapsedMs: 61_000 });
   await page.addInitScript(() => {
     Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
@@ -311,6 +312,7 @@ test('share uses the canonical daily URL and handles copy, native cancellation a
   const result = await page.evaluate(() => window.copiedResult);
   expect(result).toContain('Solved in 1:01 with 2 hints.');
   expect(result).toContain('Your daily brain game.');
+  expect(result).toContain('\n3-day streak\n');
   const link = new URL(result.split('\n').at(-1));
   expect(link.origin).toBe('https://nookgrid.com');
   expect(link.pathname).toBe('/');

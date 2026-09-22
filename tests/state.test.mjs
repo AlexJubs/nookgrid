@@ -123,4 +123,6 @@ assert.equal(shareText('2026-09-10',0,'https://example.com/?utm_source=old&utm_m
 assert.match(shareText('2026-09-10',1,'https://example.com/',3661000), /Solved in 1:01:01 with 1 hint\./);
 assert.match(shareText('2026-09-10',2,'https://example.com/',100), /Solved in 0:01 with 2 hints\./);
 for (const elapsedMs of [null,0,undefined]) assert.match(shareText('2026-09-10',0,'https://example.com/',elapsedMs), /\nSolved without hints\.\n/);
+for (const streak of [1,3]) assert.match(shareText('2026-09-10',0,'https://example.com/',61000,streak), new RegExp(`\\n${streak}-day streak\\nhttps://`));
+assert.doesNotMatch(shareText('2026-09-10',0,'https://example.com/',61000,0), /streak/);
 console.log('State checks passed: placement, swaps, validation, local dates, daily streaks, persistence, spoiler-free sharing.');

@@ -88,6 +88,26 @@ test('yesterday keeps a streak active until a local day is missed', async ({ pag
   expect(await readStreak(page)).toEqual(earned);
 });
 
+test('archive sharing uses the current streak without earning a day and expires at midnight', async ({ page }) => {
+  const archive = bank.puzzles.find(puzzle => puzzle.date === '2026-09-15');
+  const earned = ['2026-09-15', '2026-09-16'];
+  await seedProgress(page, earned, 'streak');
+  await seedProgress(page, { board: archive.solution, moves: 9 }, archive.date);
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { window.copiedResult = text; } } });
+  });
+  await openGame(page, `date=${archive.date}`);
+  await page.locator('#share').click();
+  expect(await page.evaluate(() => window.copiedResult)).toContain('\n2-day streak\n');
+  expect(await readStreak(page)).toEqual(earned);
+
+  await page.clock.setSystemTime(new Date('2026-09-18T00:00:00-04:00'));
+  await page.locator('#share').click();
+  expect(await page.evaluate(() => window.copiedResult)).not.toContain('streak');
+  expect(await readStreak(page)).toEqual(earned);
+});
+
 test('local midnight refreshes Today without replacing the current board', async ({ page }) => {
   await page.clock.pauseAt(new Date('2026-09-17T19:59:58-04:00'));
   await openGame(page);
