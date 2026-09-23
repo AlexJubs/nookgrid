@@ -75,10 +75,10 @@ test('Tutorial hint and selection messages remain screen-reader-only on phone an
   for (const viewport of [{ width: 375, height: 667 }, { width: 1024, height: 768 }]) {
     await page.setViewportSize(viewport);
     await openGame(page, 'date=practice');
-    const previousHints = Number(await page.locator('#hint-count').textContent());
+    const previousHints = (await readProgress(page, bank.tutorial.date))?.hints || 0;
     await page.locator('#hint').click();
     await page.locator('#confirm-hint').click();
-    await expect(page.locator('#hint-count')).toHaveText(String(previousHints + 1));
+    await expect(page.locator('#hint')).toHaveAccessibleName(new RegExp(`^Hint, ${previousHints + 1} hints? used$`));
     await expect(page.locator('#selection-status')).toHaveClass(/sr-only/);
     expect(await page.locator('#selection-status').evaluate(element => element.getBoundingClientRect().height)).toBeLessThanOrEqual(1);
     await choose(page.locator('#tray .place[aria-disabled="false"]:visible').last());
@@ -149,16 +149,18 @@ test('invalid drops and Escape cancel drags without swallowing the next tap', as
 
 test('hints require confirmation and stay fixed through moves, undo, reset and reload', async ({ page }) => {
   await openGame(page);
+  await expect(page.locator('#hint')).toHaveText('Hint');
   await page.locator('#hint').click();
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   await expectBoard(page, emptyBoard);
-  await expect(page.locator('#hint-count')).toHaveText('0');
+  await expect(page.locator('#hint')).toHaveAccessibleName('Hint, 0 hints used');
   await place(page, daily.solution[1], 1);
   await page.locator('#hint').click();
   await page.locator('#confirm-hint').click();
   await expect(page.locator('[data-lot="0"]')).toHaveAttribute('aria-disabled', 'true');
   await expect(page.locator('[data-lot="0"]')).toHaveAccessibleName(/fixed by a hint/);
-  await expect(page.locator('#hint-count')).toHaveText('1');
+  await expect(page.locator('#hint')).toHaveAccessibleName('Hint, 1 hint used');
+  await expect(page.locator('#hint')).toHaveText('Hint');
   const fixed = page.locator(`#tray [data-place="${daily.solution[0]}"]`);
   const movable = page.locator(`#tray [data-place="${daily.solution[1]}"]`);
   await expect(fixed).toHaveAttribute('aria-disabled', 'true');
@@ -179,7 +181,7 @@ test('hints require confirmation and stay fixed through moves, undo, reset and r
   await expectBoard(page, [...daily.solution.slice(0, 2), ...Array(7).fill(null)]);
   await page.reload();
   await expect(page.locator('[data-lot="0"]')).toHaveAttribute('aria-disabled', 'true');
-  await expect(page.locator('#hint-count')).toHaveText('1');
+  await expect(page.locator('#hint')).toHaveAccessibleName('Hint, 1 hint used');
   await expect(page.locator('#undo')).toBeDisabled();
   expect((await readProgress(page)).hintedPlaces).toEqual([daily.solution[0]]);
 });
@@ -189,7 +191,7 @@ test('reset clears solved hints, Undo restores them and unfinished replay hints 
   for (let count = 1; count <= 9; count++) {
     await page.locator('#hint').click();
     await page.locator('#confirm-hint').click();
-    await expect(page.locator('#hint-count')).toHaveText(String(count));
+    await expect(page.locator('#hint')).toHaveAttribute('aria-label', new RegExp(`^Hint, ${count} hints? used$`));
   }
   await expectBoard(page, daily.solution);
   await expect(page.locator('#completion-detail')).toHaveText('9 hints used.');
@@ -214,7 +216,7 @@ test('reset clears solved hints, Undo restores them and unfinished replay hints 
   await page.locator('#clear-win').click();
   await page.reload();
   await expectBoard(page, emptyBoard);
-  await expect(page.locator('#hint-count')).toHaveText('0');
+  await expect(page.locator('#hint')).toHaveAccessibleName('Hint, 0 hints used');
   await page.locator('#hint').click();
   await page.locator('#confirm-hint').click();
   await page.locator('#clear').click();

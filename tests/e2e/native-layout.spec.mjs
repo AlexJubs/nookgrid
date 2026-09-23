@@ -111,7 +111,7 @@ test('native phone gameplay keeps every rule, lot, place and action on screen', 
       await expectScreenFit(page, phone, puzzle.clues.length);
       await page.locator('#hint').click();
       await page.locator('#confirm-hint').click();
-      await expect(page.locator('#hint-count')).toHaveText('1');
+      await expect(page.locator('#hint')).toHaveAccessibleName('Hint, 1 hint used');
       await expectScreenFit(page, phone, puzzle.clues.length);
     }
   }

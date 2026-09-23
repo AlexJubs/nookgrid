@@ -53,7 +53,7 @@ for (const [description, progress] of [
     await seedProgress(page, progress);
     await openGame(page);
     await expectBoard(page, emptyBoard);
-    await expect(page.locator('#hint-count')).toHaveText('0');
+    await expect(page.locator('#hint')).toHaveAccessibleName('Hint, 0 hints used');
     await place(page, 'bakery', 0);
     await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
     expect((await readProgress(page)).moves).toBe(1);
@@ -64,7 +64,7 @@ test('saved hints are repaired and old saves keep unknown solve times hidden', a
   await seedProgress(page, { board: [daily.solution[0], ...Array(8).fill(null)], hintedPlaces: [daily.solution[1], daily.solution[1], 'unknown'], hints: -1 });
   await openGame(page);
   await expectBoard(page, [...daily.solution.slice(0, 2), ...Array(7).fill(null)]);
-  await expect(page.locator('#hint-count')).toHaveText('1');
+  await expect(page.locator('#hint')).toHaveAccessibleName('Hint, 1 hint used');
   await expect(page.locator('[data-lot="1"]')).toHaveAttribute('aria-disabled', 'true');
   await page.evaluate(({ board }) => localStorage.setItem('nookgrid:test:v1:2026-09-11', JSON.stringify({ board, moves: 9 })), {
     board: bank.puzzles.find(puzzle => puzzle.date === '2026-09-11').solution
@@ -118,10 +118,10 @@ test('loaded game plays offline and every fetched resource stays local', async (
   await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
   await page.locator('#hint').click();
   await page.locator('#confirm-hint').click();
-  await expect(page.locator('#hint-count')).toHaveText('1');
+  await expect(page.locator('#hint')).toHaveAccessibleName('Hint, 1 hint used');
   await context.setOffline(false);
   await page.reload();
-  await expect(page.locator('#hint-count')).toHaveText('1');
+  await expect(page.locator('#hint')).toHaveAccessibleName('Hint, 1 hint used');
 });
 
 test('an exhausted calendar falls back to the playable tutorial', async ({ page }) => {

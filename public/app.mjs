@@ -446,7 +446,6 @@ function render() {
   $('game').classList.toggle('is-solved', solved);
   $('game').classList.toggle('has-selection', Boolean(selected));
   $('hint').disabled = solved;
-  $('hint-count').textContent = progress.hints;
   $('hint').setAttribute('aria-label',`Hint, ${progress.hints} hint${progress.hints === 1 ? '' : 's'} used`);
   $('completion').hidden = !solved;
   if (!solved) document.querySelector('.confetti')?.remove();
