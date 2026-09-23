@@ -315,6 +315,7 @@ test('share uses the canonical daily URL and handles copy, native cancellation a
   expect(result).toContain('Solved in 1:01 with 2 hints.');
   expect(result).toContain('Your daily brain game.');
   expect(result).toContain('\n3-day streak\n');
+  expect(result).toContain('\nCan you beat my time?\n');
   const link = new URL(result.split('\n').at(-1));
   expect(link.origin).toBe('https://nookgrid.com');
   expect(link.pathname).toBe('/');

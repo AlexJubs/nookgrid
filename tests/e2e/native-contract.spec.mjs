@@ -124,6 +124,7 @@ test('native public tags wait for metadata and respect opt-out while it is pendi
 
 
 test('cancelling the native share sheet leaves the solved board visible',async ({page}) => {
+  await page.clock.install({time:new Date('2026-09-17T12:00:00Z')});
   await page.goto('/');
   await expect(page.locator('#game')).toHaveAttribute('aria-busy','false');
   for (let count = 0; count < 9; count++) {
@@ -137,6 +138,9 @@ test('cancelling the native share sheet leaves the solved board visible',async (
   await page.locator('#share').click();
   expect(await page.evaluate(() => window.sharedResult)).toContain(`${solveTime} with 9 hints.`);
   expect(await page.evaluate(() => window.sharedResult)).toContain('\n1-day streak\n');
+  const result = await page.evaluate(() => window.sharedResult);
+  expect(result).toContain('\nCan you beat my time?\n');
+  expect(Object.fromEntries(new URL(result.split('\n').at(-1)).searchParams)).toEqual({date:'2026-09-17',utm_source:'share'});
   await expect(page.locator('#share-dialog')).not.toBeVisible();
   await expect(page.locator('#completion')).toBeVisible();
   expect(await page.evaluate(() => window.captured.filter(item => item.event === 'share_result').at(-1).properties.result)).toBe('cancelled');

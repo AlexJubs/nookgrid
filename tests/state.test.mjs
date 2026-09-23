@@ -119,10 +119,15 @@ assert.equal(formatSolveTime(3661000),'1:01:01');
 assert.equal(formatSolveTime(100),'0:01');
 assert.equal(formatSolveTime(0),'');
 assert.equal(formatSolveTime(null),'');
-assert.equal(shareText('2026-09-10',0,'https://example.com/?utm_source=old&utm_medium=result&utm_campaign=daily&utm_content=result_card&utm_term=puzzle#private',61000), 'NookGrid · September 10, 2026\n🏡 Your daily brain game.\nSolved in 1:01 without hints.\nhttps://example.com/?date=2026-09-10&utm_source=share');
+assert.equal(shareText('2026-09-10',0,'https://example.com/?utm_source=old&utm_medium=result&utm_campaign=daily&utm_content=result_card&utm_term=puzzle#private',61000), 'NookGrid · September 10, 2026\n🏡 Your daily brain game.\nSolved in 1:01 without hints.\nCan you beat my time?\nhttps://example.com/?date=2026-09-10&utm_source=share');
 assert.match(shareText('2026-09-10',1,'https://example.com/',3661000), /Solved in 1:01:01 with 1 hint\./);
 assert.match(shareText('2026-09-10',2,'https://example.com/',100), /Solved in 0:01 with 2 hints\./);
 for (const elapsedMs of [null,0,undefined]) assert.match(shareText('2026-09-10',0,'https://example.com/',elapsedMs), /\nSolved without hints\.\n/);
-for (const streak of [1,3]) assert.match(shareText('2026-09-10',0,'https://example.com/',61000,streak), new RegExp(`\\n${streak}-day streak\\nhttps://`));
+for (const streak of [1,3]) assert.match(shareText('2026-09-10',0,'https://example.com/',61000,streak), new RegExp(`\\n${streak}-day streak\\nCan you beat my time\\?\\nhttps://`));
 assert.doesNotMatch(shareText('2026-09-10',0,'https://example.com/',61000,0), /streak/);
+for (const elapsedMs of [null,0,undefined]) {
+  const result = shareText('2026-09-10',0,'https://example.com/',elapsedMs);
+  assert.match(result, /\nCan you solve it\?\nhttps:\/\//);
+  assert.doesNotMatch(result, /beat my time/);
+}
 console.log('State checks passed: placement, swaps, validation, local dates, daily streaks, persistence, spoiler-free sharing.');
