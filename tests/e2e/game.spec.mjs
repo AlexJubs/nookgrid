@@ -231,7 +231,7 @@ test('timer starts with play, excludes hidden time and remains stopped after sol
   expect((await readProgress(page)).elapsedMs).toBe(solved);
 });
 
-test('share uses the canonical daily URL and handles copy, native cancellation and fallback', async ({ page }) => {
+test('share uses the canonical daily URL and handles copy, native cancellation and fallback', async ({ page }, testInfo) => {
   await seedProgress(page, { board: daily.solution, moves: 9, hints: 2, elapsedMs: 61_000 });
   await page.addInitScript(() => {
     Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
@@ -243,10 +243,11 @@ test('share uses the canonical daily URL and handles copy, native cancellation a
   const result = await page.evaluate(() => window.copiedResult);
   expect(result).toContain('Solved in 1:01 with 2 hints.');
   expect(result).toContain('Your daily brain game.');
+  expect(result).toContain('1-day streak\nCan you beat my time?');
   const link = new URL(result.split('\n').at(-1));
   expect(link.origin).toBe('https://nookgrid.com');
   expect(link.pathname).toBe('/');
-  expect(Object.fromEntries(link.searchParams)).toEqual({ date: today, utm_source: 'share', utm_medium: 'result', utm_campaign: 'daily', utm_content: 'result_card' });
+  expect(Object.fromEntries(link.searchParams)).toEqual({ date: today, utm_source: 'share' });
   expect(link.hash).toBe('');
   expect(result).not.toMatch(/Bakery|Cafe|Books|Florist|Pond|Market/);
   await page.evaluate(() => Object.defineProperty(navigator, 'share', { configurable: true, value: async value => { window.nativeResult = value; } }));
@@ -261,6 +262,11 @@ test('share uses the canonical daily URL and handles copy, native cancellation a
   await expect(page.locator('#share-text')).toHaveAttribute('readonly', '');
   await expect(page.locator('#share-text')).toBeFocused();
   expect(await page.locator('#share-text').evaluate(input => input.selectionEnd - input.selectionStart)).toBe(result.length);
+  await page.screenshot({path:testInfo.outputPath('share-fallback.png')});
+  await page.locator('[aria-label="Close share result"]').click();
+  await page.clock.setSystemTime(new Date('2026-09-19T12:00:00-04:00'));
+  await page.locator('#share').click();
+  await expect(page.locator('#share-text')).not.toHaveValue(/streak/);
 });
 
 test('reset restarts elapsed time and undo restores it across reload', async ({ page }) => {

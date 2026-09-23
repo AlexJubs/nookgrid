@@ -1,5 +1,5 @@
 import { PLACES, clueText, clueStatus, isSolved } from './engine.mjs?v=20260915-teaser1';
-import { movePlace, selectPuzzle, restoreProgress, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces, puzzleDay, restoreStreakDays, addDailyCompletion, streakLength } from './state.mjs?v=20260919-daily1';
+import { movePlace, selectPuzzle, restoreProgress, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces, puzzleDay, restoreStreakDays, addDailyCompletion, streakLength } from './state.mjs?v=20260923-share1';
 import { placeArt } from './art.mjs?v=20260915-teaser1';
 import { testMode, analytics } from './session.mjs?v=20260918-simple1';
 import { native, savedValue, saveValue } from './platform.mjs';
@@ -490,7 +490,7 @@ $('confirm-hint').addEventListener('click', () => {
 });
 
 $('share').addEventListener('click', async () => {
-  const text = shareText(puzzle.date,progress.hints,'https://nookgrid.com/',progress.elapsedMs);
+  const text = shareText(puzzle.date,progress.hints,'https://nookgrid.com/',progress.elapsedMs,streakLength(streakDays,puzzleDay()));
   $('share-status').textContent = '';
   try {
     if (native) { await native.share(text); track('share_result',{result:'shared'}); }

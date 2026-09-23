@@ -89,15 +89,12 @@ export function formatSolveTime(elapsedMs) {
   return `${hours ? `${hours}:${String(Math.floor(seconds / 60) % 60).padStart(2,'0')}` : Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2,'0')}`;
 }
 
-export function shareText(date, hints, base, elapsedMs) {
+export function shareText(date, hints, base, elapsedMs, streak = 0) {
   const label = date === 'tutorial' ? 'Practice' : new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric',timeZone:'UTC'});
   const solveTime = formatSolveTime(elapsedMs);
   const link = new URL(base);
   link.search = date === 'tutorial' ? '?date=practice' : `?date=${date}`;
   link.searchParams.set('utm_source','share');
-  link.searchParams.set('utm_medium','result');
-  link.searchParams.set('utm_campaign','daily');
-  link.searchParams.set('utm_content','result_card');
   link.hash = '';
-  return `NookGrid · ${label}\n🏡 Your daily brain game.\nSolved${solveTime ? ` in ${solveTime}` : ''} ${hints ? `with ${hints} hint${hints === 1 ? '' : 's'}.` : 'without hints.'}\n${link.href}`;
+  return `NookGrid · ${label}\n🏡 Your daily brain game.\nSolved${solveTime ? ` in ${solveTime}` : ''} ${hints ? `with ${hints} hint${hints === 1 ? '' : 's'}.` : 'without hints.'}${streak > 0 ? `\n${streak}-day streak` : ''}\n${solveTime ? 'Can you beat my time?' : 'Can you solve it?'}\n${link.href}`;
 }
