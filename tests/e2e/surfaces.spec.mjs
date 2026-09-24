@@ -194,9 +194,9 @@ for (const [mode, query, date] of [
     await expect(help).toContainText('Touching');
     await expect(help).toContainText('Keyboard');
     await expect(help.locator('.help-status')).toContainText('Fits this layout');
-    await expect(help.locator('.help-status .met use')).toHaveAttribute('href', /\/icons\.svg#check-square$/);
+    await expect(help.locator('.help-status .met use')).toHaveAttribute('href', /^\/icons\.svg(?:\?[^#]*)?#check-square$/);
     await expect(help.locator('.help-status')).toContainText('Needs a change');
-    await expect(help.locator('.help-status .conflict use')).toHaveAttribute('href', /\/icons\.svg#x-square$/);
+    await expect(help.locator('.help-status .conflict use')).toHaveAttribute('href', /^\/icons\.svg(?:\?[^#]*)?#x-square$/);
     await expect(help.getByRole('link', { name: 'Worked example', exact: true })).toHaveCount(0);
     const tutorial = help.getByRole('link', { name: 'Play tutorial', exact: true });
     if (mode === 'tutorial') await expect(tutorial).toBeHidden();
