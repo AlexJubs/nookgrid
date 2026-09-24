@@ -75,7 +75,8 @@
 .completion-summary{display:flex;flex-direction:column;flex:1;gap:12px;width:100%;padding:0;background:transparent}
 .game-page .completion h2{font-size:26px;line-height:1.2;margin-bottom:4px}
 .game-page .completion p{font-size:14px;line-height:1.5}
-.completion-meta{display:flex;flex-wrap:wrap;gap:4px;color:var(--muted);font-variant-numeric:tabular-nums}
+.completion-meta{display:flex;flex-wrap:wrap;gap:4px;color:var(--ink);font-variant-numeric:tabular-nums}
+.game-page .completion .completion-meta p{font-size:16px}
 .completion-meta p:not([hidden])~p:not([hidden])::before{content:"·";margin-right:4px}
 .confetti{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:30}
 .confetti i{position:absolute;top:0;left:0;width:8px;height:12px;border-radius:2px}
@@ -191,7 +192,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .completion-place{display:grid;place-items:center;aspect-ratio:1;min-width:0;background:transparent;border:0}
 .completion-place svg{width:92%;height:auto}
 .completion-place .place-name{display:none}
-.result-history{width:100%;margin:0}
+.result-history{width:100%;margin:24px 0 0}
 #view-result{grid-column:1/-1;justify-self:stretch;width:100%;margin-top:8px}
 #solved-plan summary{display:flex;align-items:center;gap:6px;min-height:44px;font-size:14px;color:var(--green);cursor:pointer;list-style:none}
 #solved-plan summary::-webkit-details-marker{display:none}
