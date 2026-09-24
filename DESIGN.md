@@ -34,7 +34,7 @@ Keep the outcome, streak, week strip and supporting countdown together above one
 
 ## Spacing and proportions
 
-- Put related text closer together than separate groups. Result title, time and hint count form one group; actions form another. Reference: pages 96–99.
+- Put related text closer together than separate groups. Result title and metadata form one group; actions form another. Streak, solve time and hints share one wrapping row with the same regular 14px text, muted color and quiet dot separators. Reference: pages 96–99.
 - Fit panels to real content. Preserve the compact board and bounded plan width instead of stretching them into unused space. Reference: pages 76–82.
 - Prefer existing spacing choices: 4, 8, 12, 16, 24 and 32px. Existing board geometry and 44px interaction targets are functional exceptions, not a reason to scale everything uniformly.
 - Phone home uses the available safe viewport height: title and date above, streak and week in the middle, Play/Continue and Calendar near the bottom. Expand space between those groups, not inside labels. Short or larger-text homes scroll naturally without clipping.

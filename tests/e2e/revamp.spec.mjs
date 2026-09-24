@@ -389,6 +389,12 @@ for (const [label, puzzle, date] of [
     await expect(page.locator('.completion-actions button:visible, .completion-actions a:visible')).toHaveText(labels);
     await expect(page.locator('.result-history button')).toHaveCount(0);
     await expect(page.locator('#home-open')).toBeVisible();
+    const summaryStyles = await page.locator('.completion-meta p:visible').evaluateAll(items => items.map(item => {
+      const style = getComputedStyle(item);
+      return { size: style.fontSize, weight: style.fontWeight, color: style.color };
+    }));
+    expect(summaryStyles.every(style => JSON.stringify(style) === JSON.stringify(summaryStyles[0]))).toBe(true);
+    expect(summaryStyles[0].weight).toBe('400');
     if (label === 'daily') await expect(page.locator('#next-puzzle span')).toHaveText('Next puzzle in');
     for (const native of [false, true]) {
       if (native && page.viewportSize().width > 927) continue;

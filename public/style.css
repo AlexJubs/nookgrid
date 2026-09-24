@@ -75,9 +75,8 @@
 .completion-summary{display:flex;flex-direction:column;flex:1;gap:12px;width:100%;padding:0;background:transparent}
 .game-page .completion h2{font-size:26px;line-height:1.2;margin-bottom:4px}
 .game-page .completion p{font-size:14px;line-height:1.5}
-.game-page #completion-detail{color:var(--muted)}
-.game-page #daily-streak{color:var(--blue);font-weight:600;margin-top:4px}
-.game-page #completion-time{font-weight:650;font-variant-numeric:tabular-nums;margin-bottom:3px}
+.completion-meta{display:flex;flex-wrap:wrap;gap:4px;color:var(--muted);font-variant-numeric:tabular-nums}
+.completion-meta p:not([hidden])~p:not([hidden])::before{content:"·";margin-right:4px}
 .confetti{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:30}
 .confetti i{position:absolute;top:0;left:0;width:8px;height:12px;border-radius:2px}
 @media(prefers-reduced-motion:reduce){.confetti{display:none}}
