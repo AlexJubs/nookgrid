@@ -1,24 +1,19 @@
 name: Release TestFlight
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: ios-testflight
   cancel-in-progress: false
 
 jobs:
-  checks:
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || vars.ENABLE_TESTFLIGHT_RELEASE == 'true')
-    uses: ./.github/workflows/ci.yml
-
   upload:
-    needs: checks
+    if: github.ref == 'refs/heads/main'
     runs-on: macos-15
     timeout-minutes: 30
     environment: ios-testflight
@@ -34,6 +29,10 @@ jobs:
         with:
           node-version: 22
           package-manager-cache: false
+      - name: Require passing CI for this exact source
+        run: npm run check:release
+        env:
+          GH_TOKEN: ${{ github.token }}
       - run: npm ci
       - run: npm run build:ios
         env:

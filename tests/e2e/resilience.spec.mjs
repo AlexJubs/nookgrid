@@ -146,3 +146,16 @@ test('an exhausted calendar falls back to the playable tutorial', async ({ page 
   await place(page, 'bakery', 0);
   await expect(page.locator('.puzzle-instruction')).toHaveText('Place Cafe in the next square to the right of Bakery.');
 });
+
+test('calendar before launch explains the empty history instead of loading forever', async ({ page }) => {
+  await page.clock.setSystemTime(new Date('2026-09-09T12:00:00Z'));
+  await openGame(page);
+  await expect(page.locator('#puzzle-label')).toHaveText('Tutorial');
+  await page.locator('#menu-open').click();
+  await page.locator('#menu-calendar-open').click();
+  await expect(page.locator('#calendar-status')).toHaveText('No puzzles released yet.');
+  await expect(page.locator('#calendar-navigation')).toBeHidden();
+  await expect(page.locator('#calendar-months')).toBeHidden();
+  await page.getByRole('button', {name:'Close calendar',exact:true}).click();
+  await expect(page.locator('#board')).toBeVisible();
+});

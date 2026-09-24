@@ -208,12 +208,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #solved-plan summary::after{content:"+";margin-left:auto;font-size:20px;color:var(--muted)}
 #solved-plan[open] summary::after{content:"−"}
 #solved-plan summary:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
-.game-page #calendar-dialog{width:min(400px,calc(100% - 16px));max-width:calc(100% - 16px);padding:20px 16px;overflow:hidden}
+.game-page #calendar-dialog{width:min(400px,calc(100% - 16px));max-width:calc(100% - 16px);padding:16px}
 #calendar-streak{color:var(--blue);font-weight:600}
-#calendar-months{max-height:60dvh;overflow-y:auto;overscroll-behavior:contain;padding:4px 2px}
-.calendar-month{margin-bottom:28px}
-.calendar-month:last-child{margin-bottom:0}
-.game-page .calendar-month h3{font-size:16px;font-weight:600;margin:0 0 12px}
+#calendar-months{padding:4px 2px}
+.calendar-navigation{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.game-page #calendar-month-title{font-size:16px;font-weight:600;margin:0}
+#calendar-previous svg{transform:rotate(180deg)}
 .calendar-weekdays,.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(44px,1fr));gap:4px 0;text-align:center}
 .calendar-weekdays{font-size:11px;line-height:1.5;color:var(--muted);margin-bottom:8px}
 .calendar-day{position:relative;display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;border:0;border-radius:7px;color:var(--ink);font-size:13px;line-height:1;text-decoration:none}
@@ -295,6 +295,7 @@ a.calendar-day:hover{background:var(--surface)}
 @media(max-width:927px) and (orientation:portrait){
   .native-app{--safe-top:env(safe-area-inset-top);--safe-bottom:env(safe-area-inset-bottom);--header-height:52px}
   .native-app .game-page{height:100dvh;min-height:0;padding-top:var(--safe-top);padding-bottom:var(--safe-bottom);display:flex;flex-direction:column}
+  .native-app .game-page #calendar-dialog{top:var(--safe-top);bottom:var(--safe-bottom);max-height:calc(100dvh - var(--safe-top) - var(--safe-bottom) - 24px)}
   .native-app .game-page .site-header{height:var(--header-height);flex:none;width:100%;padding-block:4px}
   .native-app .game-page .brand{font-size:24px}
   .native-app .puzzle-heading h1{font-size:24px;margin:0}
@@ -321,7 +322,6 @@ a.calendar-day:hover{background:var(--surface)}
   .native-app .game-page.show-result,.native-app .game-page.show-home{height:auto;min-height:100dvh}
   .native-app .game-page.show-result .play-area{display:block}
   .native-app .game-page.show-result .completion{width:100%;gap:8px}
-  .native-app .game-page #calendar-months{max-height:calc(70dvh - var(--safe-top) - var(--safe-bottom))}
 }
 @media(max-width:927px) and (orientation:portrait) and (max-height:740px){
   .native-app{--header-height:48px}
@@ -338,7 +338,7 @@ a.calendar-day:hover{background:var(--surface)}
 @media(max-width:360px){
   .game-page .site-header{gap:4px;padding-inline:12px}
   .game-page .brand{font-size:22px}
-  .game-page #calendar-dialog{width:100%;max-width:100%;padding:20px 6px}
+  .game-page #calendar-dialog{width:100%;max-width:100%;padding:16px 6px}
   #calendar-months{padding-inline:0}
   .calendar-day{border-radius:4px}
 }

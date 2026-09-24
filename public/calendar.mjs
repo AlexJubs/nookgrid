@@ -37,19 +37,16 @@ export function getCalendarMonths(firstDate,today) {
   return months;
 }
 
-export function renderCalendar({dates,today,completedDates = [],streakDays = [],currentDate,isTest = false}) {
+export function renderCalendar({dates,today,completedDates = [],streakDays = [],currentDate,isTest = false,selectedMonth}) {
   const fragment = document.createDocumentFragment();
   if (!parseDate(today)) return fragment;
   const available = new Set(dates.filter(date => parseDate(date) && date <= today));
   const firstDate = [...available].sort()[0];
   const completed = new Set(completedDates), earned = new Set(streakDays);
-  for (const month of getCalendarMonths(firstDate,today)) {
+  for (const month of getCalendarMonths(firstDate,today).filter(item => item.month === (selectedMonth || today.slice(0,7)))) {
     const section = document.createElement('section');
     section.className = 'calendar-month';
-    const heading = document.createElement('h3');
-    heading.id = `calendar-${month.month}`;
-    heading.textContent = month.label;
-    section.setAttribute('aria-labelledby',heading.id);
+    section.setAttribute('aria-labelledby','calendar-month-title');
     const labels = document.createElement('div');
     labels.className = 'calendar-weekdays';
     labels.setAttribute('aria-hidden','true');
@@ -97,7 +94,7 @@ export function renderCalendar({dates,today,completedDates = [],streakDays = [],
       if (isCompleted) cell.insertAdjacentHTML('beforeend','<svg class="ui-icon calendar-check" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-home1#check"/></svg>');
       grid.append(cell);
     }
-    section.append(heading,labels,grid);
+    section.append(labels,grid);
     fragment.append(section);
   }
   return fragment;

@@ -1,6 +1,18 @@
 # Release NookGrid
 
-The website and iOS app share the game in `public/`. CI checks both surfaces. A GitHub push alone does not publish anything until a release is explicitly enabled below. Apple enrollment, signing credentials and the first TestFlight upload are separate prerequisites; this repository does not establish that they exist.
+The website and iOS app share the game in `public/`. CI checks both surfaces. Releases are manual; a GitHub push never publishes either surface. Apple enrollment, signing credentials and the first TestFlight upload are separate prerequisites; this repository does not establish that they exist.
+
+## Required release gate
+
+1. Run `npm run test:release` after installing dependencies and the Playwright browsers. This single command runs shared logic and Chromium/WebKit checks locally with external requests blocked.
+2. Commit and push the reviewed source. Wait for its `CI` workflow to pass both **Web and shared logic** and **iOS simulator**. Investigate failures without weakening tests or repeatedly rerunning unexplained failures.
+3. Run `npm run check:release` with command-scoped `GH_TOKEN` or `GITHUB_TOKEN` that can read the personal repository and Actions. It checks clean source, current remote `main`, committed public bytes, workflow identity, source/event and both latest successful jobs. Missing access, pending/skipped/failed checks, ignored public files or a source mismatch stop the release.
+
+`test:release` tests local edits; `check:release` verifies the exact pushed commit. The latter is read-only and reuses CI results instead of running another full native suite. Keep its JSON receipt with the release record. Never change the employer GitHub login for this project.
+
+The web publisher enforces this gate before contacting here.now, including when called by authorized owner tooling. The manual TestFlight workflow checks before building or using signing material. For Xcode Organizer releases, run the gate before the production build and again before upload, and record the checked source and archive build number. Verify that archive contains that source's production assets. Direct Organizer actions remain a manual checklist; a check of today's checkout cannot validate an unrelated older archive.
+
+Passing checks reduces regression risk; it does not prove there are no bugs. Preserve supported behavior when changing UI: movable board pieces must still drag back to the tray, save that removal and support Undo. Hiding a separate Put back button does not remove that gesture or justify reversing its test expectations. Fixed hints remain fixed.
 
 ## Reproduce CI
 
@@ -8,9 +20,8 @@ Use Node.js 22.12 or newer and Python 3 available as `python3`. On macOS, instal
 
 ```sh
 npm ci
-npm test
 npx playwright install chromium webkit --with-deps
-npm run test:e2e
+npm run test:release
 npm run build:ios
 npm run test:ios
 ```
@@ -38,7 +49,7 @@ Use the following record types as a private recovery checklist. Fill actual valu
 | Personal Apple development | Apple Account recovery, intended personal team, existing app record, signing certificate with its private key, profiles and any App Store Connect API key |
 | Analytics and support | Analytics administrator access and control of the support mailbox; the public capture token cannot restore either |
 
-Sign in to the existing services and verify the intended personal ownership before restoring deployment settings. Do not create replacement production resources merely because local access is missing. Use the secret and variable names below to populate the GitHub environments. Keep both automatic-release variables absent or `false` during setup. A manual Actions dispatch can run even while those variables are false, so dispatch only after its access and release candidate are ready.
+Sign in to the existing services and verify the intended personal ownership before restoring deployment settings. Do not create replacement production resources merely because local access is missing. Use the secret and variable names below to populate the GitHub environments only with owner approval. Dispatch a release only after its access and release candidate are ready.
 
 No credentials are required to clone the public source, run browser tests or build the unsigned simulator app. Do not put passwords, API secrets, recovery codes, private signing keys or exported account sessions in source, issue comments, build logs or generated public files.
 
@@ -47,7 +58,7 @@ No credentials are required to clone the public source, run browser tests or bui
 1. Complete the [Xcode setup](DEVELOPMENT.md#ios-development). In Xcode Settings > Accounts, add the owner's personal Apple Account and confirm the intended personal developer team is available. Leave employer accounts and teams unchanged.
 2. Build the default QA bundle with `npm run build:ios`, open `ios/App/App.xcodeproj`, and select the **App** target's Signing & Capabilities. Use automatic signing with the intended personal team. The existing app uses `com.nookgrid.app`; its owner must retain that identity. A fork needs its own available bundle identifier and matching configuration before device signing or distribution.
 3. Connect and unlock the iPhone, follow Apple's pairing and Developer Mode prompts, select it as the **App** scheme destination, and run. Review Xcode's local signing changes before committing; personal team selection must stay out of shared source. See [Apple's device setup](https://developer.apple.com/documentation/xcode/running-your-app-on-simulated-or-physical-devices).
-4. For the first manual TestFlight release on this Mac, verify personal Developer Program and App Store Connect access, use an unused build number, and clear `NOOKGRID_DEV_URL`. Run `NOOKGRID_PRODUCTION=1 npm run build:ios`, choose a physical-device archive destination, then Product > Archive. Use Organizer's distribution flow with the intended personal account. Confirm processing and actual TestFlight availability as described below.
+4. For a manual TestFlight release, follow the required release gate above, verify personal Developer Program and App Store Connect access, use an unused build number, and clear `NOOKGRID_DEV_URL`. Run `NOOKGRID_PRODUCTION=1 npm run build:ios`, choose a physical-device archive destination, then Product > Archive. Verify the archive's source and build number, rerun `npm run check:release`, then use Organizer's distribution flow with the intended personal account. Confirm processing and actual TestFlight availability as described below.
 5. After archiving, clear any exported production/development URL values and run `npm run build:ios` to restore analytics-disabled QA assets. Keep archives and signing exports private.
 
 An archive build proves compilation and signing at that step, not account access for upload. If export reports an account-access error, preserve the archive and restore the intended personal account's access before trying another upload. A certificate without its private key cannot restore a signing identity; see [Apple's signing-identity guidance](https://developer.apple.com/documentation/xcode/sharing-your-teams-signing-certificates).
@@ -56,14 +67,7 @@ An archive build proves compilation and signing at that step, not account access
 
 Create GitHub environments named `web-production` and `ios-testflight`. Restrict each to `main`; add environment review protection if wanted. Store provider credentials as environment secrets. Both workflows have read-only repository permissions and pinned GitHub actions. Pull request checks never receive release credentials.
 
-Both release workflows rerun CI before publishing the same checked-out commit. They can be started manually from Actions on `main`. Automatic publishing is off while the corresponding repository variable is absent or differs from `true`.
-
-| Repository variable | Enable only after |
-| --- | --- |
-| `ENABLE_WEB_RELEASE=true` | The first manual web release and owner manifest verification succeed |
-| `ENABLE_TESTFLIGHT_RELEASE=true` | A manually uploaded build finishes processing and is usable in TestFlight |
-
-When enabled, a successful main push can publish to the corresponding service. The workflows serialize releases separately. No new hosting service, paid CI plan or Apple membership is purchased by these workflows.
+Both release workflows start only through a manual Actions dispatch on `main`. They verify the checked-out commit's existing successful CI run instead of duplicating its suites. Their read-only token includes Actions access for this check. Automatic publication is disabled regardless of historical `ENABLE_WEB_RELEASE` or `ENABLE_TESTFLIGHT_RELEASE` values. The workflows serialize releases separately. No new hosting service, paid CI plan or Apple membership is purchased by these workflows.
 
 ## Website
 
@@ -79,11 +83,11 @@ Use the existing site and hosting account. The helper updates only that site's `
 
 For the first release, compare the intended public files with the owner's current manifest. Obtain its `currentVersionId` through the dashboard or authenticated `GET /api/v1/publish/:slug`. In Actions, run **Release web** on `main` and enter that ID as `expected_version`. This is an explicit replacement of that reviewed version. A stale version fails instead of overwriting a newer publication.
 
-Automatic releases first compare the owner manifest with `public/` from the previous main push. A match supplies the base version for the update. A mismatch stops before uploading, including when an earlier deployment was skipped or someone edited the site elsewhere. Reconcile the differences and run a manual release; do not bypass that check by supplying an unreviewed current version.
+Authorized owner tooling can supply a reviewed previous public directory through `HERENOW_EXPECTED_DIRECTORY` instead of a base version. The helper compares it with the current owner manifest and stops on a mismatch. Reconcile differences before replacing a version; do not supply an unreviewed current version just to bypass a failure. The same exact-source CI guard applies to this route, using command-scoped personal GitHub access.
 
-The helper rejects symlinks and unexpected upload destinations, uploads file bytes, finalizes, then checks the complete owner manifest's file hashes and sizes. Its output records the previous and current version IDs. It never opens the hosted game. Provider behavior is documented in the [here.now publish API](https://here.now/docs#update).
+The helper accepts only the checked-out repository's committed `public/` bytes, rejects symlinks and unexpected upload destinations, uploads file bytes, finalizes, then checks the complete owner manifest's file hashes and sizes. Its output records the source, CI receipt and previous/current version IDs. It never opens the hosted game. Provider behavior is documented in the [here.now publish API](https://here.now/docs#update).
 
-If an upload or verification fails, inspect the owner's current version before retrying. A timeout can happen after a change is live. To roll back, use the site's Versions panel to restore the last known good version, then reconcile main before re-enabling automatic releases. See [here.now version history](https://here.now/docs#versions).
+If an upload or verification fails, inspect the owner's current version before retrying. A timeout can happen after a change is live. To roll back, use the site's Versions panel to restore the last known good version, then reconcile main before the next release. See [here.now version history](https://here.now/docs#versions).
 
 ## TestFlight
 
@@ -112,4 +116,4 @@ A successful upload is not a TestFlight-ready build. Wait for processing in [App
 
 Before distribution, reconcile the app's privacy answers and privacy manifest with its actual collection, complete required metadata/screenshots, and verify the bundled calendar covers the intended release period. Do not enable advertising or reminders as part of signing setup.
 
-To halt future uploads, remove `ENABLE_TESTFLIGHT_RELEASE` or set it to `false`. To stop a bad beta, expire that build in App Store Connect and upload a corrected build with a new number. A website rollback does not change an already installed app. Rotate expired or revoked signing material in the environment secrets before the next release.
+Uploads require an explicit manual dispatch. To stop a bad beta, expire that build in App Store Connect and upload a corrected build with a new number. A website rollback does not change an already installed app. Rotate expired or revoked signing material in the environment secrets before the next release.

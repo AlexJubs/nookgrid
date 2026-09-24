@@ -3,7 +3,7 @@ import {mkdtemp, rm, symlink, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import test from 'node:test';
-import {collectFiles, releaseWeb} from './release-web.mjs';
+import {collectFiles, releaseWeb as publishWeb} from './release-web.mjs';
 
 test('web releases validate targets, preserve the base version and verify published hashes', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'nookgrid-release-'));
@@ -14,6 +14,11 @@ test('web releases validate targets, preserve the base version and verify publis
     const versionId = '01BBBBBBBBBBBBBBBBBBBBBBBB';
     const siteApi = 'https://here.now/api/v1/publish/nookgrid-test';
     const calls = [];
+    const releaseWeb = (options, request) => publishWeb(options, request, async ({directory: checkedDirectory, files}) => {
+      assert.equal(checkedDirectory, directory);
+      assert.deepEqual(files.map(item => item.path), ['index.html']);
+      return {source: 'tested-source'};
+    });
     let uploadPath = file.path;
     let uploadHost = 'bucket.r2.cloudflarestorage.com';
     let manifest = [file];
@@ -30,6 +35,8 @@ test('web releases validate targets, preserve the base version and verify publis
       if (url === siteApi && init.method === 'GET') return Response.json({currentVersionId: versionId, manifest});
       assert.fail(`Unexpected request: ${url}`);
     };
+    await assert.rejects(publishWeb(options, request, async () => { throw new Error('CI failed'); }), /CI failed/);
+    assert.equal(calls.length, 0);
     assert.equal((await releaseWeb(options, request)).currentVersionId, versionId);
     assert.equal(JSON.parse(calls[0].body).baseVersionId, options.baseVersionId);
     assert.equal(calls[1].headers.Authorization, undefined);

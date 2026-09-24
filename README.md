@@ -21,3 +21,7 @@ NookGrid is available on the [App Store](https://apps.apple.com/us/app/nookgrid/
 <img src="docs/images/nookgrid-ios.png" alt="NookGrid on iPhone, with the neighborhood plan above the grid and places below it" width="300">
 
 [Development guide](docs/DEVELOPMENT.md) · [Release guide](docs/RELEASING.md)
+
+## Before a release
+
+After installing dependencies and the Playwright browsers, run `npm run test:release` for the local shared-logic and browser checks. Before publishing, run `npm run check:release` with command-scoped personal GitHub read access. This separate gate requires clean, committed source matching current `origin/main`, plus successful web and iOS jobs in its latest CI run. It reuses those completed checks without rerunning the simulator suite. See the [release guide](docs/RELEASING.md#required-release-gate) for setup and the manual native checklist.

@@ -4,7 +4,7 @@ import { placeArt } from './art.mjs?v=20260915-teaser1';
 import { testMode, analytics } from './session.mjs?v=20260924-calendar2';
 import { native, savedValue, saveValue } from './platform.mjs';
 import { updatePuzzleLinks } from './navigation.mjs?v=20260924-calendar2';
-import { getWeekDates, renderCalendar } from './calendar.mjs?v=20260924-calendar2';
+import { getWeekDates, getCalendarMonths, renderCalendar } from './calendar.mjs?v=20260924-calendar3';
 
 const $ = id => document.getElementById(id);
 const renderIcon = (name, className = '') => `<svg class="ui-icon ${className}" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-calendar2#${name}"/></svg>`;
@@ -22,6 +22,7 @@ let wasSolved = false, feedbackKey = null, feedbackPayload = null;
 let hasGuidance = false, shouldShowGuidance = false;
 let solveTimer = {elapsedMs:0,startedAt:null};
 let screen = 'puzzle';
+let calendarMonths = [], calendarMonth;
 
 function read(key) {
   return savedValue(key);
@@ -76,19 +77,45 @@ function getCompletedDates() {
   )).map(item => item.date);
 }
 
-function prepareCalendar(resetScroll = true) {
+function prepareCalendar(shouldResetMonth = true) {
   if (!bank || !puzzle) return;
-  const focusedDate = $('calendar-months').contains(document.activeElement) ? document.activeElement.dataset.puzzleDate : null;
-  const scrollTop = $('calendar-months').scrollTop;
+  const dates = bank.puzzles.map(item => item.date);
+  calendarMonths = getCalendarMonths(dates.filter(date => date <= today).sort()[0],today);
+  if (shouldResetMonth) calendarMonth = (screen === 'home' || mode === 'practice' ? today : puzzle.date).slice(0,7);
+  const month = calendarMonths.find(item => item.month === calendarMonth) || calendarMonths[0];
   $('calendar-streak').textContent = `${streakLength(streakDays,today)}-day streak`;
+  if (!month) {
+    $('calendar-status').textContent = 'No puzzles released yet.';
+    $('calendar-status').hidden = false;
+    $('calendar-navigation').hidden = true;
+    $('calendar-months').hidden = true;
+    return;
+  }
+  calendarMonth = month.month;
+  const index = calendarMonths.indexOf(month);
+  const focusedDate = $('calendar-months').contains(document.activeElement) ? document.activeElement.dataset.puzzleDate : null;
+  $('calendar-month-title').textContent = month.label;
+  $('calendar-previous').disabled = index === calendarMonths.length - 1;
+  $('calendar-next').disabled = index === 0;
   $('calendar-months').replaceChildren(renderCalendar({
-    dates:bank.puzzles.map(item => item.date),today,completedDates:getCompletedDates(),streakDays,
+    dates,today,selectedMonth:calendarMonth,completedDates:getCompletedDates(),streakDays,
     currentDate:screen === 'home' ? null : puzzle.date,isTest:testMode
   }));
   if (focusedDate) $('calendar-months').querySelector(`a[data-puzzle-date="${focusedDate}"]`)?.focus({preventScroll:true});
   $('calendar-status').hidden = true;
+  $('calendar-navigation').hidden = false;
   $('calendar-months').hidden = false;
-  $('calendar-months').scrollTop = resetScroll ? 0 : scrollTop;
+}
+
+for (const [id,offset] of [['calendar-previous',1],['calendar-next',-1]]) {
+  $(id).addEventListener('click',() => {
+    const month = calendarMonths[calendarMonths.findIndex(item => item.month === calendarMonth) + offset];
+    if (!month) return;
+    const hasFocus = document.activeElement === $(id);
+    calendarMonth = month.month;
+    prepareCalendar(false);
+    if (hasFocus && $(id).disabled) $(offset === 1 ? 'calendar-next' : 'calendar-previous').focus({preventScroll:true});
+  });
 }
 
 function renderHistory() {
@@ -675,6 +702,7 @@ async function init() {
     $('game').hidden = true;
     $('game').setAttribute('aria-busy','false');
     $('calendar-status').textContent = 'Puzzles unavailable';
+    $('calendar-navigation').hidden = true;
     $('calendar-status').hidden = false;
     $('calendar-months').hidden = true;
   } finally {

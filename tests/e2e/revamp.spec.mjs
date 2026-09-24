@@ -287,3 +287,54 @@ test('reading Privacy from home returns home without losing an unfinished puzzle
   await expect(page.locator('#home')).toBeHidden();
   await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
 });
+
+for (const native of [false, true]) {
+  test(`${native ? 'native' : 'web'} six-week calendar fits a small phone without a scroll list`, async ({ page }, testInfo) => {
+    await page.setViewportSize({width:320,height:568});
+    await page.clock.setSystemTime(new Date('2026-11-30T12:00:00Z'));
+    if (native) await page.addInitScript(() => {
+      window.nookgridNative = {isDevelopment:true,onStateChange:async () => {}};
+      document.addEventListener('DOMContentLoaded', () => {
+        document.documentElement.classList.add('native-app');
+        document.documentElement.style.setProperty('--safe-top','20px');
+        document.documentElement.style.setProperty('--safe-bottom','0px');
+      }, {once:true});
+    });
+    await seedProgress(page, ['2026-11-28','2026-11-29'], 'streak');
+    for (const date of ['2026-11-27','2026-11-28','2026-11-29']) {
+      await seedProgress(page, {board:emptyBoard,moves:0,reported:true}, date);
+    }
+    await openHome(page);
+    await page.locator('#calendar-open').press('Enter');
+    await expect(page.locator('#calendar-month-title')).toHaveText('November 2026');
+    await expect(page.locator('#calendar-dialog [data-puzzle-date]')).toHaveCount(30);
+    await expect(page.locator('#calendar-streak')).toHaveText('2-day streak');
+    await expect(page.locator('#calendar-dialog .is-completed')).toHaveCount(3);
+    await expect(page.locator('#calendar-dialog .is-streak')).toHaveCount(2);
+    const geometry = await page.locator('#calendar-dialog').evaluate(dialog => ({
+      width:innerWidth,height:innerHeight,scrolls:dialog.scrollHeight > dialog.clientHeight,
+      targets:[...dialog.querySelectorAll('button,a')].map(element => {
+        const {x,y,width,height} = element.getBoundingClientRect();
+        return {name:element.getAttribute('aria-label'),x,y,width,height};
+      })
+    }));
+    expect(geometry.scrolls).toBe(false);
+    const bounds = await page.locator('#calendar-dialog').boundingBox();
+    expect(bounds.y).toBeGreaterThanOrEqual(native ? 20 : 0);
+    expect(bounds.y + bounds.height).toBeLessThanOrEqual(568);
+    for (const target of geometry.targets) {
+      expect(target.width,target.name).toBeGreaterThanOrEqual(44);
+      expect(target.height,target.name).toBeGreaterThanOrEqual(44);
+      expect(target.x,target.name).toBeGreaterThanOrEqual(0);
+      expect(target.x + target.width,target.name).toBeLessThanOrEqual(geometry.width);
+      expect(target.y,target.name).toBeGreaterThanOrEqual(0);
+      expect(target.y + target.height,target.name).toBeLessThanOrEqual(geometry.height);
+    }
+    await page.screenshot({path:testInfo.outputPath('six-week-calendar.png')});
+    await page.emulateMedia({colorScheme:'dark'});
+    await page.screenshot({path:testInfo.outputPath('six-week-calendar-dark.png')});
+    await page.locator('#calendar-dialog a[data-puzzle-date="2026-11-30"]').press('Enter');
+    await expect(page.locator('#board')).toBeVisible();
+    await expect(page.locator('#puzzle-date')).toHaveText('Nov 30, 2026');
+  });
+}

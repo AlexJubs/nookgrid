@@ -2,6 +2,7 @@ import {createHash} from 'node:crypto';
 import {lstat, readdir, readFile} from 'node:fs/promises';
 import {extname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {checkRelease} from './check-release.mjs';
 
 const api = 'https://here.now/api/v1/publish';
 const contentTypes = {
@@ -34,13 +35,14 @@ export async function collectFiles(directory, prefix = '') {
   return files.sort((left, right) => left.path.localeCompare(right.path));
 }
 
-export async function releaseWeb({directory, apiKey, slug, baseVersionId, expectedDirectory, account}, request = fetch) {
+export async function releaseWeb({directory, apiKey, slug, baseVersionId, expectedDirectory, account}, request = fetch, check = checkRelease) {
   if (!apiKey || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug || '') ||
       (!expectedDirectory && !/^[A-Z0-9]{26}$/.test(baseVersionId || ''))) {
     throw new Error('HERENOW_API_KEY, HERENOW_SLUG and a valid base version or expected directory are required.');
   }
   const files = await collectFiles(directory);
   if (!files.some(file => file.path === 'index.html')) throw new Error('The public directory must contain index.html.');
+  const release = await check({directory, files});
   const headers = {'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'X-HereNow-Client': 'github-actions/nookgrid'};
   if (account) headers['X-HereNow-Account'] = account;
   const siteApi = `${api}/${slug}`;
@@ -83,7 +85,7 @@ export async function releaseWeb({directory, apiKey, slug, baseVersionId, expect
   if (live.currentVersionId !== published.currentVersionId || !matchesManifest(live.manifest, files)) {
     throw new Error('Published manifest verification failed. Check the owner dashboard before retrying.');
   }
-  return {slug, previousVersionId: baseVersionId, currentVersionId: published.currentVersionId, files: files.length};
+  return {...release, slug, previousVersionId: baseVersionId, currentVersionId: published.currentVersionId, files: files.length};
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

@@ -121,33 +121,98 @@ test('a stale tab cannot erase an earned completion badge', async ({ page }) => 
   }
 });
 
-test('the calendar scrolls to launch without duplicates or unreleased links', async ({ page }) => {
+test('the calendar pages by month to launch without scrolling or unreleased links', async ({ page }) => {
   await page.clock.setSystemTime(new Date('2026-11-09T12:00:00Z'));
   await openGame(page);
   await page.locator('#menu-open').click();
   await page.locator('#menu-calendar-open').click();
-  const months = page.locator('#calendar-months .calendar-month');
-  await expect(months.locator('h3')).toHaveText(['November 2026', 'October 2026', 'September 2026']);
-  const dates = page.locator('#calendar-months a[data-puzzle-date]');
-  await expect(dates).toHaveCount(61);
-  const values = await dates.evaluateAll(items => items.map(item => item.dataset.puzzleDate));
+  const calendar = page.locator('#calendar-dialog');
+  const previous = calendar.getByRole('button', { name: 'Previous month', exact: true });
+  const next = calendar.getByRole('button', { name: 'Next month', exact: true });
+  const title = calendar.locator('#calendar-month-title');
+  await expect(title).toHaveText('November 2026');
+  await expect(next).toBeDisabled();
+  const values = [];
+  for (const [label, count] of [['November 2026', 9], ['October 2026', 31], ['September 2026', 21]]) {
+    await expect(title).toHaveText(label);
+    await expect(calendar.locator('.calendar-month')).toHaveCount(1);
+    const dates = calendar.locator('a[data-puzzle-date]');
+    await expect(dates).toHaveCount(count);
+    const days = await dates.evaluateAll(items => items.map(item => item.dataset.puzzleDate));
+    expect(days).toEqual([...days].sort());
+    values.push(...days);
+    expect(await page.locator('#calendar-months').evaluate(element => element.scrollHeight <= element.clientHeight)).toBe(true);
+    if (label === 'September 2026') break;
+    await previous.press('Enter');
+    await expect(label === 'October 2026' ? next : previous).toBeFocused();
+  }
+  await expect(previous).toBeDisabled();
   expect(new Set(values).size).toBe(61);
   expect(values.every(date => date >= '2026-09-10' && date <= '2026-11-09')).toBe(true);
-  for (const month of await months.all()) {
-    const days = await month.locator('a[data-puzzle-date]').evaluateAll(items => items.map(item => item.dataset.puzzleDate));
-    expect(days).toEqual([...days].sort());
-  }
-  await expect(page.locator('#calendar-dialog [data-puzzle-date="2026-09-09"]')).not.toHaveAttribute('href');
-  await expect(page.locator('#calendar-dialog [data-puzzle-date="2026-11-10"]')).not.toHaveAttribute('href');
-  await expect(page.locator('#calendar-dialog [aria-current="date"]')).toHaveAttribute('data-puzzle-date', '2026-11-09');
-  const firstDay = page.locator('#calendar-dialog a[data-puzzle-date="2026-09-10"]');
-  await firstDay.scrollIntoViewIfNeeded();
-  await firstDay.focus();
-  await expect(firstDay).toBeFocused();
-  expect(await page.locator('#calendar-months').evaluate(element => element.scrollTop)).toBeGreaterThan(0);
-  await firstDay.press('Enter');
+  await expect(calendar.locator('[data-puzzle-date="2026-09-09"]')).not.toHaveAttribute('href');
+  await next.press('Enter');
+  await next.press('Enter');
+  await expect(title).toHaveText('November 2026');
+  await expect(calendar.locator('[data-puzzle-date="2026-11-10"]')).not.toHaveAttribute('href');
+  await expect(calendar.locator('[aria-current="date"]')).toHaveAttribute('data-puzzle-date', '2026-11-09');
+  await previous.press('Enter');
+  await previous.press('Enter');
+  await calendar.locator('a[data-puzzle-date="2026-09-10"]').press('Enter');
   await expect(page.locator('#puzzle-date')).toHaveText('Sep 10, 2026');
   expect(new URL(page.url()).searchParams.get('test')).toBe('1');
+  await page.locator('#menu-open').click();
+  await page.locator('#menu-calendar-open').click();
+  await expect(title).toHaveText('September 2026');
+});
+
+for (const [date, current, previous, lastDay] of [
+  ['2027-01-02', 'January 2027', 'December 2026', '2026-12-31'],
+  ['2028-03-01', 'March 2028', 'February 2028', '2028-02-29']
+]) {
+  test(`calendar navigation retains every day across ${previous}`, async ({ page }) => {
+    await page.clock.setSystemTime(new Date(`${date}T12:00:00Z`));
+    await openGame(page);
+    await page.locator('#menu-open').click();
+    await page.locator('#menu-calendar-open').click();
+    await expect(page.locator('#calendar-month-title')).toHaveText(current);
+    await page.getByRole('button', { name: 'Previous month', exact: true }).press('Enter');
+    await expect(page.locator('#calendar-month-title')).toHaveText(previous);
+    await expect(page.locator(`#calendar-dialog a[data-puzzle-date="${lastDay}"]`)).toBeVisible();
+    await expect(page.locator('#calendar-dialog a[data-puzzle-date]')).toHaveCount(Number(lastDay.slice(-2)));
+    await page.getByRole('button', { name: 'Next month', exact: true }).press('Enter');
+    await expect(page.locator('#calendar-month-title')).toHaveText(current);
+    await expect(page.getByRole('button', { name: 'Next month', exact: true })).toBeDisabled();
+  });
+}
+
+test('browsing a month survives a saved completion and midnight without losing the puzzle', async ({ page }) => {
+  await page.clock.setSystemTime(new Date('2026-10-31T23:59:00-04:00'));
+  await openGame(page);
+  await place(page, 'cafe', 0);
+  await page.locator('#menu-open').click();
+  await page.locator('#menu-calendar-open').click();
+  await page.getByRole('button', { name: 'Previous month', exact: true }).press('Enter');
+  const date = page.locator('#calendar-dialog a[data-puzzle-date="2026-09-17"]');
+  await date.focus();
+  await page.evaluate(() => {
+    const key = 'nookgrid:test:v1:2026-09-17';
+    localStorage.setItem(key, JSON.stringify({board:Array(9).fill(null),moves:0,reported:true}));
+    window.dispatchEvent(new StorageEvent('storage',{key}));
+  });
+  await expect(date).toHaveAccessibleName(/, completed(?:,|$)/);
+  await expect(date).toBeFocused();
+  await page.clock.fastForward(61_000);
+  await expect(page.locator('#calendar-month-title')).toHaveText('September 2026');
+  await expect(date).toBeFocused();
+  await page.getByRole('button', { name: 'Next month', exact: true }).press('Enter');
+  await expect(page.locator('#calendar-month-title')).toHaveText('October 2026');
+  await page.getByRole('button', { name: 'Next month', exact: true }).press('Enter');
+  await expect(page.locator('#calendar-month-title')).toHaveText('November 2026');
+  await expect(page.locator('#calendar-dialog a[data-puzzle-date]')).toHaveCount(1);
+  await page.keyboard.press('Escape');
+  await expectBoard(page, ['cafe', ...Array(8).fill(null)]);
+  await openGame(page, 'date=2026-10-31');
+  await expectBoard(page, ['cafe', ...Array(8).fill(null)]);
 });
 
 test('archived completion offers today and has no countdown', async ({ page }) => {

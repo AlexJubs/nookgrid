@@ -139,6 +139,22 @@ final class NookGridUITests: XCTestCase {
         tap(button("Calendar"))
         XCTAssertTrue(button("Close calendar").waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["0-day streak"].exists)
+        XCTAssertTrue(getCalendarMonthTitle().exists, app.debugDescription)
+        let currentMonth = getCalendarMonthTitle().label
+        for label in ["Previous month", "Next month"] {
+            let control = button(label)
+            XCTAssertTrue(control.exists)
+            XCTAssertGreaterThanOrEqual(control.frame.width, 44)
+            XCTAssertGreaterThanOrEqual(control.frame.height, 44)
+        }
+        XCTAssertFalse(button("Next month").isEnabled)
+        if button("Previous month").isEnabled {
+            changeCalendarMonth("Previous month")
+            XCTAssertTrue(button("Next month").isEnabled)
+            changeCalendarMonth("Next month")
+            XCTAssertEqual(getCalendarMonthTitle().label, currentMonth)
+            XCTAssertFalse(button("Next month").isEnabled)
+        }
         let today = app.webViews.links.matching(NSPredicate(format: "label CONTAINS ', Today,'")).firstMatch
         XCTAssertTrue(today.exists, app.debugDescription)
         tap(today)
@@ -338,6 +354,26 @@ final class NookGridUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Nice work!"].exists)
     }
 
+    private func getCalendarMonthTitle() -> XCUIElement {
+        app.webViews.firstMatch.staticTexts.matching(NSPredicate(format: "label MATCHES %@", "(January|February|March|April|May|June|July|August|September|October|November|December) [0-9]{4}")).firstMatch
+    }
+
+    private func changeCalendarMonth(_ label: String) {
+        let previousTitle = getCalendarMonthTitle().label
+        XCTAssertFalse(previousTitle.isEmpty, app.debugDescription)
+        tap(button(label))
+        XCTAssertTrue(app.webViews.firstMatch.staticTexts[previousTitle].waitForNonExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(getCalendarMonthTitle().exists, app.debugDescription)
+    }
+
+    private func goToCalendarBoundary(_ label: String) {
+        for _ in 0..<120 {
+            if !button(label).isEnabled { break }
+            changeCalendarMonth(label)
+        }
+        XCTAssertFalse(button(label).isEnabled, "Calendar exceeded the ten-year puzzle bank")
+    }
+
     private func openCalendar() {
         tap(button("Settings"))
         XCTAssertTrue(button("Close menu").waitForExistence(timeout: 5))
@@ -345,11 +381,15 @@ final class NookGridUITests: XCTestCase {
         tap(button("Calendar"))
         XCTAssertTrue(button("Close calendar").waitForExistence(timeout: 5))
         XCTAssertFalse(button("Close menu").exists)
-        XCTAssertTrue(app.webViews.links.matching(NSPredicate(format: "label CONTAINS 'September 10, 2026'")).firstMatch.exists)
+        XCTAssertTrue(getCalendarMonthTitle().exists, app.debugDescription)
+        XCTAssertTrue(button("Previous month").exists)
+        XCTAssertTrue(button("Next month").exists)
     }
 
     private func openArchive() {
         openCalendar()
+        goToCalendarBoundary("Previous month")
+        XCTAssertEqual(getCalendarMonthTitle().label, "September 2026")
         tap(app.webViews.links.matching(NSPredicate(format: "label BEGINSWITH 'Thursday, September 10, 2026,'")).firstMatch)
         XCTAssertTrue(app.staticTexts["Sep 10, 2026 plan"].waitForExistence(timeout: 5), app.debugDescription)
         XCTAssertFalse(button("Close calendar").exists)
@@ -357,9 +397,10 @@ final class NookGridUITests: XCTestCase {
 
     private func openToday() {
         openCalendar()
+        goToCalendarBoundary("Next month")
         tap(app.webViews.links.matching(NSPredicate(format: "label CONTAINS ', Today,'")).firstMatch)
         XCTAssertTrue(button("How to play").waitForExistence(timeout: 5))
-        XCTAssertFalse(button("Close calendar").exists)
+        XCTAssertTrue(button("Close calendar").waitForNonExistence(timeout: 5), app.debugDescription)
     }
 
     func testArchiveNavigation() {

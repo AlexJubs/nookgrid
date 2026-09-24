@@ -1,8 +1,6 @@
 name: Release web
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       expected_version:
@@ -12,18 +10,15 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: web-production
   cancel-in-progress: false
 
 jobs:
-  checks:
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || vars.ENABLE_WEB_RELEASE == 'true')
-    uses: ./.github/workflows/ci.yml
-
   deploy:
-    needs: checks
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     environment: web-production
@@ -35,17 +30,9 @@ jobs:
         with:
           node-version: 22
           package-manager-cache: false
-      - name: Read the previous source for automatic release
-        if: github.event_name == 'push'
-        env:
-          BASE_COMMIT: ${{ github.event.before }}
-        run: |
-          git fetch origin "$BASE_COMMIT" --depth=1
-          mkdir -p "$RUNNER_TEMP/previous-source"
-          git archive "$BASE_COMMIT" public | tar -x -C "$RUNNER_TEMP/previous-source"
-          printf 'HERENOW_EXPECTED_DIRECTORY=%s\n' "$RUNNER_TEMP/previous-source/public" >> "$GITHUB_ENV"
       - name: Publish public files and verify the owner manifest
         env:
+          GH_TOKEN: ${{ github.token }}
           HERENOW_API_KEY: ${{ secrets.HERENOW_API_KEY }}
           HERENOW_SLUG: ${{ vars.HERENOW_SLUG }}
           HERENOW_ACCOUNT: ${{ vars.HERENOW_ACCOUNT }}
