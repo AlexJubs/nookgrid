@@ -14,6 +14,19 @@ The web publisher enforces this gate before contacting here.now, including when 
 
 Passing checks reduces regression risk; it does not prove there are no bugs. Preserve supported behavior when changing UI: movable board pieces must still drag back to the tray, save that removal and support Undo. Hiding a separate Put back button does not remove that gesture or justify reversing its test expectations. Fixed hints remain fixed.
 
+## Manual screen pass
+
+Before publishing a UI or gameplay release, record the source, browser/device and pass or blocker for each group below. Exercise the actual controls in an isolated preview; screenshots and automated results alone are not a manual pass.
+
+- Home: new, unfinished and completed daily puzzle; Play/Continue, result and Calendar navigation.
+- Daily, Tutorial and archive: drag on and off, move, swap, cancelled drop, tap and keyboard controls, Undo, Reset, hint cancellation and fixed hints, reload with saved progress.
+- Completion: time and hints, daily streak credit, archive/Tutorial exclusion, solved-plan disclosure, replay, clean share text and share cancellation/fallback.
+- Calendar: one whole month without a scrolling history list, month boundaries, current-puzzle underline, completion checks, streak marks, disabled dates and saved completion after Reset.
+- Dialogs and reading pages: Help, Menu, Settings, Feedback, Share, About and both Privacy pages; close, Escape, outside dismissal, focus restoration, text editing and the return to the correct puzzle.
+- Recovery and fit: load failure and retry, short-phone calendar fit, readable scrolling on long help/privacy pages, desktop controls and native safe areas.
+
+Keep failed cases blocked until fixed and rechecked. Record unavailable native or physical-device checks explicitly; do not replace them with a browser-size preview or claim a bug-free certification. Complete the physical iPhone checks below before public App Store submission.
+
 ## Reproduce CI
 
 Use Node.js 22.12 or newer and Python 3 available as `python3`. On macOS, install Xcode 26 or newer with an iOS Simulator runtime and finish Xcode's first launch setup.

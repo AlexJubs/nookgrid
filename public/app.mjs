@@ -200,11 +200,21 @@ document.querySelectorAll('dialog').forEach(dialog => {
 });
 document.addEventListener('pointerdown', () => document.documentElement.classList.add('pointer-input'), true);
 document.addEventListener('keydown', event => {
-  const isEditingText = event.target.matches('textarea,input:not([type="checkbox"]):not([type="radio"]),[contenteditable="true"]');
-  if (['Tab', 'Escape'].includes(event.key) || (!isEditingText && ['Enter', ' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key))) {
+  const isEditingText = event.target.isContentEditable || event.target.matches('textarea,input:not([type="checkbox"]):not([type="radio"])');
+  if (['Tab', 'Escape'].includes(event.key) || (!isEditingText && ['Enter', ' ', 'Delete', 'Backspace', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key))) {
     document.documentElement.classList.remove('pointer-input');
   }
   if (event.key === 'Escape' && selected && !document.querySelector('dialog[open]')) { selected = null; render(); }
+  if (['Delete', 'Backspace'].includes(event.key) && !isEditingText && !event.metaKey && !event.ctrlKey && !event.altKey && event.target.closest('#board,#tray,dialog')) {
+    event.preventDefault();
+    if (screen !== 'puzzle' || !selected || drag || document.querySelector('dialog[open]') || event.target.closest('[aria-disabled="true"]')) return;
+    if (!progress.board.includes(selected) || progress.hintedPlaces.includes(selected)) return;
+    const id = selected;
+    const index = progress.board.indexOf(id);
+    if (applyBoard(movePlace(progress.board,id,null),`${nameOf(id)} is back in the tray.`,'remove')) {
+      $('board').children[index].focus({preventScroll:true});
+    }
+  }
 });
 
 async function postRecord(collection, record, key) {

@@ -120,6 +120,90 @@ test('tap controls select, deselect, swap, undo and reset', async ({ page }) => 
   await expect(page.locator('#undo')).toBeDisabled();
 });
 
+for (const date of [today, 'practice', bank.puzzles[0].date]) {
+  test(`keyboard returns a selected place to the tray with Undo and saved progress for ${date}`, async ({ page }) => {
+    await openGame(page, `date=${date}`);
+    const saveDate = date === 'practice' ? bank.tutorial.date : date;
+    const board = ['bakery', ...Array(8).fill(null)];
+    await place(page, 'bakery', 0);
+    await page.locator('[data-lot="0"]').press('Enter');
+    await expect(page.locator('[data-lot="0"]')).toHaveAttribute('aria-pressed', 'true');
+    await page.keyboard.press('Delete');
+    await expectBoard(page, emptyBoard);
+    await expect(page.locator('#selection-status')).toHaveText('Bakery is back in the tray.');
+    expect((await readProgress(page, saveDate)).board).toEqual(emptyBoard);
+    await page.locator('#undo').press('Enter');
+    await expectBoard(page, board);
+    await page.reload();
+    await expectBoard(page, board);
+    await page.locator('[data-place="bakery"]').press('Enter');
+    await page.keyboard.press('Backspace');
+    await expectBoard(page, emptyBoard);
+    await page.reload();
+    await enterGame(page);
+    await expectBoard(page, emptyBoard);
+    expect((await readProgress(page, saveDate)).board).toEqual(emptyBoard);
+    await expect(page.getByRole('button', { name: 'Put back', exact: true })).toHaveCount(0);
+  });
+}
+
+test('removal keys preserve fixed hints and leave dialogs and text editing alone', async ({ page }) => {
+  await openGame(page);
+  await page.locator('#hint').click();
+  await page.locator('#confirm-hint').click();
+  const fixed = [daily.solution[0], ...Array(8).fill(null)];
+  await page.locator('[data-lot="0"]').focus();
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Delete');
+  await expectBoard(page, fixed);
+  await page.locator(`[data-place="${daily.solution[0]}"]`).focus();
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Backspace');
+  await expectBoard(page, fixed);
+  await place(page, daily.solution[1], 1);
+  await page.locator('[data-lot="1"]').press('Enter');
+  const board = [...daily.solution.slice(0, 2), ...Array(7).fill(null)];
+  await page.locator('[data-lot="0"]').focus();
+  await page.keyboard.press('Delete');
+  await expectBoard(page, board);
+  await page.locator('[data-lot="1"]').focus();
+  await page.locator('#help-open').click();
+  await page.keyboard.press('Delete');
+  await page.keyboard.press('Backspace');
+  await expectBoard(page, board);
+  await page.getByRole('button', { name: 'Close how to play', exact: true }).click();
+  await page.locator('#menu-open').click();
+  await page.locator('#feedback-open').click();
+  await page.locator('#feedback-message').fill('note');
+  await page.locator('#feedback-message').press('End');
+  await page.keyboard.press('Backspace');
+  await expect(page.locator('#feedback-message')).toHaveValue('not');
+  for (let index = 0; index < 3; index++) await page.keyboard.press('ArrowLeft');
+  expect(await page.locator('#feedback-message').evaluate(input => input.selectionStart)).toBe(0);
+  await page.keyboard.press('Delete');
+  await expect(page.locator('#feedback-message')).toHaveValue('ot');
+  await expectBoard(page, board);
+  await page.getByRole('button', { name: 'Close feedback', exact: true }).click();
+  await page.locator('[data-lot="1"]').focus();
+  await page.keyboard.press('Delete');
+  await expectBoard(page, fixed);
+});
+
+test('keyboard removal keeps focus when Tutorial guidance hides the removed tray place', async ({ page }) => {
+  await openGame(page, 'date=practice');
+  await place(page, 'bakery', 0);
+  await place(page, 'cafe', 1);
+  await place(page, 'books', 2);
+  await place(page, 'market', 8);
+  await page.locator('[data-lot="0"]').press('Enter');
+  await page.keyboard.press('Delete');
+  await page.locator('[data-place="market"]').press('Enter');
+  await page.keyboard.press('Delete');
+  await expectBoard(page, [null, 'cafe', 'books', ...Array(6).fill(null)]);
+  await expect(page.locator('[data-place="market"]')).toBeHidden();
+  await expect(page.locator('[data-lot="8"]')).toBeFocused();
+});
+
 test('drag controls place, displace, swap and return pieces to the tray', async ({ page }) => {
   await openGame(page);
   const lot = index => page.locator(`[data-lot="${index}"]`);
