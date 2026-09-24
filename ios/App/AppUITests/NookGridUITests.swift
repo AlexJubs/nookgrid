@@ -22,7 +22,7 @@ final class NookGridUITests: XCTestCase {
 
     private func captureScreenshot(_ name: String) {
         XCTContext.runActivity(named: name) { activity in
-            let screenshot = XCTAttachment(screenshot: app.screenshot())
+            let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
             screenshot.name = name
             screenshot.lifetime = .keepAlways
             activity.add(screenshot)
