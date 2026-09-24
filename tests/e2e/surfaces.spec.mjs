@@ -1,5 +1,65 @@
 import { test, expect, bank, daily, today, emptyBoard, openGame, place, expectBoard, solvePuzzle, seedProgress, readProgress, choose } from './fixtures.mjs';
 
+for (const state of ['drag', 'focus']) {
+  test(`${state} rings stay visible over neighboring cells on every edge`, async ({ page, isMobile }, testInfo) => {
+    await openGame(page, 'date=2026-09-11');
+    if (isMobile) await page.evaluate(() => document.documentElement.classList.add('native-app'));
+    if (state === 'focus') {
+      await place(page, 'pond', 8);
+      await choose(page.locator('[data-lot="8"]'));
+    }
+    for (const theme of ['light', 'dark']) {
+      await page.emulateMedia({ colorScheme: theme });
+      if (state === 'drag') {
+        const pond = await page.locator('[data-place="pond"]').boundingBox();
+        await page.mouse.move(pond.x + pond.width / 2, pond.y + pond.height / 2);
+        await page.mouse.down();
+      } else await page.keyboard.press('Tab');
+      for (const index of [7, 0, 1, 2, 3, 4, 5, 6, 8]) {
+        const lot = page.locator(`[data-lot="${index}"]`);
+        if (state === 'drag') {
+          const box = await lot.boundingBox();
+          await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 3 });
+          await expect(lot).toHaveClass(/drop-target/);
+        } else await lot.focus();
+        const ring = await lot.evaluate(element => {
+          const box = element.getBoundingClientRect(), style = getComputedStyle(element);
+          return { x: box.x, y: box.y, width: box.width, height: box.height,
+            offset: parseFloat(style.outlineOffset) + parseFloat(style.outlineWidth) / 2,
+            color: style.outlineColor.match(/\d+/g).slice(0, 3).map(Number) };
+        });
+        const clip = { x: Math.floor(ring.x) - 8, y: Math.floor(ring.y) - 8,
+          width: Math.ceil(ring.width) + 16, height: Math.ceil(ring.height) + 16 };
+        const screenshot = await page.screenshot({ clip, scale: 'css',
+          style: '.drag-ghost{visibility:hidden!important}', path: testInfo.outputPath(`${theme}-${index}.png`) });
+        const edges = await page.evaluate(async ({ imageData, ring, clip }) => {
+          const image = new Image();
+          image.src = `data:image/png;base64,${imageData}`;
+          await image.decode();
+          const canvas = document.createElement('canvas');
+          canvas.width = image.width; canvas.height = image.height;
+          const context = canvas.getContext('2d');
+          context.drawImage(image, 0, 0);
+          return [[ring.x - ring.offset, ring.y + ring.height / 2],
+            [ring.x + ring.width + ring.offset, ring.y + ring.height / 2],
+            [ring.x + ring.width / 2, ring.y - ring.offset],
+            [ring.x + ring.width / 2, ring.y + ring.height + ring.offset]].map(([x, y]) =>
+            [...context.getImageData(Math.floor(x - clip.x), Math.floor(y - clip.y), 1, 1).data].slice(0, 3));
+        }, { imageData: screenshot.toString('base64'), ring, clip });
+        for (const [edge, color] of edges.entries()) {
+          expect(Math.max(...color.map((channel, i) => Math.abs(channel - ring.color[i]))),
+            `${theme} lot ${index} ${['left', 'right', 'top', 'bottom'][edge]} ring is unobscured`).toBeLessThanOrEqual(8);
+        }
+      }
+      if (state === 'drag') {
+        await page.keyboard.press('Escape');
+        await page.mouse.up();
+        await expect(page.locator('.drop-target, .drag-ghost')).toHaveCount(0);
+      }
+    }
+  });
+}
+
 test('calendar navigation preserves progress and exposes only released dates', async ({ page }) => {
   await openGame(page);
   await place(page, 'cafe', 0);

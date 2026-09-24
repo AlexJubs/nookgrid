@@ -43,6 +43,8 @@
 .game-page .lot .address{color:var(--muted)}
 .game-page .lot:hover{background:var(--line)}
 .game-page .lot.selected,.game-page .place.selected{background:var(--surface);outline:2px solid var(--focus);outline-offset:1px}
+.game-page .lot:focus-visible{z-index:1}
+.game-page .lot.drop-target{z-index:2}
 .game-page .lot.starter-target:not(.selected){outline:2px dashed var(--blue);outline-offset:-5px}
 .game-page .play-controls{display:contents}
 .game-page .selection-bar{position:absolute;width:1px;height:1px;min-height:0;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}

@@ -59,6 +59,8 @@ Reuse `.primary`, `.secondary` and `.text-button`; button-style links, including
 
 Use the shared palette for resting and hover states. Disabled and locked controls do not acquire an enabled hover treatment. Earned calendar dates retain contrasting accent text and fill when hovered. All controls use the shared focus color for keyboard input and stay quiet after touch. Check primary, secondary, quiet, icon, selected, locked, disabled and disclosure states in both themes.
 
+Keep selection outlines within the board gap. Raise keyboard-focused cells above their neighbors and drag targets above focus, so each outline remains visible on every side.
+
 ## Dialogs and reading pages
 
 Use the same left-aligned heading and upper-right close control for Menu, All puzzles, Settings, Feedback, Share and How to play; the short Hint confirmation stays centered. Primary actions use forest green, secondary actions use the quiet neutral surface, and close controls retain the same 44px target. Reading pages can scroll. Privacy uses a concise Back action. Their page title must not overpower the NookGrid wordmark. Return actions preserve the actual Tutorial or archived puzzle the player left. The question-mark control opens one How to play dialog over the current puzzle on every route. Keep the board, selection and scroll position intact; close with X, Escape or an outside tap and restore focus to the question mark. Keep the instructions readable with internal scrolling on smaller screens or enlarged text. Play tutorial is a separate, optional neutral button-style link for guided practice; hide it when already in the Tutorial. Keep How to play in the dialog and omit the redundant worked-example route.
