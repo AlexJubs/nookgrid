@@ -40,20 +40,20 @@ final class NookGridUITests: XCTestCase {
         element.press(forDuration: 0.1)
     }
     private func scrollTo(_ element: XCUIElement) {
-        let puzzleList = app.webViews.firstMatch.descendants(matching: .any)
-            .matching(NSPredicate(format: "label BEGINSWITH 'Choose a puzzle'")).firstMatch
+        let calendar = app.webViews.firstMatch.descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH 'Puzzle completion history'")).firstMatch
         let helpDialog = app.webViews.firstMatch.descendants(matching: .other)
             .matching(NSPredicate(format: "label == 'How to play, web dialog'")).firstMatch
-        let isPuzzleLink = element.elementType == .link && puzzleList.exists
+        let isCalendarLink = element.elementType == .link && calendar.exists
         let isHelpOpen = button("Close how to play").exists
-        let scrollArea: XCUIElement = isPuzzleLink ? puzzleList : isHelpOpen ? helpDialog : app
-        let viewport = scrollArea.frame.intersection(app.frame).insetBy(dx: 0, dy: isPuzzleLink ? 4 : 0)
+        let scrollArea: XCUIElement = isCalendarLink ? calendar : isHelpOpen ? helpDialog : app
+        let viewport = scrollArea.frame.intersection(app.frame).insetBy(dx: 0, dy: isCalendarLink ? 4 : 0)
         for _ in 0..<4 {
             let frame = element.frame
             if frame.minY >= viewport.minY && frame.maxY <= viewport.maxY && element.isHittable { return }
             let isBelow = frame.maxY > viewport.maxY
-            let start = scrollArea.coordinate(withNormalizedOffset: CGVector(dx: isPuzzleLink || isHelpOpen ? 0.5 : 0.02, dy: isBelow ? 0.8 : 0.2))
-            let end = scrollArea.coordinate(withNormalizedOffset: CGVector(dx: isPuzzleLink || isHelpOpen ? 0.5 : 0.02, dy: isBelow ? 0.2 : 0.8))
+            let start = scrollArea.coordinate(withNormalizedOffset: CGVector(dx: isCalendarLink || isHelpOpen ? 0.5 : 0.02, dy: isBelow ? 0.8 : 0.2))
+            let end = scrollArea.coordinate(withNormalizedOffset: CGVector(dx: isCalendarLink || isHelpOpen ? 0.5 : 0.02, dy: isBelow ? 0.2 : 0.8))
             start.press(forDuration: 0.05, thenDragTo: end)
         }
         XCTAssertTrue(viewport.contains(element.frame), "Element remains outside its scroll area: \(element), frame \(element.frame), viewport \(viewport). \(app.debugDescription)")
@@ -76,12 +76,10 @@ final class NookGridUITests: XCTestCase {
         assertLot(address, name)
     }
     private func openTutorial() {
-        let tutorial = app.webViews.links.matching(NSPredicate(format: "label == 'Tutorial' OR label == 'Tutorial, completed'")).firstMatch
-        if tutorial.exists { tap(tutorial) }
-        else {
-            tap(button("How to play"))
-            tap(app.webViews.links["Play tutorial"].firstMatch)
-        }
+        tap(button("How to play"))
+        XCTAssertTrue(button("Close how to play").waitForExistence(timeout: 5))
+        tap(app.webViews.links["Play tutorial"].firstMatch)
+        XCTAssertFalse(button("Close how to play").exists)
         XCTAssertTrue(app.staticTexts["Tutorial plan"].waitForExistence(timeout: 5))
         XCTAssertTrue(lot("A1").exists)
         XCTAssertTrue(button("How to play").exists)
@@ -208,10 +206,10 @@ final class NookGridUITests: XCTestCase {
         for address in lots { assertLot(address, "empty") }
         XCTAssertTrue(button("Hint, 0 hints used").exists)
         XCTAssertTrue(button("Undo").isEnabled)
-        openPuzzles()
+        openCalendar()
         XCTAssertTrue(app.staticTexts["1-day streak"].exists)
-        XCTAssertTrue(app.webViews.links.matching(NSPredicate(format: "label BEGINSWITH 'Today, ' AND label ENDSWITH ', completed'")).firstMatch.exists, app.debugDescription)
-        tap(button("Close puzzles"))
+        XCTAssertTrue(app.webViews.links.matching(NSPredicate(format: "label CONTAINS ', Today, completed, daily streak day'")).firstMatch.exists, app.debugDescription)
+        tap(button("Close calendar"))
 
         app.terminate()
         app.launchArguments = ["nookgrid-offline"]
@@ -222,10 +220,10 @@ final class NookGridUITests: XCTestCase {
         for address in lots { assertLot(address, "empty") }
         XCTAssertTrue(button("Hint, 0 hints used").exists)
         XCTAssertFalse(button("Undo").isEnabled)
-        openPuzzles()
+        openCalendar()
         XCTAssertTrue(app.staticTexts["1-day streak"].exists)
-        XCTAssertTrue(app.webViews.links.matching(NSPredicate(format: "label BEGINSWITH 'Today, ' AND label ENDSWITH ', completed'")).firstMatch.exists, app.debugDescription)
-        tap(button("Close puzzles"))
+        XCTAssertTrue(app.webViews.links.matching(NSPredicate(format: "label CONTAINS ', Today, completed, daily streak day'")).firstMatch.exists, app.debugDescription)
+        tap(button("Close calendar"))
         reveal(0)
         let fixed = app.webViews.firstMatch.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH 'Lot ' AND label ENDSWITH 'fixed by a hint'")).firstMatch
         XCTAssertTrue(fixed.waitForExistence(timeout: 5))
@@ -267,8 +265,10 @@ final class NookGridUITests: XCTestCase {
         app.launchArguments = ["nookgrid-offline"]
         app.launch()
         XCTAssertTrue(button("Settings").waitForExistence(timeout: 15))
-        openPuzzles()
-        XCTAssertTrue(app.webViews.links["Tutorial, completed"].firstMatch.exists, app.debugDescription)
+        openCalendar()
+        XCTAssertFalse(app.webViews.links.matching(NSPredicate(format: "label CONTAINS 'Tutorial'")).firstMatch.exists)
+        XCTAssertTrue(app.staticTexts["0-day streak"].exists)
+        tap(button("Close calendar"))
         openTutorial()
         for address in lots { assertLot(address, "empty") }
         XCTAssertTrue(button("Hint, 0 hints used").exists)
@@ -321,33 +321,36 @@ final class NookGridUITests: XCTestCase {
         let elapsed = components[0] * 60 + components[1]
         XCTAssertLessThan(Double(elapsed), Date().timeIntervalSince(started) - 5, "Background time must not count toward solve time")
         XCTAssertTrue(app.webViews.links["Play today's puzzle"].exists)
-        openPuzzles()
-        XCTAssertTrue(app.webViews.links["Tutorial, completed"].firstMatch.exists, app.debugDescription)
-        tap(button("Close puzzles"))
+        tap(button("Calendar"))
+        XCTAssertTrue(button("Close calendar").waitForExistence(timeout: 5))
+        XCTAssertFalse(app.webViews.links.matching(NSPredicate(format: "label CONTAINS 'Tutorial'")).firstMatch.exists)
+        XCTAssertTrue(app.staticTexts["0-day streak"].exists)
+        tap(button("Close calendar"))
+        XCTAssertTrue(app.staticTexts["Nice work!"].exists)
     }
 
-    private func openPuzzles() {
+    private func openCalendar() {
         tap(button("Settings"))
         XCTAssertTrue(button("Close menu").waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["Menu"].exists)
-        tap(button("Puzzles"))
-        XCTAssertTrue(button("Close puzzles").waitForExistence(timeout: 5))
+        tap(button("Calendar"))
+        XCTAssertTrue(button("Close calendar").waitForExistence(timeout: 5))
         XCTAssertFalse(button("Close menu").exists)
-        XCTAssertTrue(app.webViews.links.matching(NSPredicate(format: "label == 'Tutorial' OR label == 'Tutorial, completed'")).firstMatch.exists)
+        XCTAssertTrue(app.webViews.links.matching(NSPredicate(format: "label CONTAINS 'September 10, 2026'")).firstMatch.exists)
     }
 
     private func openArchive() {
-        openPuzzles()
-        tap(app.webViews.links["Sep 10, 2026"].firstMatch)
+        openCalendar()
+        tap(app.webViews.links.matching(NSPredicate(format: "label BEGINSWITH 'Thursday, September 10, 2026,'")).firstMatch)
         XCTAssertTrue(app.staticTexts["Sep 10, 2026 plan"].waitForExistence(timeout: 5), app.debugDescription)
-        XCTAssertFalse(button("Close puzzles").exists)
+        XCTAssertFalse(button("Close calendar").exists)
     }
 
     private func openToday() {
-        openPuzzles()
-        tap(app.webViews.links.matching(NSPredicate(format: "label BEGINSWITH 'Today, '")).firstMatch)
+        openCalendar()
+        tap(app.webViews.links.matching(NSPredicate(format: "label CONTAINS ', Today,'")).firstMatch)
         XCTAssertTrue(button("How to play").waitForExistence(timeout: 5))
-        XCTAssertFalse(button("Close puzzles").exists)
+        XCTAssertFalse(button("Close calendar").exists)
     }
 
     func testArchiveNavigation() {
@@ -360,9 +363,8 @@ final class NookGridUITests: XCTestCase {
         assertLot("A1", "Bakery")
         openToday()
         assertLot("A1", "empty")
-        openPuzzles()
         openTutorial()
-        XCTAssertFalse(button("Close puzzles").exists)
+        XCTAssertFalse(button("Close how to play").exists)
         assertLot("A1", "empty")
     }
 
@@ -426,10 +428,10 @@ final class NookGridUITests: XCTestCase {
         }
         captureScreenshot("Native feedback")
         tap(button("Close feedback"))
-        openPuzzles()
-        captureScreenshot("Puzzles")
-        tap(button("Close puzzles"))
-        XCTAssertFalse(button("Close puzzles").exists)
+        openCalendar()
+        captureScreenshot("Calendar")
+        tap(button("Close calendar"))
+        XCTAssertFalse(button("Close calendar").exists)
         tap(button("Settings"))
         captureScreenshot("Menu touch focus")
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.15)).tap()

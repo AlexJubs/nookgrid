@@ -10,6 +10,10 @@ test('a new player reaches today in one action and returns to the same unfinishe
   await openHome(page);
   await expect(page.locator('#home-streak-count')).toHaveText('0');
   await expect(page.locator('#home-play')).toContainText(/play/i);
+  await expect(page.locator('#home').getByRole('button', { name: 'Calendar', exact: true })).toBeVisible();
+  await expect(page.locator('#calendar-open svg')).toHaveAttribute('aria-hidden', 'true');
+  await expect(page.locator('#calendar-open use')).toHaveAttribute('href', /#calendar-blank$/);
+  await expect(page.locator('#puzzles-dialog,#home-archive,#result-archive')).toHaveCount(0);
   await choose(page.locator('#home-play'));
   await expect(page.locator('#home')).toBeHidden();
   await expect(page.locator('#board')).toBeVisible();
@@ -55,6 +59,15 @@ test('completion has a dedicated recap, accessible solved plan and replay withou
   await expect(page.locator('#board')).toBeHidden();
   await expect(page.locator('#tray')).toBeHidden();
   await expect(page.locator('#daily-streak')).toContainText('1-day streak');
+  const resultCalendar = page.locator('#result-calendar-open');
+  await expect(resultCalendar).toHaveAccessibleName('Calendar');
+  await expect(resultCalendar.locator('use')).toHaveAttribute('href', /#calendar-blank$/);
+  await resultCalendar.press('Enter');
+  await expect(page.locator('#calendar-dialog')).toBeVisible();
+  await expect(page.locator(`#calendar-dialog [data-puzzle-date="${today}"]`)).toHaveAccessibleName(/, completed, daily streak day/);
+  await page.keyboard.press('Escape');
+  await expect(resultCalendar).toBeFocused();
+  await expect(page.locator('#completion')).toBeVisible();
   await choose(page.locator('#view-solved'));
   await expect(page.locator('body')).not.toHaveClass(/show-result/);
   await expect(page.locator('#board')).toBeVisible();
@@ -68,6 +81,9 @@ test('completion has a dedicated recap, accessible solved plan and replay withou
   await choose(page.locator('#result-home'));
   await expect(page.locator('#home')).toBeVisible();
   await expect(page.locator('#home-streak-count')).toHaveText('1');
+  await expect(page.locator('#calendar-open')).toHaveClass(/primary/);
+  await expect(page.locator('#home-result')).toHaveClass(/secondary/);
+  await expect(page.locator('#home-play')).toBeHidden();
   expect(await page.locator('#home-week').ariaSnapshot()).toContain('September 17, today, completed');
   await choose(page.locator('#home-result'));
   await expect(page.locator('#completion')).toBeVisible();
@@ -79,6 +95,48 @@ test('completion has a dedicated recap, accessible solved plan and replay withou
 });
 
 for (const native of [false, true]) {
+  test(`${native ? 'native' : 'web'} home uses phone height and keeps its actions inside safe areas`, async ({ page }) => {
+    const safeTop = native ? 47 : 0, safeBottom = native ? 34 : 0;
+    if (native) await page.addInitScript(({ safeTop, safeBottom }) => {
+      document.addEventListener('DOMContentLoaded', () => {
+        document.documentElement.classList.add('native-app');
+        document.documentElement.style.setProperty('--safe-top', `${safeTop}px`);
+        document.documentElement.style.setProperty('--safe-bottom', `${safeBottom}px`);
+      }, { once: true });
+    }, { safeTop, safeBottom });
+    const actionPositions = [];
+    for (const height of [844, 932]) {
+      await page.setViewportSize({ width: 390, height });
+      await openHome(page);
+      const header = await page.locator('.site-header').boundingBox();
+      const intro = await page.locator('.home-intro').boundingBox();
+      const progress = await page.locator('.home-progress').boundingBox();
+      const actions = await page.locator('.home-actions').boundingBox();
+      expect(header.y).toBeGreaterThanOrEqual(safeTop);
+      expect(intro.y).toBeGreaterThanOrEqual(header.y + header.height);
+      expect(progress.y).toBeGreaterThan(intro.y + intro.height);
+      expect(actions.y).toBeGreaterThan(progress.y + progress.height);
+      expect(actions.y + actions.height).toBeLessThanOrEqual(height - safeBottom);
+      expect(actions.y + actions.height).toBeGreaterThan(height * 0.8);
+      await expect(page.locator('#home-play')).toBeInViewport();
+      await expect(page.locator('#calendar-open')).toBeInViewport();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+      actionPositions.push(actions.y);
+    }
+    expect(actionPositions[1] - actionPositions[0]).toBeGreaterThan(60);
+    await page.setViewportSize({ width: 390, height: 667 });
+    await openHome(page);
+    const calendar = page.locator('#calendar-open');
+    await calendar.scrollIntoViewIfNeeded();
+    await expect(calendar).toBeInViewport();
+    const bounds = await calendar.boundingBox();
+    expect(bounds.y).toBeGreaterThanOrEqual(safeTop);
+    expect(bounds.y + bounds.height).toBeLessThanOrEqual(667 - safeBottom);
+    expect(bounds.height).toBeGreaterThanOrEqual(44);
+    await calendar.press('Enter');
+    await expect(page.locator('#calendar-dialog')).toBeVisible();
+  });
+
   test(`${native ? 'native' : 'web'} calendar preserves completed history after a missed streak and replay`, async ({ page }) => {
     if (native) await page.addInitScript(() => {
       window.nookgridNative = {

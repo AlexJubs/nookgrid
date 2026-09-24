@@ -10,18 +10,18 @@ async function readStreak(page) {
   return page.evaluate(key => JSON.parse(localStorage.getItem(key) || '[]'), streakKey);
 }
 
-async function openPuzzles(page) {
+async function openCalendar(page) {
   await page.locator('#menu-open').click();
-  await page.locator('#puzzles-open').click();
-  await expect(page.locator('#puzzles-dialog')).toBeVisible();
+  await page.locator('#menu-calendar-open').click();
+  await expect(page.locator('#calendar-dialog')).toBeVisible();
 }
 
 test('a daily completion survives Reset, replay and reload without earning twice', async ({ page }) => {
   await seedProgress(page, almostSolved);
   await openGame(page);
-  await openPuzzles(page);
-  await expect(page.locator('#puzzles-streak')).toBeHidden();
-  await page.getByRole('button', { name: 'Close puzzles', exact: true }).click();
+  await openCalendar(page);
+  await expect(page.locator('#calendar-streak')).toHaveText('0-day streak');
+  await page.getByRole('button', { name: 'Close calendar', exact: true }).click();
 
   await place(page, daily.solution[8], 8);
   await expect(page.locator('#completion')).toBeVisible();
@@ -31,9 +31,9 @@ test('a daily completion survives Reset, replay and reload without earning twice
   await page.locator('#clear-win').click();
   await expectBoard(page, emptyBoard);
   await expect(page.locator('#completion')).toBeHidden();
-  await openPuzzles(page);
-  await expect(page.locator('#puzzles-streak')).toHaveText('1-day streak');
-  await page.getByRole('button', { name: 'Close puzzles', exact: true }).click();
+  await openCalendar(page);
+  await expect(page.locator('#calendar-streak')).toHaveText('1-day streak');
+  await page.getByRole('button', { name: 'Close calendar', exact: true }).click();
   await solvePuzzle(page);
   await page.reload();
   await enterGame(page);
@@ -76,16 +76,16 @@ test('yesterday keeps a streak active until a local day is missed', async ({ pag
   const earned = ['2026-09-16', today];
   await seedProgress(page, earned, 'streak');
   await openGame(page);
-  await openPuzzles(page);
-  await expect(page.locator('#puzzles-streak')).toHaveText('2-day streak');
+  await openCalendar(page);
+  await expect(page.locator('#calendar-streak')).toHaveText('2-day streak');
 
   await page.clock.setSystemTime(new Date('2026-09-18T12:00:00-04:00'));
   await page.clock.fastForward(1_200);
-  await expect(page.locator('#puzzles-streak')).toHaveText('2-day streak');
+  await expect(page.locator('#calendar-streak')).toHaveText('2-day streak');
 
   await page.clock.setSystemTime(new Date('2026-09-19T00:00:00-04:00'));
   await page.clock.fastForward(1_200);
-  await expect(page.locator('#puzzles-streak')).toBeHidden();
+  await expect(page.locator('#calendar-streak')).toHaveText('0-day streak');
   expect(await readStreak(page)).toEqual(earned);
 });
 
@@ -116,22 +116,25 @@ test('local midnight refreshes Today without replacing the current board', async
   await page.clock.fastForward(4_000);
   await expect(page.locator('#new-day')).toBeHidden();
   await expect(page.locator('#puzzle-date')).toHaveText('Sep 17, 2026');
-  await openPuzzles(page);
-  await expect(page.locator('#puzzles-dialog [data-puzzle-date="2026-09-17"]')).toHaveAttribute('aria-current', 'page');
-  await expect(page.locator('#puzzles-dialog [data-puzzle-date="2026-09-17"] small')).toHaveText('Today');
-  await expect(page.locator('#puzzles-dialog [data-puzzle-date="2026-09-18"]')).toHaveCount(0);
+  await openCalendar(page);
+  const previous = page.locator('#calendar-dialog [data-puzzle-date="2026-09-17"]');
+  const current = page.locator('#calendar-dialog [data-puzzle-date="2026-09-18"]');
+  await expect(previous).toHaveAttribute('aria-current', 'date');
+  await expect(previous).toHaveAccessibleName(/, Today,/);
+  await expect(current).toHaveClass(/is-unavailable/);
+  await expect(current).not.toHaveAttribute('href');
+  await previous.focus();
 
   await page.clock.setSystemTime(new Date('2026-09-17T23:59:58-04:00'));
   await page.clock.fastForward(4_000);
-  const previous = page.locator('#puzzles-dialog [data-puzzle-date="2026-09-17"]');
-  const current = page.locator('#puzzles-dialog [data-puzzle-date="2026-09-18"]');
   await expect(previous).toHaveAttribute('aria-current', 'page');
-  await expect(previous.locator('.puzzle-current')).toHaveText('');
-  await expect(previous.locator('.puzzle-current use')).toHaveAttribute('href', /#play-circle$/);
-  await expect(previous.locator('small')).toHaveCount(0);
-  await expect(current.locator('small')).toHaveText('Today');
-  await expect(current).not.toHaveAttribute('aria-current', 'page');
-  await page.getByRole('button', { name: 'Close puzzles', exact: true }).click();
+  await expect(previous).toBeFocused();
+  await expect(previous).not.toHaveAccessibleName(/, Today,/);
+  await expect(current).toHaveAccessibleName(/, Today,/);
+  await expect(current).toHaveAttribute('aria-current', 'date');
+  await expect(current).toHaveAttribute('href', '?date=2026-09-18&test=1');
+  await expect(current).not.toHaveClass(/is-unavailable/);
+  await page.getByRole('button', { name: 'Close calendar', exact: true }).click();
   await expect(page.locator('#new-day')).toBeVisible();
   await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
 
@@ -139,8 +142,8 @@ test('local midnight refreshes Today without replacing the current board', async
   await expect(page.locator('#puzzle-date')).toHaveText('Sep 18, 2026');
   await expectBoard(page, emptyBoard);
   await place(page, 'park', 4);
-  await openPuzzles(page);
-  await page.locator('#puzzles-dialog [data-puzzle-date="2026-09-17"]').click();
+  await openCalendar(page);
+  await page.locator('#calendar-dialog [data-puzzle-date="2026-09-17"]').click();
   await expect(page.locator('#puzzle-date')).toHaveText('Sep 17, 2026');
   await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
   expect((await readProgress(page, '2026-09-18')).board).toEqual([null, null, null, null, 'park', null, null, null, null]);
@@ -199,7 +202,7 @@ test('a failed native streak write stays visible and Retry saves the earned day'
   await expect.poll(() => readStreak(page)).toEqual([today]);
   await page.reload();
   await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
-  await openPuzzles(page);
-  await expect(page.locator('#puzzles-streak')).toHaveText('1-day streak');
+  await openCalendar(page);
+  await expect(page.locator('#calendar-streak')).toHaveText('1-day streak');
   expect(await readStreak(page)).toEqual([today]);
 });

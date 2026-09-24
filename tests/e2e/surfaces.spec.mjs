@@ -1,6 +1,6 @@
 import { test, expect, bank, daily, today, emptyBoard, openGame, place, expectBoard, solvePuzzle, seedProgress, readProgress, choose } from './fixtures.mjs';
 
-test('puzzle navigation preserves progress and exposes only released dates', async ({ page }) => {
+test('calendar navigation preserves progress and exposes only released dates', async ({ page }) => {
   await openGame(page);
   await place(page, 'cafe', 0);
   await page.locator('#menu-open').click();
@@ -9,49 +9,38 @@ test('puzzle navigation preserves progress and exposes only released dates', asy
   await expect(menu.getByRole('button', { name: 'Settings', exact: true })).toBeVisible();
   await expect(menu.getByRole('button', { name: 'Feedback', exact: true })).toBeVisible();
   await expect(menu.getByRole('link', { name: 'Privacy', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Puzzles', exact: true }).click();
-  const links = page.locator('#puzzle-list a');
+  await menu.getByRole('button', { name: 'Calendar', exact: true }).click();
+  const calendar = page.locator('#calendar-dialog');
+  const links = calendar.locator('a[data-puzzle-date]');
   expect(await links.evaluateAll(items => items.map(item => item.dataset.puzzleDate))).toEqual([
-    'practice', '2026-09-17', '2026-09-16', '2026-09-15', '2026-09-14',
-    '2026-09-13', '2026-09-12', '2026-09-11', '2026-09-10'
+    '2026-09-10', '2026-09-11', '2026-09-12', '2026-09-13',
+    '2026-09-14', '2026-09-15', '2026-09-16', '2026-09-17'
   ]);
-  await expect(page.locator('#puzzle-list [aria-current="page"]')).toHaveCount(1);
-  await expect(page.locator('#puzzle-list [aria-current="page"]')).toHaveAccessibleName('Today, Sep 17, 2026');
-  const current = page.locator('#puzzle-list [aria-current="page"]');
-  await expect(current.locator('small')).toHaveText('Today');
-  expect(await current.evaluate(item => item.firstElementChild.firstChild.textContent)).toBe('Sep 17, 2026');
-  await expect(current.locator('.puzzle-current')).toHaveText('');
-  await expect(current.locator('.puzzle-current use')).toHaveAttribute('href', /#play-circle$/);
-  await expect(page.locator('#puzzle-list .puzzle-current')).toHaveCount(1);
-  expect(await links.evaluateAll(items => items.every(item => {
-    const label = item.firstElementChild;
-    const style = getComputedStyle(label);
-    return style.fontSize === '14px' && style.fontWeight === '500' &&
-      !item.querySelector('.menu-chevron') && !item.querySelector('.puzzle-completed');
-  }))).toBe(true);
+  await expect(calendar.locator('[aria-current="date"]')).toHaveAccessibleName('Thursday, September 17, 2026, Today, not completed, current puzzle');
+  await expect(calendar.locator('.is-current')).toHaveCount(1);
+  await expect(calendar.locator('.is-completed')).toHaveCount(0);
+  await expect(calendar.getByRole('link', { name: /Tutorial/ })).toHaveCount(0);
   expect(await links.evaluateAll(items => items.every(item => new URL(item.href).searchParams.get('test') === '1'))).toBe(true);
-  await expect(page.locator('.puzzle-schedule')).toContainText('New puzzles daily.');
-  await expect(page.locator('.puzzle-schedule')).not.toContainText(/midnight/i);
-  await expect(page.locator('#puzzles-more')).toBeHidden();
-  await page.getByRole('link', { name: 'Sep 11, 2026', exact: true }).click();
+  await calendar.locator('[data-puzzle-date="2026-09-11"]').click();
   await expect(page).toHaveURL(/date=2026-09-11/);
   expect(new URL(page.url()).searchParams.get('test')).toBe('1');
   await expect(page.locator('#board-title')).toHaveText('Archived puzzle');
   await place(page, 'park', 0);
   await page.locator('#menu-open').click();
-  await page.locator('#puzzles-open').click();
-  await expect(page.locator('#puzzle-list [aria-current="page"]')).toHaveAccessibleName('Sep 11, 2026');
-  await expect(page.locator('#puzzle-list [aria-current="page"] .puzzle-current use')).toHaveAttribute('href', /#play-circle$/);
-  await expect(page.locator('#puzzle-list .puzzle-current')).toHaveCount(1);
-  await page.locator('#puzzles-dialog').getByRole('link', { name: 'Tutorial', exact: true }).click();
+  await page.locator('#menu-calendar-open').click();
+  await expect(calendar.locator('[aria-current="page"]')).toHaveAccessibleName('Friday, September 11, 2026, not completed, current puzzle');
+  await expect(calendar.locator('.is-current')).toHaveCount(1);
+  await calendar.locator('[data-close]').click();
+  await page.locator('#help-open').click();
+  await page.locator('#help-tutorial').click();
   await expect(page.locator('#puzzle-label')).toHaveText('Tutorial');
   expect(Object.fromEntries(new URL(page.url()).searchParams)).toMatchObject({ date: 'practice', test: '1' });
   await place(page, 'bakery', 0);
   await page.locator('#menu-open').click();
-  await page.locator('#puzzles-open').click();
-  await expect(page.locator('#puzzle-list [aria-current="page"]')).toHaveAccessibleName('Tutorial');
-  await expect(page.locator('#puzzle-list [aria-current="page"] .puzzle-current use')).toHaveAttribute('href', /#play-circle$/);
-  await page.getByRole('link', { name: 'Today, Sep 17, 2026', exact: true }).click();
+  await page.locator('#menu-calendar-open').click();
+  await expect(calendar.locator('.is-current')).toHaveCount(0);
+  await expect(calendar.locator('[aria-current="page"]')).toHaveCount(0);
+  await calendar.locator('[data-puzzle-date="2026-09-17"]').click();
   await expect(page.locator('#board-title')).toHaveText("Today's puzzle");
   await expectBoard(page, ['cafe', ...Array(8).fill(null)]);
   await openGame(page, 'date=2026-09-11');
@@ -63,7 +52,7 @@ test('puzzle navigation preserves progress and exposes only released dates', asy
   await expectBoard(page, ['cafe', ...Array(8).fill(null)]);
 });
 
-test('completed puzzles stay marked after selection changes, Reset and reload', async ({ page }) => {
+test('completed puzzles stay recorded after selection changes, Reset and reload', async ({ page }) => {
   test.setTimeout(60_000);
   const archive = bank.puzzles.find(puzzle => puzzle.date === '2026-09-11');
   for (const puzzle of [daily, archive, bank.tutorial]) {
@@ -74,32 +63,33 @@ test('completed puzzles stay marked after selection changes, Reset and reload', 
     await openGame(page, `date=${date}`);
     await place(page, puzzle.solution[8], 8);
     await expect(page.locator('#completion')).toBeVisible();
-    await page.locator('#menu-open').click();
-    await page.locator('#puzzles-open').click();
-    await expect(page.locator(`#puzzles-dialog [data-puzzle-date="${date}"]`)).toHaveAccessibleName(/, completed$/);
-    await page.locator('#puzzles-dialog [data-close]').click();
+    await expect.poll(async () => (await readProgress(page, puzzle.date)).reported).toBe(true);
     await page.locator('#clear-win').click();
     await expectBoard(page, emptyBoard);
     await page.reload();
     await expectBoard(page, emptyBoard);
+    expect((await readProgress(page, puzzle.date)).reported).toBe(true);
     await page.locator('#menu-open').click();
-    await page.locator('#puzzles-open').click();
-    const row = page.locator(`#puzzles-dialog [data-puzzle-date="${date}"]`);
-    await expect(row).toHaveAttribute('aria-current', 'page');
-    await expect(row.locator('.puzzle-current use')).toHaveAttribute('href', /#play-circle$/);
-    await expect(row.locator('.puzzle-completed use')).toHaveAttribute('href', /#check-circle$/);
-    await expect(row).toHaveAccessibleName(/, completed$/);
-    await expect(row.locator('.puzzle-current')).toHaveText('');
-    await expect(row.locator('.puzzle-completed')).toHaveText('');
-    await expect(row.locator('.menu-chevron')).toHaveCount(0);
+    await page.locator('#menu-calendar-open').click();
+    const day = page.locator(`#calendar-dialog [data-puzzle-date="${date}"]`);
+    if (date === 'practice') {
+      await expect(day).toHaveCount(0);
+      await expect(page.locator('#calendar-dialog .is-current')).toHaveCount(0);
+    } else {
+      await expect(day).toHaveAttribute('aria-current', date === today ? 'date' : 'page');
+      await expect(day).toHaveClass(/is-completed/);
+      await expect(day.locator('.calendar-check use')).toHaveAttribute('href', /#check$/);
+      await expect(day).toHaveAccessibleName(/, completed(?:,|$)/);
+      await expect(day.locator('.calendar-check')).toHaveAttribute('aria-hidden', 'true');
+    }
+    await page.locator('#calendar-dialog [data-close]').click();
   }
-  await page.locator('#puzzles-dialog [data-close]').click();
   await openGame(page, 'date=2026-09-16');
   await page.locator('#menu-open').click();
-  await page.locator('#puzzles-open').click();
-  await expect(page.locator('#puzzle-list .puzzle-completed')).toHaveCount(3);
-  await expect(page.locator('[aria-current="page"] .puzzle-completed')).toHaveCount(0);
-  await expect(page.locator('#puzzle-list .puzzle-current')).toHaveCount(1);
+  await page.locator('#menu-calendar-open').click();
+  await expect(page.locator('#calendar-dialog .is-completed')).toHaveCount(2);
+  await expect(page.locator('#calendar-dialog [aria-current="page"]')).not.toHaveClass(/is-completed/);
+  await expect(page.locator('#calendar-dialog .is-current')).toHaveCount(1);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('nookgrid:test:v1:streak')))).toEqual([today]);
 });
 
@@ -122,41 +112,40 @@ test('a stale tab cannot erase an earned completion badge', async ({ page }) => 
     await stale.reload();
     await expect(stale.locator('#completion')).toBeHidden();
     await stale.locator('#menu-open').click();
-    await stale.locator('#puzzles-open').click();
-    await expect(stale.locator(`#puzzles-dialog [data-puzzle-date="${today}"]`)).toHaveAccessibleName(/, completed$/);
-    await expect(stale.locator(`#puzzles-dialog [data-puzzle-date="${today}"] .puzzle-completed use`)).toHaveAttribute('href', /#check-circle$/);
+    await stale.locator('#menu-calendar-open').click();
+    await expect(stale.locator(`#calendar-dialog [data-puzzle-date="${today}"]`)).toHaveAccessibleName(/, completed(?:,|$)/);
+    await expect(stale.locator(`#calendar-dialog [data-puzzle-date="${today}"] .calendar-check use`)).toHaveAttribute('href', /#check$/);
     expect(errors).toEqual([]);
   } finally {
     await stale.close();
   }
 });
 
-test('earlier puzzles append in bounded pages without duplicates or future dates', async ({ page }) => {
+test('the calendar scrolls to launch without duplicates or unreleased links', async ({ page }) => {
   await page.clock.setSystemTime(new Date('2026-11-09T12:00:00Z'));
   await openGame(page);
   await page.locator('#menu-open').click();
-  await page.locator('#puzzles-open').click();
-  const links = page.locator('#puzzle-list a');
-  const dates = page.locator('#puzzle-list a:not([data-puzzle-date="practice"])');
-  await expect(links).toHaveCount(31);
-  await expect(dates.first()).toHaveAttribute('data-puzzle-date', '2026-11-09');
-  await expect(dates.last()).toHaveAttribute('data-puzzle-date', '2026-10-11');
-  await page.getByRole('button', { name: 'Earlier puzzles', exact: true }).press('Enter');
-  await expect(links).toHaveCount(61);
-  await expect(dates.nth(30)).toHaveAttribute('data-puzzle-date', '2026-10-10');
-  await expect(dates.nth(30)).toBeFocused();
-  await expect(dates.last()).toHaveAttribute('data-puzzle-date', '2026-09-11');
-  await page.locator('#puzzles-more').press('Enter');
-  await expect(links).toHaveCount(62);
-  await expect(dates.last()).toHaveAttribute('data-puzzle-date', '2026-09-10');
-  await expect(dates.last()).toBeFocused();
-  await expect(page.locator('#puzzles-more')).toBeHidden();
+  await page.locator('#menu-calendar-open').click();
+  const months = page.locator('#calendar-months .calendar-month');
+  await expect(months.locator('h3')).toHaveText(['November 2026', 'October 2026', 'September 2026']);
+  const dates = page.locator('#calendar-months a[data-puzzle-date]');
+  await expect(dates).toHaveCount(61);
   const values = await dates.evaluateAll(items => items.map(item => item.dataset.puzzleDate));
   expect(new Set(values).size).toBe(61);
-  expect(values.every(date => date <= '2026-11-09')).toBe(true);
-  expect(values).toEqual([...values].sort().reverse());
-  await expect(page.locator('#puzzle-list [aria-current="page"]')).toHaveCount(1);
-  await page.getByRole('link', { name: 'Sep 10, 2026', exact: true }).press('Enter');
+  expect(values.every(date => date >= '2026-09-10' && date <= '2026-11-09')).toBe(true);
+  for (const month of await months.all()) {
+    const days = await month.locator('a[data-puzzle-date]').evaluateAll(items => items.map(item => item.dataset.puzzleDate));
+    expect(days).toEqual([...days].sort());
+  }
+  await expect(page.locator('#calendar-dialog [data-puzzle-date="2026-09-09"]')).not.toHaveAttribute('href');
+  await expect(page.locator('#calendar-dialog [data-puzzle-date="2026-11-10"]')).not.toHaveAttribute('href');
+  await expect(page.locator('#calendar-dialog [aria-current="date"]')).toHaveAttribute('data-puzzle-date', '2026-11-09');
+  const firstDay = page.locator('#calendar-dialog a[data-puzzle-date="2026-09-10"]');
+  await firstDay.scrollIntoViewIfNeeded();
+  await firstDay.focus();
+  await expect(firstDay).toBeFocused();
+  expect(await page.locator('#calendar-months').evaluate(element => element.scrollTop)).toBeGreaterThan(0);
+  await firstDay.press('Enter');
   await expect(page.locator('#puzzle-date')).toHaveText('Sep 10, 2026');
   expect(new URL(page.url()).searchParams.get('test')).toBe('1');
 });
@@ -258,7 +247,7 @@ test('direct reading pages return to today without a saved return destination', 
   }
 });
 
-for (const dialog of ['menu', 'puzzles', 'help', 'hint', 'feedback', 'settings', 'share']) {
+for (const dialog of ['menu', 'calendar', 'help', 'hint', 'feedback', 'settings', 'share']) {
   test(`${dialog} touch focus stays quiet and keyboard focus stays visible`, async ({ page }, testInfo) => {
     if (dialog === 'share') {
       await seedProgress(page, { board: daily.solution, moves: 9, elapsedMs: 1000 });
@@ -270,8 +259,8 @@ for (const dialog of ['menu', 'puzzles', 'help', 'hint', 'feedback', 'settings',
     await page.locator('#menu-open').press('Enter');
     await page.keyboard.press('Escape');
     await expect(page.locator('#menu-dialog')).not.toBeVisible();
-    if (['puzzles', 'feedback', 'settings'].includes(dialog)) await choose(page.locator('#menu-open'));
-    const opener = page.locator(`#${{ menu: 'menu-open', puzzles: 'puzzles-open', help: 'help-open', hint: 'hint', feedback: 'feedback-open', settings: 'settings-open', share: 'share' }[dialog]}`);
+    if (['calendar', 'feedback', 'settings'].includes(dialog)) await choose(page.locator('#menu-open'));
+    const opener = page.locator(`#${{ menu: 'menu-open', calendar: 'menu-calendar-open', help: 'help-open', hint: 'hint', feedback: 'feedback-open', settings: 'settings-open', share: 'share' }[dialog]}`);
     await choose(opener);
     const surface = page.locator(`#${dialog}-dialog`);
     await expect(surface).toBeVisible();
@@ -286,7 +275,7 @@ for (const dialog of ['menu', 'puzzles', 'help', 'hint', 'feedback', 'settings',
     await choose(surface.locator('[data-close]'));
     await expect(surface).not.toBeVisible();
     expect(await focusedOutline()).toBe('none');
-    if (['puzzles', 'feedback', 'settings'].includes(dialog)) await page.locator('#menu-open').press('Enter');
+    if (['calendar', 'feedback', 'settings'].includes(dialog)) await page.locator('#menu-open').press('Enter');
     await opener.press('Enter');
     await expect(surface).toBeVisible();
     expect(await page.evaluate(id => document.activeElement.closest('dialog')?.id === `${id}-dialog`, dialog)).toBe(true);
@@ -305,12 +294,12 @@ for (const dialog of ['menu', 'puzzles', 'help', 'hint', 'feedback', 'settings',
     }
     await openGame(page);
     const open = async () => {
-      if (['puzzles', 'feedback', 'settings'].includes(dialog)) await page.locator('#menu-open').press('Enter');
-      await page.locator(`#${{ menu: 'menu-open', puzzles: 'puzzles-open', help: 'help-open', hint: 'hint', feedback: 'feedback-open', settings: 'settings-open', share: 'share' }[dialog]}`).press('Enter');
+      if (['calendar', 'feedback', 'settings'].includes(dialog)) await page.locator('#menu-open').press('Enter');
+      await page.locator(`#${{ menu: 'menu-open', calendar: 'menu-calendar-open', help: 'help-open', hint: 'hint', feedback: 'feedback-open', settings: 'settings-open', share: 'share' }[dialog]}`).press('Enter');
       await expect(page.locator(`#${dialog}-dialog`)).toBeVisible();
       await expect(page.locator('dialog[open]')).toHaveCount(1);
     };
-    const focus = page.locator(`#${{ menu: 'menu-open', puzzles: 'menu-open', help: 'help-open', hint: 'hint', feedback: 'menu-open', settings: 'menu-open', share: 'share' }[dialog]}`);
+    const focus = page.locator(`#${{ menu: 'menu-open', calendar: 'menu-open', help: 'help-open', hint: 'hint', feedback: 'menu-open', settings: 'menu-open', share: 'share' }[dialog]}`);
     const surface = page.locator(`#${dialog}-dialog`);
     for (const dismissal of ['close', 'escape', 'backdrop']) {
       await open();
@@ -365,7 +354,7 @@ test('preferences and supporting pages preserve test mode and private analytics 
   await expect(page.locator('#game')).toBeVisible();
 });
 
-test('Tutorial remains a secondary Help action and today stays available in Puzzles', async ({ page }) => {
+test('Tutorial remains a secondary Help action and today stays available in Calendar', async ({ page }) => {
   const checkControl = async control => {
     await expect(control).toBeVisible();
     const style = await control.evaluate(element => {
@@ -385,8 +374,8 @@ test('Tutorial remains a secondary Help action and today stays available in Puzz
   await expect(page.locator('#puzzle-label')).toHaveText('Tutorial');
   await expect(page.locator('#puzzle-switch')).toHaveCount(0);
   await page.locator('#menu-open').click();
-  await page.locator('#puzzles-open').click();
-  await page.locator('#puzzles-dialog').getByRole('link', { name: 'Today, Sep 17, 2026', exact: true }).click();
+  await page.locator('#menu-calendar-open').click();
+  await page.locator('#calendar-dialog [data-puzzle-date="2026-09-17"]').click();
   await expect(page.locator('#puzzle-date')).toHaveText('Sep 17, 2026');
 });
 
@@ -398,7 +387,7 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
     expect(new Set(titleSizes)).toEqual(new Set([20]));
     expect(titleSizes[0]).toBeLessThan(await page.locator('.brand').evaluate(brand => parseFloat(getComputedStyle(brand).fontSize)));
     await choose(page.locator('#menu-open'));
-    const rows = await page.locator('#puzzles-open, #settings-open').evaluateAll(elements => elements.map(element => {
+    const rows = await page.locator('#menu-calendar-open, #settings-open').evaluateAll(elements => elements.map(element => {
       const style = getComputedStyle(element), bounds = element.getBoundingClientRect();
       const chevron = element.querySelector('.menu-chevron');
       return {
@@ -498,15 +487,19 @@ test('keyboard controls retain names, focus outlines and text clue states', asyn
   await expect(page.getByRole('button', { name: 'Lot A1, Bakery', exact: true })).toHaveAttribute('aria-pressed', 'false');
   await expect(page.locator('#clues .clue-state').first()).toContainText(/Matches the plan|Needs a move|not placed yet/);
   await page.locator('#menu-open').press('Enter');
-  await page.getByRole('button', { name: 'Puzzles', exact: true }).press('Enter');
+  await page.locator('#menu-calendar-open').press('Enter');
   // Cocoa WebKit uses Option+Tab for links; Linux WebKit uses Tab.
   await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab');
-  const tutorial = page.locator('#puzzles-dialog').getByRole('link', { name: 'Tutorial', exact: true });
-  await expect(tutorial).toBeFocused();
+  const firstDay = page.locator('#calendar-dialog a[data-puzzle-date="2026-09-10"]');
+  await expect(firstDay).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#puzzle-date')).toHaveText('Sep 10, 2026');
+  await page.locator('#help-open').press('Enter');
+  await page.locator('#help-tutorial').focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('#puzzle-label')).toHaveText('Tutorial');
   await page.locator('#menu-open').press('Enter');
-  await page.locator('#puzzles-open').press('Enter');
+  await page.locator('#menu-calendar-open').press('Enter');
   await page.keyboard.press('Escape');
   await expect(page.locator('#menu-open')).toBeFocused();
 });

@@ -1,13 +1,13 @@
 import { PLACES, clueText, clueStatus, isSolved } from './engine.mjs?v=20260915-teaser1';
-import { movePlace, selectPuzzle, restoreProgress, hasPuzzleCompletion, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces, puzzleDay, restoreStreakDays, addDailyCompletion, streakLength } from './state.mjs?v=20260924-home1';
+import { movePlace, selectPuzzle, restoreProgress, hasPuzzleCompletion, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces, puzzleDay, restoreStreakDays, addDailyCompletion, streakLength } from './state.mjs?v=20260924-calendar2';
 import { placeArt } from './art.mjs?v=20260915-teaser1';
-import { testMode, analytics } from './session.mjs?v=20260924-home1';
+import { testMode, analytics } from './session.mjs?v=20260924-calendar2';
 import { native, savedValue, saveValue } from './platform.mjs';
-import { updatePuzzleLinks } from './navigation.mjs?v=20260924-home1';
-import { getWeekDates, renderCalendar } from './calendar.mjs?v=20260924-home1';
+import { updatePuzzleLinks } from './navigation.mjs?v=20260924-calendar2';
+import { getWeekDates, renderCalendar } from './calendar.mjs?v=20260924-calendar2';
 
 const $ = id => document.getElementById(id);
-const renderIcon = (name, className = '') => `<svg class="ui-icon ${className}" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-home1#${name}"/></svg>`;
+const renderIcon = (name, className = '') => `<svg class="ui-icon ${className}" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-calendar2#${name}"/></svg>`;
 const ids = PLACES.map(place => place.id);
 const nameOf = id => PLACES.find(place => place.id === id)?.name || '';
 const openedDay = puzzleDay();
@@ -60,12 +60,11 @@ async function navigateTo(url) {
 function openDialog(id, opener) {
   const isFromMenu = $('menu-dialog').open;
   if (isFromMenu) $('menu-dialog').close();
-  if (id === 'puzzles-dialog' && bank && puzzle) preparePuzzleList();
   if (id === 'calendar-dialog' && bank && puzzle) prepareCalendar();
   $(id).showModal();
   $(id).addEventListener('close', () => (isFromMenu ? $('menu-open') : opener).focus({preventScroll:true}), {once:true});
 }
-for (const [button, dialog] of [['help-open','help-dialog'],['menu-open','menu-dialog'],['puzzles-open','puzzles-dialog'],['home-archive','puzzles-dialog'],['result-archive','puzzles-dialog'],['calendar-open','calendar-dialog'],['result-calendar-open','calendar-dialog'],['feedback-open','feedback-dialog'],['feedback-win','feedback-dialog'],['settings-open','settings-dialog'],['hint','hint-dialog']]) {
+for (const [button, dialog] of [['help-open','help-dialog'],['menu-open','menu-dialog'],['menu-calendar-open','calendar-dialog'],['calendar-open','calendar-dialog'],['result-calendar-open','calendar-dialog'],['feedback-open','feedback-dialog'],['feedback-win','feedback-dialog'],['settings-open','settings-dialog'],['hint','hint-dialog']]) {
   $(button).addEventListener('click', () => openDialog(dialog, $(button)));
 }
 $('help-tutorial').href = `?date=practice${testMode ? '&test=1' : ''}`;
@@ -78,6 +77,7 @@ function getCompletedDates() {
 }
 
 function prepareCalendar(resetScroll = true) {
+  if (!bank || !puzzle) return;
   const focusedDate = $('calendar-months').contains(document.activeElement) ? document.activeElement.dataset.puzzleDate : null;
   const scrollTop = $('calendar-months').scrollTop;
   $('calendar-streak').textContent = `${streakLength(streakDays,today)}-day streak`;
@@ -86,6 +86,8 @@ function prepareCalendar(resetScroll = true) {
     currentDate:screen === 'home' ? null : puzzle.date,isTest:testMode
   }));
   if (focusedDate) $('calendar-months').querySelector(`a[data-puzzle-date="${focusedDate}"]`)?.focus({preventScroll:true});
+  $('calendar-status').hidden = true;
+  $('calendar-months').hidden = false;
   $('calendar-months').scrollTop = resetScroll ? 0 : scrollTop;
 }
 
@@ -102,7 +104,8 @@ function renderHistory() {
   $('home-play').hidden = Boolean(hasFinishedBoard);
   $('home-play').disabled = !daily;
   $('home-result').hidden = !hasFinishedBoard;
-  $('home-archive').className = hasFinishedBoard ? 'primary' : 'secondary';
+  $('calendar-open').classList.toggle('primary',Boolean(hasFinishedBoard));
+  $('calendar-open').classList.toggle('secondary',!hasFinishedBoard);
   $('home-date').textContent = new Date(`${today}T12:00:00Z`).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'});
   for (const id of ['home-week','result-week']) {
     $(id).replaceChildren(...getWeekDates(today).map(date => {
@@ -153,52 +156,6 @@ $('home-play').addEventListener('click',() => puzzle.date === today ? showScreen
 $('home-result').addEventListener('click',() => puzzle.date === today && isSolved(puzzle,progress.board) ? showScreen('result') : navigateTo(`?date=${today}${testMode ? '&test=1' : ''}`));
 $('view-solved').addEventListener('click',() => showScreen('puzzle'));
 $('view-result').addEventListener('click',() => showScreen('result'));
-
-function preparePuzzleList() {
-  const focusedDate = document.activeElement?.dataset.puzzleDate;
-  $('puzzle-list').replaceChildren();
-  const dates = ['practice', ...bank.puzzles.map(item => item.date).filter(date => date <= today).sort().reverse()];
-  let count = 0;
-  function showEarlierPuzzles() {
-    const previousCount = count;
-    for (const date of dates.slice(count, count === 0 ? 31 : count + 30)) {
-      const link = document.createElement('a');
-      const label = date === 'practice' ? 'Tutorial' : new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
-      link.href = `?date=${date}${testMode ? '&test=1' : ''}`;
-      link.dataset.puzzleDate = date;
-      link.setAttribute('aria-label', date === today ? `Today, ${label}` : label);
-      const isCurrent = date === (mode === 'practice' ? 'practice' : puzzle.date);
-      if (isCurrent) link.setAttribute('aria-current','page');
-      const text = document.createElement('span');
-      text.textContent = label;
-      if (date === today) {
-        const detail = document.createElement('small');
-        detail.textContent = 'Today';
-        text.append(detail);
-      }
-      link.append(text);
-      const trailing = document.createElement('span');
-      trailing.className = 'puzzle-trailing';
-      if (isCurrent) trailing.innerHTML = `<span class="puzzle-current" aria-hidden="true" title="Current puzzle">${renderIcon('play-circle')}</span>`;
-      const listedPuzzle = date === 'practice' ? bank.tutorial : bank.puzzles.find(item => item.date === date);
-      const isCompleted = (isCurrent && (progress.reported || isSolved(puzzle,progress.board))) || hasPuzzleCompletion(read(`${progressPrefix}${listedPuzzle.date}`),ids,listedPuzzle.solution);
-      if (isCompleted) {
-        trailing.insertAdjacentHTML('beforeend',`<span class="puzzle-completed" aria-hidden="true" title="Completed">${renderIcon('check-circle')}</span>`);
-        link.setAttribute('aria-label',`${link.getAttribute('aria-label')}, completed`);
-      }
-      link.append(trailing);
-      $('puzzle-list').append(link);
-      count++;
-    }
-    if (previousCount < count && previousCount > 0) $('puzzle-list').children[previousCount].focus();
-    $('puzzles-more').hidden = count >= dates.length;
-  }
-  showEarlierPuzzles();
-  $('puzzles-more').onclick = showEarlierPuzzles;
-  $('puzzles-status').hidden = true;
-  $('puzzle-list').hidden = false;
-  if (focusedDate) ($('puzzle-list').querySelector(`[data-puzzle-date="${focusedDate}"]`) || $('puzzles-dialog').querySelector('[data-close]')).focus({preventScroll:true});
-}
 
 document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => button.closest('dialog').close()));
 document.querySelectorAll('dialog').forEach(dialog => {
@@ -465,7 +422,6 @@ function updateReturnPrompt() {
       const number = bank.puzzles.findIndex(item => item.date === puzzle.date) + 1;
       document.title = `NookGrid | ${isToday ? 'Free daily brain game' : `Brain game ${number}`}`;
     }
-    preparePuzzleList();
     renderHistory();
     if ($('calendar-dialog').open) prepareCalendar(false);
   }
@@ -476,10 +432,8 @@ function updateReturnPrompt() {
   $('next-puzzle').hidden = !isToday || !hasTomorrow;
   if (isToday && hasTomorrow) $('next-puzzle-time').textContent = nextPuzzleCountdown(now);
   const streak = streakLength(streakDays,currentDay);
-  for (const id of ['daily-streak','puzzles-streak']) {
-    $(id).textContent = `${streak}-day streak`;
-    $(id).hidden = streak === 0 || (id === 'daily-streak' && !isToday);
-  }
+  $('daily-streak').textContent = `${streak}-day streak`;
+  $('daily-streak').hidden = streak === 0 || !isToday;
   $('clues-title').textContent = mode === 'practice' ? 'Tutorial plan' : isToday ? 'Today’s plan' : `${$('puzzle-date').textContent} plan`;
 }
 
@@ -524,7 +478,7 @@ function render() {
     const id = button.dataset.place, placed = board.includes(id), isLocked = progress.hintedPlaces.includes(id);
     button.hidden = isLearning && !starterPlaces.slice(0,starterStep + 1).includes(id) && !placed && selected !== id;
     button.className = `place${placed ? ' placed' : ''}${isLocked ? ' locked' : ''}${selected === id ? ' selected' : ''}`;
-    button.querySelector('.placed-check use').setAttribute('href', `./icons.svg?v=20260924-home1#${isLocked ? 'lock-key' : 'check'}`);
+    button.querySelector('.placed-check use').setAttribute('href', `./icons.svg?v=20260924-calendar2#${isLocked ? 'lock-key' : 'check'}`);
     button.setAttribute('aria-disabled',String(isLocked));
     button.setAttribute('aria-pressed', String(selected === id));
     button.setAttribute('aria-label', `${nameOf(id)}${isLocked ? ', fixed by a hint' : placed ? ', already on the board' : ', choose a lot'}`);
@@ -696,7 +650,6 @@ async function init() {
     $('play-today').href = `?date=${today}${testMode ? '&test=1' : ''}`;
     $('board-title').textContent = {daily:"Today's puzzle",archive:'Archived puzzle',practice:'The tutorial puzzle'}[mode];
     document.title = `NookGrid | ${mode === 'daily' ? 'Free daily brain game' : mode === 'practice' ? 'Tutorial brain game' : `Brain game ${number}`}`;
-    preparePuzzleList();
     if (native) document.addEventListener('click',event => {
       const anchor = event.target.closest('a[href]');
       if (!anchor || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -706,6 +659,7 @@ async function init() {
       navigateTo(url.href);
     });
     makeBoard(); render();
+    if ($('calendar-dialog').open) prepareCalendar();
     $('game').setAttribute('aria-busy','false');
     $('game').inert = false;
     setInterval(updateReturnPrompt,1000);
@@ -720,10 +674,9 @@ async function init() {
     $('puzzle-date').textContent = 'Unavailable';
     $('game').hidden = true;
     $('game').setAttribute('aria-busy','false');
-    $('puzzles-status').textContent = 'Puzzles unavailable';
-    $('puzzles-status').hidden = false;
-    $('puzzle-list').hidden = true;
-    $('puzzles-more').hidden = true;
+    $('calendar-status').textContent = 'Puzzles unavailable';
+    $('calendar-status').hidden = false;
+    $('calendar-months').hidden = true;
   } finally {
     $('load-status').hidden = true;
   }

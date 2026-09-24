@@ -44,8 +44,8 @@ for (const destination of ['tutorial', 'archive']) {
     }
     else {
       await page.locator('#menu-open').click();
-      await page.locator('#puzzles-open').click();
-      await page.getByRole('link', { name: 'Sep 16, 2026', exact: true }).click();
+      await page.locator('#menu-calendar-open').click();
+      await page.locator('#calendar-dialog a[data-puzzle-date="2026-09-16"]').click();
     }
     await expect(page).toHaveURL(originalUrl);
     await page.evaluate(() => window.releaseNativeWrite());
@@ -106,8 +106,8 @@ test('a failed native archive save exposes retry without leaving the current puz
   });
   const originalUrl = page.url();
   await page.locator('#menu-open').click();
-  await page.locator('#puzzles-open').click();
-  await page.getByRole('link', { name: 'Sep 16, 2026', exact: true }).click();
+  await page.locator('#menu-calendar-open').click();
+  await page.locator('#calendar-dialog a[data-puzzle-date="2026-09-16"]').click();
   await expect(page.locator('dialog[open]')).toHaveCount(0);
   await expect(page.locator('#save-warning')).toBeVisible();
   await expect(page).toHaveURL(originalUrl);
@@ -116,8 +116,8 @@ test('a failed native archive save exposes retry without leaving the current puz
   await page.getByRole('button', { name: 'Retry save', exact: true }).click();
   await expect(page.locator('#save-warning')).toBeHidden();
   await page.locator('#menu-open').click();
-  await page.locator('#puzzles-open').click();
-  await page.getByRole('link', { name: 'Sep 16, 2026', exact: true }).click();
+  await page.locator('#menu-calendar-open').click();
+  await page.locator('#calendar-dialog a[data-puzzle-date="2026-09-16"]').click();
   await expect(page).toHaveURL(/date=2026-09-16/);
   await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
   await openGame(page);

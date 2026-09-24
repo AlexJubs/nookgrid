@@ -17,7 +17,7 @@ The same browser scenarios run on desktop Chromium at 1280 by 900 and WebKit wit
 | Sharing | Canonical public URL, date and attribution, no QA/hash values or solution spoilers, mocked clipboard success, mocked native-share success/cancellation/failure, selected read-only fallback |
 | Navigation | Unified Today, Tutorial and past-date list; pagination and restored focus; failed navigation exposes saved-progress recovery; future dates rejected; per-puzzle saves isolated; expired calendar fallback; Local-midnight rollover preserves the active board |
 | Daily streak | Local midnight and daylight-saving boundaries; one credit for today's completion with or without hints; Reset/replay and native process restart retain credit; archive/Tutorial exclusion; missed days; failed-write retry |
-| Dialogs | Menu, Puzzles, Hint, Feedback, Settings and Share: button, Escape and outside dismissal, inside clicks, one modal, focus restoration |
+| Dialogs | Menu, Calendar, Hint, Feedback, Settings and Share: button, Escape and outside dismissal, inside clicks, one modal, focus restoration |
 | Supporting pages | Inline Tutorial tips, contextual move guidance and compact return, worked example, privacy navigation, retained QA mode and saved analytics opt-out |
 | Recovery | Loading/inert state, failed or malformed puzzle request, retry, malformed/duplicate/unknown/short saved boards, repaired saved hints, unknown legacy solve time |
 | Persistence failure | Denied browser storage still allows moves, hints and undo with a visible warning |

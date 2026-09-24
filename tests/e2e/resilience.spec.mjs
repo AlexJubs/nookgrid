@@ -1,6 +1,8 @@
 import { test, expect, bank, daily, emptyBoard, enterGame, openGame, place, expectBoard, seedProgress, readProgress } from './fixtures.mjs';
 
 test('loading remains inert until the puzzle resource arrives', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
   let release;
   const ready = new Promise(resolve => { release = resolve; });
   await page.route('**/puzzles.json', async route => { await ready; await route.fulfill({ json: bank }); });
@@ -8,15 +10,27 @@ test('loading remains inert until the puzzle resource arrives', async ({ page })
   await expect(page.locator('#load-status')).toBeVisible();
   await expect(page.locator('#game')).toHaveAttribute('inert', '');
   await page.locator('#menu-open').click();
-  await page.locator('#puzzles-open').click();
-  await expect(page.locator('#puzzles-status')).toContainText(/loading/i);
-  await expect(page.locator('#puzzle-list')).toBeHidden();
+  await page.locator('#menu-calendar-open').click();
+  await expect(page.locator('#calendar-status')).toContainText(/loading/i);
+  await expect(page.locator('#calendar-months')).toBeHidden();
+  await page.evaluate(() => {
+    const key = 'nookgrid:test:v1:streak', newValue = '["2026-09-16"]';
+    localStorage.setItem(key, newValue);
+    window.dispatchEvent(new StorageEvent('storage', { key, newValue, url: location.href, storageArea: localStorage }));
+  });
+  expect(errors).toEqual([]);
+  await expect(page.locator('#calendar-status')).toContainText(/loading/i);
+  await expect(page.locator('#calendar-months')).toBeHidden();
+  await expect(page.locator('#game')).toHaveAttribute('inert', '');
   release();
   await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
   await expect(page.locator('#load-status')).toBeHidden();
-  await expect(page.locator('#puzzle-list')).toBeVisible();
-  await expect(page.locator('#puzzles-status')).toBeHidden();
-  await page.getByRole('button', { name: 'Close puzzles', exact: true }).click();
+  await expect(page.locator('#calendar-months')).toBeVisible();
+  await expect(page.locator('#calendar-status')).toBeHidden();
+  await expect(page.locator('#calendar-months a[data-puzzle-date]')).toHaveCount(8);
+  await expect(page.locator('#calendar-streak')).toHaveText('1-day streak');
+  expect(errors).toEqual([]);
+  await page.getByRole('button', { name: 'Close calendar', exact: true }).click();
   await expectBoard(page, emptyBoard);
 });
 
@@ -30,11 +44,11 @@ for (const failure of ['unavailable', 'malformed']) {
     await expect(page.locator('#game')).toBeHidden();
     await page.locator('#menu-open').click();
     await expect(page.locator('#menu-dialog')).toBeVisible();
-    await page.locator('#puzzles-open').click();
-    await expect(page.locator('#puzzles-dialog')).toBeVisible();
-    await expect(page.locator('#puzzles-status')).toContainText('unavailable');
-    await expect(page.locator('#puzzle-list')).toBeHidden();
-    await expect(page.locator('#puzzles-more')).toBeHidden();
+    await page.locator('#menu-calendar-open').click();
+    await expect(page.locator('#calendar-dialog')).toBeVisible();
+    await expect(page.locator('#calendar-status')).toContainText('unavailable');
+    await expect(page.locator('#calendar-months')).toBeHidden();
+    await expect(page.locator('#calendar-months a[data-puzzle-date]')).toHaveCount(0);
     await page.keyboard.press('Escape');
     await page.unroute('**/puzzles.json');
     await page.getByRole('link', { name: 'Try again' }).click();
