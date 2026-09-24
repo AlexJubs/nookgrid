@@ -215,6 +215,39 @@ test('home and calendar retain keyboard focus, touch targets and narrow-screen a
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 });
 
+test('earned calendar days remain readable on hover in both themes', async ({ page }) => {
+  await seedProgress(page, ['2026-09-16'], 'streak');
+  await seedProgress(page, { board: emptyBoard, moves: 0, reported: true }, '2026-09-16');
+  await openHome(page);
+  await choose(page.locator('#home-play'));
+  await choose(page.locator('#menu-open'));
+  await choose(page.locator('#menu-calendar-open'));
+  const calendar = page.locator('#calendar-dialog');
+  const earnedDay = calendar.locator('[data-puzzle-date="2026-09-16"]');
+  const currentDay = calendar.locator(`[data-puzzle-date="${today}"]`);
+  for (const colorScheme of ['light', 'dark']) {
+    await page.emulateMedia({ colorScheme });
+    await page.mouse.move(0, 0);
+    for (const isHovered of [false, true]) {
+      if (isHovered) await earnedDay.hover();
+      expect(await earnedDay.evaluate(element => element.matches(':hover'))).toBe(isHovered);
+      const contrast = await earnedDay.evaluate(element => {
+        const style = getComputedStyle(element);
+        const getLuminance = color => color.match(/[\d.]+/g).slice(0, 3).map(Number).reduce((total, channel, index) => {
+          const value = channel / 255;
+          return total + (value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4) * [0.2126, 0.7152, 0.0722][index];
+        }, 0);
+        const foreground = getLuminance(style.color), background = getLuminance(style.backgroundColor);
+        return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05);
+      });
+      expect.soft(contrast, `${colorScheme} streak date ${isHovered ? 'hovered' : 'resting'}`).toBeGreaterThanOrEqual(4.5);
+      await expect(earnedDay).toHaveAccessibleName(/completed, daily streak day/);
+      await expect(currentDay).toHaveAttribute('aria-current', 'date');
+      await expect(currentDay).toHaveAccessibleName(/current puzzle/);
+    }
+  }
+});
+
 
 test('a completed archive follows the new local day from its recap after midnight', async ({ page }) => {
   const archive = bank.puzzles.find(puzzle => puzzle.date === '2026-09-16');

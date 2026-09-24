@@ -51,6 +51,14 @@ Keep the outcome, main action and supporting countdown together on the completio
 - Touch and mouse interaction must not show keyboard focus rings, including automatic dialog focus and focus restoration. Keep focus in place for accessibility; restore visible outlines on keyboard navigation. Typing in a touch-opened text field stays visually quiet. Selected pieces and Tutorial destinations retain their purposeful outlines.
 - Every action needs visible keyboard focus. Preserve accessible names, minimum 44px standalone touch targets, native controls, reduced-motion behavior and Escape/backdrop dialog dismissal.
 
+## Buttons and action labels
+
+Use regular 400 weight for action labels, including primary, secondary, quiet text, menu rows, Settings and disclosures. Primary emphasis comes from the forest fill, not bolder type. General actions use 14px text with 1.4 line height; menu rows retain 1.5. Keep the compact 12–13px gameplay toolbar and the separate place/date typography needed for puzzle content and earned-state markers.
+
+Reuse `.primary`, `.secondary` and `.text-button`; button-style links, including Play tutorial and Back, use the same classes. Filled primary and neutral secondary controls use 14px corners and at least 48px height. Quiet and icon controls use 8px corners and at least 44px targets. Home actions retain 52px height; menu rows retain their flat dividers and 48px height. Board, tray, toolbar and calendar geometry remain deliberate compact exceptions.
+
+Use the shared palette for resting and hover states. Disabled and locked controls do not acquire an enabled hover treatment. Earned calendar dates retain contrasting accent text and fill when hovered. All controls use the shared focus color for keyboard input and stay quiet after touch. Check primary, secondary, quiet, icon, selected, locked, disabled and disclosure states in both themes.
+
 ## Dialogs and reading pages
 
 Use the same left-aligned heading and upper-right close control for Menu, All puzzles, Settings, Feedback, Share and How to play; the short Hint confirmation stays centered. Primary actions use forest green, secondary actions use the quiet neutral surface, and close controls retain the same 44px target. Reading pages can scroll. Privacy uses a concise Back action. Their page title must not overpower the NookGrid wordmark. Return actions preserve the actual Tutorial or archived puzzle the player left. The question-mark control opens one How to play dialog over the current puzzle on every route. Keep the board, selection and scroll position intact; close with X, Escape or an outside tap and restore focus to the question mark. Keep the instructions readable with internal scrolling on smaller screens or enlarged text. Play tutorial is a separate, optional neutral button-style link for guided practice; hide it when already in the Tutorial. Keep How to play in the dialog and omit the redundant worked-example route.
