@@ -1,13 +1,13 @@
 import { PLACES, clueText, clueStatus, isSolved } from './engine.mjs?v=20260915-teaser1';
-import { movePlace, selectPuzzle, restoreProgress, hasPuzzleCompletion, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces, puzzleDay, restoreStreakDays, addDailyCompletion, streakLength } from './state.mjs?v=20260923-share-challenge1';
+import { movePlace, selectPuzzle, restoreProgress, hasPuzzleCompletion, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces, puzzleDay, restoreStreakDays, addDailyCompletion, streakLength } from './state.mjs?v=20260924-home1';
 import { placeArt } from './art.mjs?v=20260915-teaser1';
-import { testMode, analytics } from './session.mjs?v=20260918-simple1';
+import { testMode, analytics } from './session.mjs?v=20260924-home1';
 import { native, savedValue, saveValue } from './platform.mjs';
 import { updatePuzzleLinks } from './navigation.mjs?v=20260924-home1';
 import { getWeekDates, renderCalendar } from './calendar.mjs?v=20260924-home1';
 
 const $ = id => document.getElementById(id);
-const renderIcon = (name, className = '') => `<svg class="ui-icon ${className}" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#${name}"/></svg>`;
+const renderIcon = (name, className = '') => `<svg class="ui-icon ${className}" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-home1#${name}"/></svg>`;
 const ids = PLACES.map(place => place.id);
 const nameOf = id => PLACES.find(place => place.id === id)?.name || '';
 const openedDay = puzzleDay();
@@ -524,7 +524,7 @@ function render() {
     const id = button.dataset.place, placed = board.includes(id), isLocked = progress.hintedPlaces.includes(id);
     button.hidden = isLearning && !starterPlaces.slice(0,starterStep + 1).includes(id) && !placed && selected !== id;
     button.className = `place${placed ? ' placed' : ''}${isLocked ? ' locked' : ''}${selected === id ? ' selected' : ''}`;
-    button.querySelector('.placed-check use').setAttribute('href', `./icons.svg#${isLocked ? 'lock-key' : 'check'}`);
+    button.querySelector('.placed-check use').setAttribute('href', `./icons.svg?v=20260924-home1#${isLocked ? 'lock-key' : 'check'}`);
     button.setAttribute('aria-disabled',String(isLocked));
     button.setAttribute('aria-pressed', String(selected === id));
     button.setAttribute('aria-label', `${nameOf(id)}${isLocked ? ', fixed by a hint' : placed ? ', already on the board' : ', choose a lot'}`);

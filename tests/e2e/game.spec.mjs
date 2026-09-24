@@ -166,9 +166,9 @@ test('hints require confirmation and stay fixed through moves, undo, reset and r
   const fixed = page.locator(`#tray [data-place="${daily.solution[0]}"]`);
   const movable = page.locator(`#tray [data-place="${daily.solution[1]}"]`);
   await expect(fixed).toHaveAttribute('aria-disabled', 'true');
-  await expect(fixed.locator('.place-name use')).toHaveAttribute('href', './icons.svg#lock-key');
+  await expect(fixed.locator('.place-name use')).toHaveAttribute('href', /^\.\/icons\.svg(?:\?[^#]*)?#lock-key$/);
   await expect(movable).toHaveAttribute('aria-disabled', 'false');
-  await expect(movable.locator('.place-name use')).toHaveAttribute('href', './icons.svg#check');
+  await expect(movable.locator('.place-name use')).toHaveAttribute('href', /^\.\/icons\.svg(?:\?[^#]*)?#check$/);
   await expect(fixed.locator('.place-name svg')).toBeVisible();
   await expect(movable.locator('.place-name svg')).toBeVisible();
   await choose(page.locator(`[data-place="${daily.solution[2]}"]`));

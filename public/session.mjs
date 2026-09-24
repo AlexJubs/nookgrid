@@ -1,4 +1,4 @@
-import { createAnalytics } from './analytics.mjs?v=20260918-simple1';
+import { createAnalytics } from './analytics.mjs?v=20260924-home1';
 import { native } from './platform.mjs';
 
 let testing = new URLSearchParams(location.search).has('test') || (native ? native.isDevelopment : ['localhost','127.0.0.1',''].includes(location.hostname));

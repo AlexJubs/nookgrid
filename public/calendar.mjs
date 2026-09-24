@@ -94,7 +94,7 @@ export function renderCalendar({dates,today,completedDates = [],streakDays = [],
         description.textContent = label;
         cell.append(description);
       }
-      if (isCompleted) cell.insertAdjacentHTML('beforeend','<svg class="ui-icon calendar-check" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#check"/></svg>');
+      if (isCompleted) cell.insertAdjacentHTML('beforeend','<svg class="ui-icon calendar-check" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-home1#check"/></svg>');
       grid.append(cell);
     }
     section.append(heading,labels,grid);
