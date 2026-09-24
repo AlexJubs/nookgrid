@@ -470,7 +470,7 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
       expect(row.height, row.label).toBeGreaterThanOrEqual(44);
       expect(row.height, row.label).toBe(rows[0].height);
       expect(row.fontSize, row.label).toBe('14px');
-      expect(row.fontWeight, row.label).toBe('600');
+      expect(row.fontWeight, row.label).toBe('400');
       expect(row.background, row.label).toBe(rows[0].background);
       expect(row.background, row.label).toBe('rgba(0, 0, 0, 0)');
       expect(row.hasChevron, row.label).toBe(true);

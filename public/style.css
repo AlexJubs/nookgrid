@@ -150,7 +150,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .game-page #menu-dialog{width:min(360px,calc(100% - 32px))}
 
 .game-page .menu-links{display:grid;grid-template-columns:1fr;gap:0;background:transparent}
-.game-page .menu-links a,.game-page .menu-links .text-button{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;margin:0;padding:12px 0;font-size:var(--font-body);line-height:1.5;font-weight:600;color:var(--ink);text-align:left;text-decoration:none;border-radius:0}
+.game-page .menu-links a,.game-page .menu-links .text-button{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;margin:0;padding:12px 0;font-size:var(--font-body);line-height:1.5;font-weight:400;color:var(--ink);text-align:left;text-decoration:none;border-radius:0}
 .menu-chevron{flex:none;width:16px;height:16px;color:var(--muted)}
 .game-page .menu-links>:not(:last-child){border-bottom:1px solid var(--line)}
 .game-page .menu-links a:hover,.game-page .menu-links button:hover{background:var(--surface)}
