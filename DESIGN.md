@@ -20,17 +20,17 @@ The board and neighborhood plan are the main task. Puzzle number, date, coordina
 
 | Surface | Primary action | Quieter actions |
 | --- | --- | --- |
-| Daily completion | Share result | Reset and Feedback as peers |
-| Tutorial completion | Play today's puzzle | Reset and Feedback as peers |
-| Archived completion | Share result | Today's puzzle, Reset and Feedback |
+| Daily completion | Share result | View solved puzzle, All puzzles |
+| Tutorial completion | Play today's puzzle | View solved puzzle, All puzzles |
+| Archived completion | Share result | View solved puzzle, All puzzles |
 | Hint confirmation | Reveal | Cancel |
 | Feedback | Send | Close |
 | Share fallback | Select/copy the existing result | Close |
 | Load failure | Try again | Normal header navigation |
 
-Choose emphasis from the player's task, not from a mandatory primary/secondary/tertiary template. One solid primary action can sit alongside several equally quiet controls. Reset and Feedback are peer utilities: use matching borderless styling, target sizes, hover and focus treatment. An outline or secondary surface is useful only when an action genuinely needs intermediate emphasis. A state-changing action does not automatically need a red, heavy button. Avoid redundant actions and keep labels concise.
+Choose emphasis from the player's task, not from a mandatory primary/secondary/tertiary template. One solid primary action can sit alongside several equally quiet controls. An outline or secondary surface is useful only when an action genuinely needs intermediate emphasis. A state-changing action does not automatically need a red, heavy button. Avoid redundant actions and keep labels concise.
 
-Keep the outcome, main action and supporting countdown together on the completion surface, with the utility row beneath it. Share stays above the countdown; the countdown is smaller and lighter than the outcome. The menu uses four matching flat rows: All puzzles, Settings, Feedback and Privacy. All puzzles opens the existing calendar; there is no separate puzzle list. Dates open the selected puzzle directly and preserve current, completed and earned-streak descriptions. Tutorial stays in How to play. Reuse saved completion history so Reset and replay retain completion.
+Keep the outcome, streak, week strip and supporting countdown together above one group of three full-width actions: Share result, View solved puzzle and All puzzles. Tutorial substitutes Play today's puzzle for Share result. Use matching secondary buttons for the two navigation actions. Reset remains on the solved board, Feedback in Menu and Home in the header; do not duplicate them on the recap. The countdown is smaller and lighter than the outcome. The menu uses four matching flat rows: All puzzles, Settings, Feedback and Privacy. All puzzles opens the existing calendar; there is no separate puzzle list. Dates open the selected puzzle directly and preserve current, completed and earned-streak descriptions. Tutorial stays in How to play. Reuse saved completion history so Reset and replay retain completion.
 
 ## Spacing and proportions
 
@@ -98,7 +98,7 @@ Use the shared, locally bundled Phosphor regular icons in `public/icons.svg` on 
 
 Use the screen height after the status-bar and home-indicator insets. On regular portrait screens, keep every plan statement, all nine places and Undo/Reset/Hint visible together. Short screens and longer plans may scroll to preserve readable text and 44px targets. A compact 24px brand and one plan heading identify the puzzle; the repeated daily objective stays in How to play while Tutorial instructions remain available to screen readers without adding visible prose. The board uses the remaining height, up to 300px wide, with every lot at least 44px. Do not scale the whole screen or hide overflow to force a pass.
 
-Use compact section gaps and place tiles of at least 44px. Art remains separate from the smaller Phosphor status marks. Selection announcements remain available to screen readers. Completion uses its own result screen with Share above the countdown and matching Reset/Feedback utilities below. Preserve scrollable dialogs and readable recovery messages.
+Use compact section gaps and place tiles of at least 44px. Art remains separate from the smaller Phosphor status marks. Selection announcements remain available to screen readers. Completion uses its own result screen with one three-action group below the countdown. The solved board retains Reset even when all nine places are fixed by hints. Preserve scrollable dialogs and readable recovery messages.
 
 Verify seven- and ten-statement plans, selection, hints, daily/archive completion and every Tutorial stage at 393×852, 402×874 and 375×667, including safe-area insets. Assert 44px targets, no horizontal overflow and access to all content. Regular portrait gameplay should fit; verify vertical scrolling when a short or enlarged layout needs it.
 

@@ -74,15 +74,16 @@
           <div class="completion-board" id="completion-board" aria-hidden="true"></div>
           <div class="completion-summary">
             <div><h2 id="completion-title">Neighborhood complete</h2><p id="daily-streak" hidden></p><p id="completion-time" hidden></p><p id="completion-detail">Plan complete.</p></div>
-            <div class="result-history"><div class="week-heading"><span>This week</span><button id="result-calendar-open" class="secondary calendar-button" aria-haspopup="dialog" aria-controls="calendar-dialog"><svg class="ui-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-calendar2#calendar-blank"/></svg><span>All puzzles</span></button></div><div class="week-strip" id="result-week" aria-label="This week's puzzles"></div></div>
-            <button class="primary" id="share">Share result</button>
-            <button class="secondary" id="view-solved">View solved puzzle</button>
-            <p id="share-status" role="status"></p>
+            <div class="result-history"><div class="week-heading"><span>This week</span></div><div class="week-strip" id="result-week" aria-label="This week's puzzles"></div></div>
             <div id="next-puzzle" hidden><span>Next puzzle at midnight</span><strong id="next-puzzle-time" role="timer" aria-live="off">00:00:00</strong></div>
-            <a class="text-button inline-button" id="play-today" href="./" hidden>Play today's puzzle</a>
+            <div class="completion-actions">
+              <button class="primary" id="share">Share result</button>
+              <a class="primary inline-button" id="play-today" href="./" hidden>Play today's puzzle</a>
+              <button class="secondary" id="view-solved">View solved puzzle</button>
+              <button id="result-calendar-open" class="secondary calendar-button" aria-haspopup="dialog" aria-controls="calendar-dialog"><svg class="ui-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-calendar2#calendar-blank"/></svg><span>All puzzles</span></button>
+            </div>
+            <p id="share-status" role="status"></p>
           </div>
-          <div class="completion-actions"><button class="text-button" id="clear-win">Reset</button><button class="text-button" id="feedback-win">Feedback</button></div>
-          <div class="result-navigation"><button class="text-button" id="result-home">Home</button></div>
         </section>
         <button class="secondary" id="view-result" hidden>View today's result</button>
       </div>

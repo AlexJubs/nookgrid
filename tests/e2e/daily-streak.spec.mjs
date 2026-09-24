@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { test, expect, bank, daily, today, emptyBoard, openGame, enterGame, place, expectBoard, solvePuzzle, readProgress, seedProgress } from './fixtures.mjs';
+import { test, expect, bank, daily, today, emptyBoard, openGame, enterGame, place, expectBoard, solvePuzzle, readProgress, seedProgress, choose } from './fixtures.mjs';
 
 const streakKey = 'nookgrid:test:v1:streak';
 const almostSolved = { board: [...daily.solution.slice(0, 8), null], moves: 8 };
@@ -28,7 +28,8 @@ test('a daily completion survives Reset, replay and reload without earning twice
   await expect(page.locator('#daily-streak')).toHaveText('1-day streak');
   await expect.poll(() => readStreak(page)).toEqual([today]);
 
-  await page.locator('#clear-win').click();
+  await choose(page.locator('#view-solved'));
+  await page.locator('#clear').click();
   await expectBoard(page, emptyBoard);
   await expect(page.locator('#completion')).toBeHidden();
   await openCalendar(page);

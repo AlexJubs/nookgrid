@@ -65,7 +65,7 @@ function openDialog(id, opener) {
   (isFromMenu ? $('menu-open') : opener).focus({preventScroll:true});
   $(id).showModal();
 }
-for (const [button, dialog] of [['help-open','help-dialog'],['menu-open','menu-dialog'],['menu-calendar-open','calendar-dialog'],['calendar-open','calendar-dialog'],['result-calendar-open','calendar-dialog'],['feedback-open','feedback-dialog'],['feedback-win','feedback-dialog'],['settings-open','settings-dialog'],['hint','hint-dialog']]) {
+for (const [button, dialog] of [['help-open','help-dialog'],['menu-open','menu-dialog'],['menu-calendar-open','calendar-dialog'],['calendar-open','calendar-dialog'],['result-calendar-open','calendar-dialog'],['feedback-open','feedback-dialog'],['settings-open','settings-dialog'],['hint','hint-dialog']]) {
   $(button).addEventListener('click', () => openDialog(dialog, $(button)));
 }
 $('help-tutorial').href = `?date=practice${testMode ? '&test=1' : ''}`;
@@ -173,7 +173,7 @@ function showScreen(next) {
   (next === 'home' ? $('home-play').hidden ? $('home-result') : $('home-play') : next === 'result' ? $('share').hidden ? $('play-today') : $('share') : $('home-open')).focus({preventScroll:true});
 }
 
-for (const id of ['home-open','result-home']) $(id).addEventListener('click',() => showScreen('home'));
+$('home-open').addEventListener('click',() => showScreen('home'));
 document.querySelector('.brand').addEventListener('click',event => {
   if (!puzzle || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
   event.preventDefault();
@@ -463,7 +463,7 @@ function updateReturnPrompt() {
     if ($('calendar-dialog').open) prepareCalendar(false);
   }
   $('new-day').hidden = currentDay === openedDay || isToday || !hasToday || mode === 'practice';
-  $('play-today').hidden = isToday || !hasToday;
+  $('play-today').hidden = mode !== 'practice' || !hasToday;
   $('play-today').href = `?date=${currentDay}${testMode ? '&test=1' : ''}`;
   $('new-day').querySelector('a').href = $('play-today').href;
   $('next-puzzle').hidden = !isToday || !hasTomorrow;
@@ -531,7 +531,7 @@ function render() {
   $('selection-status').classList.add('sr-only');
   $('selection-status').textContent = selected ? `${nameOf(selected)} selected. Choose a lot.` : isLearning ? `Drag ${nameOf(starterPlaces[starterStep])}, or tap it then a square.` : 'Drag a place, or tap a place then a square.';
   $('undo').disabled = !history.some(previous => restoreHintedPlaces(previous.board,progress.hintedPlaces,puzzle.solution).some((id,index) => id !== board[index]));
-  for (const id of ['clear','clear-win']) $(id).disabled = !board.some(Boolean);
+  $('clear').disabled = !board.some(Boolean);
   $('game').classList.toggle('is-solved', solved);
   $('game').classList.toggle('has-selection', Boolean(selected));
   $('hint').disabled = solved;
@@ -581,7 +581,7 @@ $('undo').addEventListener('click', () => {
   track('board_undo');
   save(); render();
 });
-for (const id of ['clear','clear-win']) $(id).addEventListener('click', () => {
+$('clear').addEventListener('click', () => {
   const hintsToKeep = isSolved(puzzle,progress.board) ? [] : progress.hintedPlaces;
   applyBoard(restoreHintedPlaces(Array(9).fill(null),hintsToKeep,puzzle.solution),hintsToKeep.length ? 'Board reset. Hinted places stay fixed.' : 'Board cleared.','reset');
   ($('undo').disabled ? $('hint') : $('undo')).focus({preventScroll:true});
@@ -682,7 +682,6 @@ async function init() {
       document.querySelector('.puzzle-instruction').classList.add('sr-only');
       $('completion-title').textContent = 'Nice work!';
       $('share').hidden = true;
-      $('play-today').classList.replace('text-button','primary');
     }
     $('play-today').href = `?date=${today}${testMode ? '&test=1' : ''}`;
     $('board-title').textContent = {daily:"Today's puzzle",archive:'Archived puzzle',practice:'The tutorial puzzle'}[mode];

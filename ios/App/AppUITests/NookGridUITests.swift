@@ -226,6 +226,7 @@ final class NookGridUITests: XCTestCase {
         place(remainingPlace, at: remainingLot)
         XCTAssertTrue(app.staticTexts["Neighborhood complete"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["1-day streak"].exists)
+        tap(button("View solved puzzle"))
         XCTAssertTrue(button("Reset").isEnabled)
         tap(button("Reset"))
         for address in lots { assertLot(address, "empty") }
@@ -271,6 +272,7 @@ final class NookGridUITests: XCTestCase {
         for count in 0..<9 { reveal(count) }
         XCTAssertTrue(app.staticTexts["Nice work!"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["9 hints used."].exists)
+        tap(button("View solved puzzle"))
         XCTAssertTrue(button("Reset").isEnabled)
         tap(button("Reset"))
         for address in lots { assertLot(address, "empty") }
@@ -283,6 +285,7 @@ final class NookGridUITests: XCTestCase {
         tap(button("View solved puzzle"))
         XCTAssertEqual(app.webViews.firstMatch.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH 'Lot ' AND label ENDSWITH 'fixed by a hint'")).count, 9)
         viewResult()
+        tap(button("View solved puzzle"))
         tap(button("Reset"))
         for address in lots { assertLot(address, "empty") }
 

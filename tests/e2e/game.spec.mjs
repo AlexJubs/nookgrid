@@ -331,10 +331,12 @@ test('reset clears solved hints, Undo restores them and unfinished replay hints 
   }
   await expectBoard(page, daily.solution);
   await expect(page.locator('#completion-detail')).toHaveText('9 hints used.');
-  await expect(page.locator('#clear-win')).toBeEnabled();
+  await choose(page.locator('#view-solved'));
+  await expect(page.locator('#clear')).toBeVisible();
+  await expect(page.locator('#clear')).toBeEnabled();
   await expect(page.locator('#hint')).toBeDisabled();
   await expect(page.locator('#board .locked')).toHaveCount(9);
-  await page.locator('#clear-win').click();
+  await page.locator('#clear').click();
   await expectBoard(page, emptyBoard);
   await expect(page.locator('#board .locked')).toHaveCount(0);
   expect(await readProgress(page)).toMatchObject({ hints: 0, hintedPlaces: [], reported: true, elapsedMs: 0 });
@@ -342,14 +344,16 @@ test('reset clears solved hints, Undo restores them and unfinished replay hints 
   await expectBoard(page, daily.solution);
   await expect(page.locator('#board .locked')).toHaveCount(9);
   await expect(page.locator('#completion-detail')).toHaveText('9 hints used.');
-  await page.locator('#clear-win').click();
+  await choose(page.locator('#view-solved'));
+  await page.locator('#clear').click();
   await page.locator('#hint').click();
   await page.locator('#confirm-hint').click();
   await page.locator('#undo').click();
   await expectBoard(page, daily.solution);
   await expect(page.locator('#board .locked')).toHaveCount(9);
   await expect(page.locator('#completion-detail')).toHaveText('9 hints used.');
-  await page.locator('#clear-win').click();
+  await choose(page.locator('#view-solved'));
+  await page.locator('#clear').click();
   await page.reload();
   await enterGame(page);
   await expectBoard(page, emptyBoard);
@@ -369,7 +373,8 @@ for (const puzzle of [bank.tutorial, bank.puzzles.find(item => item.date === '20
     await openGame(page, `date=${puzzle.date === 'tutorial' ? 'practice' : puzzle.date}`);
     await place(page, puzzle.solution[8], 8);
     await expect(page.locator('#completion')).toBeVisible();
-    await page.locator('#clear-win').click();
+    await choose(page.locator('#view-solved'));
+    await page.locator('#clear').click();
     await expectBoard(page, emptyBoard);
     await page.reload();
     await expectBoard(page, emptyBoard);
@@ -400,7 +405,8 @@ test('a full incorrect board remains playable and a correct board completes', as
   await expect(page.locator('#next-puzzle')).toBeVisible();
   await expect(page.locator('#next-puzzle-time')).toHaveAttribute('aria-live', 'off');
   await expect(page.locator('.confetti')).toHaveCount(0);
-  await page.locator('#clear-win').click();
+  await choose(page.locator('#view-solved'));
+  await page.locator('#clear').click();
   await expectBoard(page, emptyBoard);
   await expect(page.locator('#completion')).toBeHidden();
   await page.locator('#undo').click();

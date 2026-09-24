@@ -78,7 +78,7 @@ test('completion has a dedicated recap, accessible solved plan and replay withou
   await expect(page.locator('#clues .clue:visible')).toHaveCount(daily.clues.length);
   await choose(page.locator('#view-result'));
   await expect(page.locator('#completion')).toBeVisible();
-  await choose(page.locator('#result-home'));
+  await choose(page.locator('#home-open'));
   await expect(page.locator('#home')).toBeVisible();
   await expect(page.locator('#home-streak-count')).toHaveText('1');
   await expect(page.locator('#calendar-open')).toHaveClass(/primary/);
@@ -87,7 +87,8 @@ test('completion has a dedicated recap, accessible solved plan and replay withou
   expect(await page.locator('#home-week').ariaSnapshot()).toContain('September 17, today, completed');
   await choose(page.locator('#home-result'));
   await expect(page.locator('#completion')).toBeVisible();
-  await choose(page.locator('#clear-win'));
+  await choose(page.locator('#view-solved'));
+  await choose(page.locator('#clear'));
   await expect(page.locator('#board')).toBeVisible();
   await expectBoard(page, emptyBoard);
   expect(await readProgress(page)).toMatchObject({ hints: 0, hintedPlaces: [], reported: true, elapsedMs: 0 });
@@ -178,7 +179,8 @@ for (const native of [false, true]) {
     await choose(previous);
     await expect(page).toHaveURL(/date=2026-09-16/);
     await expect(page.locator('#completion')).toBeVisible();
-    await choose(page.locator('#clear-win'));
+    await choose(page.locator('#view-solved'));
+    await choose(page.locator('#clear'));
     await expectBoard(page, emptyBoard);
     await choose(page.locator('#home-open'));
     await choose(page.locator('#calendar-open'));
@@ -256,8 +258,8 @@ test('a completed archive follows the new local day from its recap after midnigh
   await page.goto(`/?test=1&date=${archive.date}`);
   await expect(page.locator('#completion')).toBeVisible();
   await page.clock.fastForward(4_000);
-  await expect(page.locator('#play-today')).toHaveAttribute('href', /date=2026-09-18/);
-  await choose(page.locator('#play-today'));
+  await choose(page.locator('#home-open'));
+  await choose(page.locator('#home-play'));
   await expect(page.locator('#puzzle-date')).toHaveText('Sep 18, 2026');
   await expect(page.locator('#board')).toBeVisible();
   await expectBoard(page, emptyBoard);
@@ -369,5 +371,26 @@ for (const native of [false, true]) {
     await page.locator('#calendar-dialog a[data-puzzle-date="2026-11-30"]').press('Enter');
     await expect(page.locator('#board')).toBeVisible();
     await expect(page.locator('#puzzle-date')).toHaveText('Nov 30, 2026');
+  });
+}
+
+for (const [label, puzzle, date] of [
+  ['daily', daily, today],
+  ['archive', bank.puzzles.find(item => item.date === '2026-09-11'), '2026-09-11'],
+  ['Tutorial', bank.tutorial, 'practice']
+]) {
+  test(`${label} completion ends with one group of three actions`, async ({ page }) => {
+    await seedProgress(page, { board: puzzle.solution, moves: 9, reported: true }, puzzle.date);
+    await page.goto(`/?test=1&date=${date}`);
+    await expect(page.locator('#completion')).toBeVisible();
+    const labels = [label === 'Tutorial' ? "Play today's puzzle" : 'Share result', 'View solved puzzle', 'All puzzles'];
+    await expect(page.locator('#completion button:visible, #completion a:visible')).toHaveText(labels);
+    await expect(page.locator('.completion-actions button:visible, .completion-actions a:visible')).toHaveText(labels);
+    await expect(page.locator('.result-history button')).toHaveCount(0);
+    await expect(page.locator('#home-open')).toBeVisible();
+    await choose(page.locator('#view-solved'));
+    await expect(page.locator('#clear')).toBeVisible();
+    await expect(page.locator('#clear')).toBeEnabled();
+    await expect(page.locator('#tray')).toBeHidden();
   });
 }

@@ -94,7 +94,7 @@ async function expectScreenFit(page, phone, ruleCount, placeCount = 9) {
   if (geometry.plan && geometry.board) expect(geometry.plan.y + geometry.plan.height).toBeLessThanOrEqual(geometry.board.y + 1);
   if (geometry.tray && geometry.board) expect(geometry.board.y + geometry.board.height).toBeLessThanOrEqual(geometry.tray.y + 1);
   if (mayScroll) {
-    const lastAction = page.locator(isResult ? '#result-home' : await page.locator('#view-result').isVisible() ? '#view-result' : '#hint');
+    const lastAction = page.locator(isResult ? '#result-calendar-open' : await page.locator('#view-result').isVisible() ? '#view-result' : '#hint');
     await lastAction.scrollIntoViewIfNeeded();
     await expect(lastAction).toBeInViewport();
     const bottom = await lastAction.boundingBox();

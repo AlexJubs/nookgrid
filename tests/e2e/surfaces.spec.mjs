@@ -64,7 +64,8 @@ test('completed puzzles stay recorded after selection changes, Reset and reload'
     await place(page, puzzle.solution[8], 8);
     await expect(page.locator('#completion')).toBeVisible();
     await expect.poll(async () => (await readProgress(page, puzzle.date)).reported).toBe(true);
-    await page.locator('#clear-win').click();
+    await choose(page.locator('#view-solved'));
+    await page.locator('#clear').click();
     await expectBoard(page, emptyBoard);
     await page.reload();
     await expectBoard(page, emptyBoard);
@@ -215,14 +216,17 @@ test('browsing a month survives a saved completion and midnight without losing t
   await expectBoard(page, ['cafe', ...Array(8).fill(null)]);
 });
 
-test('archived completion offers today and has no countdown', async ({ page }) => {
+test('archived completion reaches today through Home and has no countdown', async ({ page }) => {
   const archive = bank.puzzles.find(puzzle => puzzle.date === '2026-09-11');
   await seedProgress(page, { board: archive.solution, moves: 9, elapsedMs: 90_000 }, archive.date);
   await openGame(page, `date=${archive.date}`);
   await expect(page.locator('#completion')).toBeVisible();
   await expect(page.locator('#completion-time')).toHaveText('Solved in 1:30');
-  await expect(page.locator('#play-today')).toBeVisible();
   await expect(page.locator('#next-puzzle')).toBeHidden();
+  await choose(page.locator('#home-open'));
+  await choose(page.locator('#home-play'));
+  await expect(page.locator('#puzzle-date')).toHaveText('Sep 17, 2026');
+  await expect(page.locator('#board')).toBeVisible();
 });
 
 for (const [mode, query, date] of [
