@@ -72,7 +72,7 @@
 .game-page .lot .hint-lock{position:absolute;top:6px;right:6px;width:12px;height:12px;color:var(--blue)}
 .game-page .is-solved:not(.has-selection) .play-controls:has(.place-tray),.game-page .is-solved.has-selection .completion{display:none}
 .game-page .completion{grid-column:1;grid-row:1;display:grid;grid-template-columns:1fr;align-items:center;justify-items:stretch;gap:8px;margin:0;padding:0;border:0;border-radius:0;background:none;text-align:left}
-.completion-summary{display:grid;justify-items:stretch;gap:12px;width:100%;padding:0;background:transparent}
+.completion-summary{display:flex;flex-direction:column;flex:1;gap:12px;width:100%;padding:0;background:transparent}
 .game-page .completion h2{font-size:26px;line-height:1.2;margin-bottom:4px}
 .game-page .completion p{font-size:14px;line-height:1.5}
 .game-page #completion-detail{color:var(--muted)}
@@ -82,7 +82,7 @@
 .confetti i{position:absolute;top:0;left:0;width:8px;height:12px;border-radius:2px}
 @media(prefers-reduced-motion:reduce){.confetti{display:none}}
 .game-page .completion .primary{margin:0;width:100%;font-size:14px;padding:12px 16px}
-.game-page .completion-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;width:100%}
+.game-page .completion-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;width:100%;margin-top:auto;padding-top:12px}
 #share-status:empty{display:none}
 #share-status{grid-column:1/-1}
 #next-puzzle{width:100%;margin:0;padding:0}
@@ -181,10 +181,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .home-actions{display:flex;flex-direction:column;gap:8px;margin-top:28px}
 .home-actions button{width:100%;min-height:52px}
 .game-page.show-home #game{display:none}
-.game-page.show-result #game{display:block;width:100%;max-width:380px;margin:24px auto 0}
+.game-page.show-result{display:flex;flex-direction:column;min-height:100svh}
+.game-page.show-result .site-header{flex:none;width:100%;margin-block:0}
+.game-page.show-result main{display:flex;flex-direction:column;flex:1;width:100%;margin-block:0;padding-bottom:24px}
+.game-page.show-result #game{display:flex;flex-direction:column;flex:1;width:100%;max-width:380px;margin:24px auto 0}
 .game-page.show-result #game .puzzle-instruction,.game-page.show-result #game .clue-panel,.game-page.show-result #game .board-wrap,.game-page.show-result #game .play-controls{display:none}
-.game-page.show-result .play-area{display:block;width:100%;max-width:none}
-.game-page.show-result .completion{display:grid}
+.game-page.show-result .play-area{display:flex;flex-direction:column;flex:1;width:100%;max-width:none;align-items:stretch}
+.game-page.show-result .completion{display:flex;flex-direction:column;flex:1;align-items:stretch}
 .completion-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;width:128px;margin:0 0 8px}
 .completion-place{display:grid;place-items:center;aspect-ratio:1;min-width:0;background:transparent;border:0}
 .completion-place svg{width:92%;height:auto}
@@ -306,9 +309,8 @@ a.calendar-day.is-streak:hover{background:var(--accent-hover)}
   .native-app .game-page .board-actions{grid-column:1;grid-row:1;gap:4px}
   .native-app .game-page .board-actions .text-button{min-height:44px;padding:6px 0;font-size:12px;gap:4px}
   .native-app .game-page .is-solved:not(.has-selection) .play-controls:has(.place-tray){display:none}
-  .native-app .game-page.show-result .game-layout{flex:none;display:block}
   .native-app .game-page.show-result,.native-app .game-page.show-home{height:auto;min-height:100dvh}
-  .native-app .game-page.show-result .play-area{display:block}
+  .native-app .game-page.show-result .play-area{display:flex}
   .native-app .game-page.show-result .completion{width:100%;gap:8px}
 }
 @media(max-width:927px) and (orientation:portrait) and (max-height:740px){

@@ -380,6 +380,7 @@ for (const [label, puzzle, date] of [
   ['Tutorial', bank.tutorial, 'practice']
 ]) {
   test(`${label} completion ends with one group of three actions`, async ({ page }) => {
+    if (page.viewportSize().width <= 927) await page.setViewportSize({ width: 393, height: 852 });
     await seedProgress(page, { board: puzzle.solution, moves: 9, reported: true }, puzzle.date);
     await page.goto(`/?test=1&date=${date}`);
     await expect(page.locator('#completion')).toBeVisible();
@@ -388,6 +389,40 @@ for (const [label, puzzle, date] of [
     await expect(page.locator('.completion-actions button:visible, .completion-actions a:visible')).toHaveText(labels);
     await expect(page.locator('.result-history button')).toHaveCount(0);
     await expect(page.locator('#home-open')).toBeVisible();
+    if (label === 'daily') await expect(page.locator('#next-puzzle span')).toHaveText('Next puzzle in');
+    for (const native of [false, true]) {
+      if (native && page.viewportSize().width > 927) continue;
+      if (native) await page.evaluate(() => {
+        document.documentElement.classList.add('native-app');
+        document.documentElement.style.setProperty('--safe-top', '59px');
+        document.documentElement.style.setProperty('--safe-bottom', '34px');
+      });
+      const layout = await page.evaluate(() => ({
+        bottom: document.querySelector('.completion-actions').getBoundingClientRect().bottom,
+        width: document.querySelector('.completion-actions').getBoundingClientRect().width,
+        gameWidth: document.querySelector('#game').getBoundingClientRect().width,
+        height: innerHeight,
+        scrollHeight: document.documentElement.scrollHeight
+      }));
+      const inset = native ? 34 : 0;
+      expect(layout.width, 'Result action widths stay consistent across puzzle modes').toBeGreaterThanOrEqual(layout.gameWidth - 1);
+      expect(layout.height - layout.bottom, 'Result actions stay above the bottom safe area').toBeGreaterThanOrEqual(inset + 8);
+      expect(layout.height - layout.bottom, 'Result actions anchor near the bottom').toBeLessThanOrEqual(inset + 24);
+      expect(layout.scrollHeight, 'Regular completion screens fit without clipping').toBeLessThanOrEqual(layout.height + 1);
+    }
+    if (page.viewportSize().width <= 927) {
+      await page.setViewportSize({ width: 320, height: 568 });
+      const layout = await page.evaluate(() => ({
+        actionTop: document.querySelector('.completion-actions').getBoundingClientRect().top,
+        historyBottom: document.querySelector('.result-history').getBoundingClientRect().bottom,
+        scrollWidth: document.documentElement.scrollWidth,
+        width: innerWidth
+      }));
+      expect(layout.actionTop).toBeGreaterThan(layout.historyBottom);
+      expect(layout.scrollWidth).toBeLessThanOrEqual(layout.width);
+      await page.locator('#result-calendar-open').scrollIntoViewIfNeeded();
+      await expect(page.locator('#result-calendar-open')).toBeInViewport();
+    }
     await choose(page.locator('#view-solved'));
     await expect(page.locator('#clear')).toBeVisible();
     await expect(page.locator('#clear')).toBeEnabled();
