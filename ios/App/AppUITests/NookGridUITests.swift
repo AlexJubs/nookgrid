@@ -514,7 +514,7 @@ final class NookGridUITests: XCTestCase {
         else {
             let dismiss = app.otherElements["PopoverDismissRegion"].firstMatch
             XCTAssertTrue(dismiss.exists, app.debugDescription)
-            dismiss.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.15)).tap()
+            dismiss.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
         }
         XCTAssertTrue(copy.waitForNonExistence(timeout: 5), app.debugDescription)
         XCTAssertFalse(button("Close share result").exists)
