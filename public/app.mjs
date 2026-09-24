@@ -62,8 +62,8 @@ function openDialog(id, opener) {
   const isFromMenu = $('menu-dialog').open;
   if (isFromMenu) $('menu-dialog').close();
   if (id === 'calendar-dialog' && bank && puzzle) prepareCalendar();
+  (isFromMenu ? $('menu-open') : opener).focus({preventScroll:true});
   $(id).showModal();
-  $(id).addEventListener('close', () => (isFromMenu ? $('menu-open') : opener).focus({preventScroll:true}), {once:true});
 }
 for (const [button, dialog] of [['help-open','help-dialog'],['menu-open','menu-dialog'],['menu-calendar-open','calendar-dialog'],['calendar-open','calendar-dialog'],['result-calendar-open','calendar-dialog'],['feedback-open','feedback-dialog'],['feedback-win','feedback-dialog'],['settings-open','settings-dialog'],['hint','hint-dialog']]) {
   $(button).addEventListener('click', () => openDialog(dialog, $(button)));

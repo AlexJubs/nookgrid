@@ -147,6 +147,25 @@ for (const date of [today, 'practice', bank.puzzles[0].date]) {
   });
 }
 
+test('closing a dialog preserves the next focused puzzle control', async ({ page }) => {
+  await openGame(page);
+  for (const opener of ['help-open', 'feedback-open']) {
+    await place(page, 'bakery', 0);
+    await page.locator('[data-lot="0"]').press('Enter');
+    if (opener === 'feedback-open') await page.locator('#menu-open').click();
+    await page.locator(`#${opener}`).click();
+    await page.evaluate(() => new Promise(resolve => {
+      const dialog = document.querySelector('dialog[open]');
+      dialog.addEventListener('close', resolve, { once: true });
+      dialog.close();
+      document.querySelector('[data-lot="0"]').focus();
+    }));
+    await expect(page.locator('[data-lot="0"]')).toBeFocused();
+    await page.keyboard.press('Delete');
+    await expectBoard(page, emptyBoard);
+  }
+});
+
 test('removal keys preserve fixed hints and leave dialogs and text editing alone', async ({ page }) => {
   await openGame(page);
   await page.locator('#hint').click();
