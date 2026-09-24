@@ -339,3 +339,5 @@ a.calendar-day:hover{background:var(--surface)}
   #calendar-months{padding-inline:0}
   .calendar-day{border-radius:4px}
 }
+
+.download-page{min-height:100svh;display:grid;place-items:center}.download-main{width:100%;max-width:520px;padding:48px 24px;text-align:center}.download-logo{display:block;margin:0 auto 20px}.download-main .brand{justify-content:center;margin-bottom:28px}.download-main h1{font-size:clamp(28px,7vw,36px);letter-spacing:-1px;line-height:1.15;margin-bottom:16px}.download-main>p:not(.brand){color:var(--muted);margin-bottom:28px}.download-main .primary{min-height:48px}.download-links{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 24px;margin-top:32px}.download-links a{display:inline-flex;align-items:center;min-height:44px;font-size:14px}.native-app #download-main{display:none}

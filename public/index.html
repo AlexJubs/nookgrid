@@ -5,11 +5,11 @@
   <meta name="google-site-verification" content="LtJC7gqeDzouHtGZCnFGF3amzGmahrWSnJaw86zTD2k" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>NookGrid | Free daily brain game</title>
-  <meta name="description" content="A free daily brain game. Arrange nine places to match the neighborhood plan.">
+  <meta name="description" content="A free daily brain game for iPhone and iPad. Arrange nine places to match the neighborhood plan.">
   <meta name="robots" content="index, follow"><link rel="canonical" href="https://nookgrid.com/">
   <meta name="theme-color" content="#FFFFFF">
   <meta property="og:title" content="NookGrid | Free daily brain game">
-  <meta property="og:description" content="Nine places, one neighborhood plan. Play a free daily brain game.">
+  <meta property="og:description" content="Nine places, one neighborhood plan. Get the free daily brain game on the App Store.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="NookGrid">
   <meta property="og:url" content="https://nookgrid.com/">
@@ -19,10 +19,19 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="NookGrid gameplay with three places on a nine-lot neighborhood board, a tray of places, and the neighborhood plan alongside.">
   <link rel="icon" href="./favicon.svg?v=20260918-logo1" type="image/svg+xml"><link rel="apple-touch-icon" href="./apple-touch-icon.png?v=20260918-logo1" sizes="180x180">
-  <link rel="stylesheet" href="./style.css?v=20260924-menu1">
-  <script type="module" src="./app.mjs?v=20260924-keyboard1"></script>
+  <link rel="stylesheet" href="./style.css?v=20260924-download1">
+  <script type="module" src="./entry.mjs?v=20260924-download1"></script>
 </head>
-<body class="game-page">
+<body class="download-page">
+  <main id="download-main" class="download-main">
+    <img class="download-logo" src="./favicon.svg?v=20260918-logo1" width="72" height="72" alt="">
+    <p class="brand">NookGrid</p>
+    <h1>Your daily brain game.</h1>
+    <p>Nine places. One neighborhood plan.<br>Play on iPhone and iPad.</p>
+    <a id="download-store" class="primary inline-button" href="https://apps.apple.com/app/id6813274587" target="_blank" rel="noopener noreferrer">Download on the App Store</a>
+    <nav class="download-links" aria-label="About NookGrid"><a href="./about.html">How to play</a><a href="mailto:alexjabbour7@outlook.com">Support</a><a href="./privacy.html">Privacy</a></nav>
+  </main>
+  <template id="game-content">
   <a class="skip-link" href="#game" data-track="index-a-1">Skip to puzzle</a>
   <header class="site-header">
     <button class="icon-button" id="home-open" aria-label="Back to home" hidden><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-calendar2#caret-right"/></svg></button>
@@ -137,5 +146,6 @@
     </div>
     <p class="settings-note">Your progress and streak stay in this browser. Clearing browser data removes them.</p>
   </dialog>
+  </template>
 </body>
 </html>

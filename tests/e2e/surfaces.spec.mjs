@@ -304,7 +304,7 @@ test('privacy keeps explicit puzzle context and returns to the saved board', asy
 test('direct reading pages return to today without a saved return destination', async ({ page }) => {
   for (const filename of ['about.html', 'privacy.html', 'app-privacy.html']) {
     await page.goto(`/${filename}?test=1`);
-    await choose(page.getByRole('link', { name: filename === 'about.html' ? 'Back to puzzle' : 'Back', exact: true }));
+    await choose(page.getByRole('link', { name: 'Back', exact: true }));
     await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
     await expect(page.locator('#board-title')).toHaveText("Today's puzzle");
     await expect(page.locator('#puzzle-date')).toHaveText('Sep 17, 2026');
@@ -516,7 +516,7 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
       await paragraphs.last().scrollIntoViewIfNeeded();
       await expect(paragraphs.last()).toBeInViewport();
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
-      const back = page.getByRole('link', { name: filename === 'about.html' ? 'Back to puzzle' : 'Back', exact: true });
+      const back = page.getByRole('link', { name: 'Back', exact: true });
       await back.scrollIntoViewIfNeeded();
       await expect(back).toBeInViewport();
       const bounds = await back.boundingBox();

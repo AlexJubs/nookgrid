@@ -93,3 +93,7 @@ Use the screen height after the status-bar and home-indicator insets. On regular
 Use compact section gaps and place tiles of at least 44px. Art remains separate from the smaller Phosphor status marks. Selection announcements remain available to screen readers. Completion uses its own result screen with Share above the countdown and matching Reset/Feedback utilities below. Preserve scrollable dialogs and readable recovery messages.
 
 Verify seven- and ten-statement plans, selection, hints, daily/archive completion and every Tutorial stage at 393×852, 402×874 and 375×667, including safe-area insets. Assert 44px targets, no horizontal overflow and access to all content. Regular portrait gameplay should fit; verify vertical scrolling when a short or enlarged layout needs it.
+
+## Public download entry
+
+Public game and shared-result links lead to the App Store. The fallback uses the existing palette and primary button, one short brain-game description, and quiet How to play, Support and Privacy links. It contains no active gameplay. Native startup waits for its bridge before showing the existing home screen. Keep native gameplay and loopback QA available; never use a public test query as a bypass.
