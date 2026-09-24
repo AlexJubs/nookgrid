@@ -79,7 +79,7 @@ final class NookGridUITests: XCTestCase {
         tap(button("How to play"))
         XCTAssertTrue(button("Close how to play").waitForExistence(timeout: 5))
         tap(app.webViews.links["Play tutorial"].firstMatch)
-        XCTAssertFalse(button("Close how to play").exists)
+        XCTAssertTrue(button("Close how to play").waitForNonExistence(timeout: 5), app.debugDescription)
         XCTAssertTrue(app.staticTexts["Tutorial plan"].waitForExistence(timeout: 5))
         XCTAssertTrue(lot("A1").exists)
         XCTAssertTrue(button("How to play").exists)
