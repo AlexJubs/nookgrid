@@ -15,7 +15,7 @@ npm run build:ios
 npm run test:ios
 ```
 
-The last two commands require macOS and Xcode. `build:ios` bundles the web game and synchronizes the Capacitor project. `test:ios` builds the unsigned simulator app and runs XCTest. Keep `package-lock.json` and the Xcode project in source control. Do not commit signing keys, provisioning profiles, generated bundles or build results.
+The last two commands require macOS and Xcode. Run local checks headlessly on one project-owned simulator, then shut down that device with `xcrun simctl shutdown <device-id>`. Leave unrelated devices alone; use CI for the full native suite. `build:ios` bundles the web game and synchronizes the Capacitor project. `test:ios` builds the unsigned simulator app and runs XCTest. Keep `package-lock.json` and the Xcode project in source control. Do not commit signing keys, provisioning profiles, generated bundles or build results.
 
 The `CI` workflow runs on main pushes and pull requests. Linux runs the shared Node checks and Chromium/WebKit QA. macOS uses the explicitly selected Xcode 26.3 on `macos-15`. Review the [runner's installed Xcode versions](https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md) before updating the pin. A missing selected Xcode should fail the build.
 

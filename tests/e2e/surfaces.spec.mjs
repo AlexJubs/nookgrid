@@ -76,7 +76,7 @@ test('completed puzzles stay marked after selection changes, Reset and reload', 
     await expect(page.locator('#completion')).toBeVisible();
     await page.locator('#menu-open').click();
     await page.locator('#puzzles-open').click();
-    await expect(page.locator(`[data-puzzle-date="${date}"]`)).toHaveAccessibleName(/, completed$/);
+    await expect(page.locator(`#puzzles-dialog [data-puzzle-date="${date}"]`)).toHaveAccessibleName(/, completed$/);
     await page.locator('#puzzles-dialog [data-close]').click();
     await page.locator('#clear-win').click();
     await expectBoard(page, emptyBoard);
@@ -84,7 +84,7 @@ test('completed puzzles stay marked after selection changes, Reset and reload', 
     await expectBoard(page, emptyBoard);
     await page.locator('#menu-open').click();
     await page.locator('#puzzles-open').click();
-    const row = page.locator(`[data-puzzle-date="${date}"]`);
+    const row = page.locator(`#puzzles-dialog [data-puzzle-date="${date}"]`);
     await expect(row).toHaveAttribute('aria-current', 'page');
     await expect(row.locator('.puzzle-current use')).toHaveAttribute('href', /#play-circle$/);
     await expect(row.locator('.puzzle-completed use')).toHaveAttribute('href', /#check-circle$/);
@@ -123,8 +123,8 @@ test('a stale tab cannot erase an earned completion badge', async ({ page }) => 
     await expect(stale.locator('#completion')).toBeHidden();
     await stale.locator('#menu-open').click();
     await stale.locator('#puzzles-open').click();
-    await expect(stale.locator(`[data-puzzle-date="${today}"]`)).toHaveAccessibleName(/, completed$/);
-    await expect(stale.locator(`[data-puzzle-date="${today}"] .puzzle-completed use`)).toHaveAttribute('href', /#check-circle$/);
+    await expect(stale.locator(`#puzzles-dialog [data-puzzle-date="${today}"]`)).toHaveAccessibleName(/, completed$/);
+    await expect(stale.locator(`#puzzles-dialog [data-puzzle-date="${today}"] .puzzle-completed use`)).toHaveAttribute('href', /#check-circle$/);
     expect(errors).toEqual([]);
   } finally {
     await stale.close();
@@ -365,7 +365,7 @@ test('preferences and supporting pages preserve test mode and private analytics 
   await expect(page.locator('#game')).toBeVisible();
 });
 
-test('Tutorial and today links read as neutral controls', async ({ page }) => {
+test('Tutorial remains a secondary Help action and today stays available in Puzzles', async ({ page }) => {
   const checkControl = async control => {
     await expect(control).toBeVisible();
     const style = await control.evaluate(element => {
@@ -379,14 +379,14 @@ test('Tutorial and today links read as neutral controls', async ({ page }) => {
     expect(style.color).toBe(await page.locator('#undo').evaluate(element => getComputedStyle(element).color));
   };
   await openGame(page);
-  await checkControl(page.locator('#puzzle-switch'));
   await page.locator('#help-open').click();
   await checkControl(page.locator('#help-tutorial'));
   await page.locator('#help-tutorial').click();
   await expect(page.locator('#puzzle-label')).toHaveText('Tutorial');
-  await expect(page.locator('#puzzle-switch')).toHaveText("Today's puzzle");
-  await checkControl(page.locator('#puzzle-switch'));
-  await page.locator('#puzzle-switch').click();
+  await expect(page.locator('#puzzle-switch')).toHaveCount(0);
+  await page.locator('#menu-open').click();
+  await page.locator('#puzzles-open').click();
+  await page.locator('#puzzles-dialog').getByRole('link', { name: 'Today, Sep 17, 2026', exact: true }).click();
   await expect(page.locator('#puzzle-date')).toHaveText('Sep 17, 2026');
 });
 
@@ -398,7 +398,6 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
     expect(new Set(titleSizes)).toEqual(new Set([20]));
     expect(titleSizes[0]).toBeLessThan(await page.locator('.brand').evaluate(brand => parseFloat(getComputedStyle(brand).fontSize)));
     await choose(page.locator('#menu-open'));
-    const menuColor = await page.locator('#menu-dialog').evaluate(dialog => getComputedStyle(dialog).backgroundColor);
     const rows = await page.locator('#puzzles-open, #settings-open').evaluateAll(elements => elements.map(element => {
       const style = getComputedStyle(element), bounds = element.getBoundingClientRect();
       const chevron = element.querySelector('.menu-chevron');
@@ -406,6 +405,7 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
         label: element.textContent.trim(), width: bounds.width, height: bounds.height,
         fontSize: style.fontSize, fontWeight: style.fontWeight,
         background: getComputedStyle(element.parentElement).backgroundColor,
+        dividerWidth: parseFloat(style.borderBottomWidth),
         hasChevron: Boolean(chevron?.checkVisibility() && chevron.getAttribute('aria-hidden') === 'true')
       };
     }));
@@ -416,17 +416,17 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
       expect(row.fontSize, row.label).toBe('14px');
       expect(row.fontWeight, row.label).toBe('600');
       expect(row.background, row.label).toBe(rows[0].background);
-      expect(row.background, row.label).not.toBe('rgba(0, 0, 0, 0)');
-      expect(row.background, row.label).not.toBe(menuColor);
+      expect(row.background, row.label).toBe('rgba(0, 0, 0, 0)');
       expect(row.hasChevron, row.label).toBe(true);
     }
+    expect(rows[0].dividerWidth).toBeGreaterThanOrEqual(1);
     for (const control of [page.locator('#feedback-open'), page.locator('#menu-dialog').getByRole('link', { name: 'Privacy', exact: true })]) {
       await expect(control).toBeInViewport();
       const bounds = await control.boundingBox();
       expect(bounds.width).toBeGreaterThanOrEqual(44);
       expect(bounds.height).toBeGreaterThanOrEqual(44);
     }
-    await choose(page.getByRole('button', { name: 'Settings', exact: true }));
+    await choose(page.locator('#menu-dialog').getByRole('button', { name: 'Settings', exact: true }));
     const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
     const analyticsSwitch = settings.getByRole('switch', { name: 'Play analytics', exact: true });
     await expect(analyticsSwitch).toHaveAccessibleDescription(/measuring visits.*Test mode: analytics are off\./);
@@ -483,8 +483,7 @@ test('local midnight announces the next puzzle without replacing the saved board
 test('keyboard controls retain names, focus outlines and text clue states', async ({ page, isMobile, browserName }) => {
   await openGame(page);
   const skip = page.getByRole('link', { name: 'Skip to puzzle' });
-  if (isMobile) await skip.focus();
-  else await page.keyboard.press('Tab');
+  await skip.focus();
   await expect(skip).toBeFocused();
   await page.keyboard.press('Enter');
   const bakery = page.getByRole('button', { name: 'Bakery, choose a lot', exact: true });
@@ -561,9 +560,10 @@ test('phone layout stacks the plan, board, items and actions without overlap', a
   await place(page, 'bakery', 0);
   await expect(page.getByRole('status').filter({ hasText: 'Bakery moved to A1.' })).toHaveCount(1);
   await solvePuzzle(page);
-  const board = await getBounds('#board');
-  const result = await getBounds('#completion');
-  expect(result.y).toBeGreaterThan(board.y + board.height);
+  await expect(page.locator('#board')).toBeHidden();
+  await expect(page.locator('#completion')).toBeVisible();
+  await page.locator('#view-solved').click();
+  await page.locator('#solved-plan summary').click();
   await page.locator('#board [data-lot="0"]').click();
   await expect(page.locator('#tray')).toBeVisible();
   await verifyStack();

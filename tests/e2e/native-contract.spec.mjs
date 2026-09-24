@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { enterGame } from './fixtures.mjs';
 import { buildIos } from '../../scripts/build-ios.mjs';
 
 test.beforeEach(async ({page}) => {
@@ -62,6 +63,7 @@ test('native production measures installations, preserves opt-out, and keeps sav
   expect(await page.evaluate(() => window.analyticsOptions.bootstrap.distinctID)).toBe('d724bf4c-89bb-4bce-bf3f-9d4d96ccf199');
   expect(await page.evaluate(() => window.captured.every(item => item.properties.platform === 'ios' && item.properties.measurement_mode === 'installation'))).toBe(true);
   expect(await page.evaluate(() => window.captured.every(item => item.properties.distribution_channel === 'sandbox' && item.properties.app_version === '1.0' && item.properties.app_build === '19'))).toBe(true);
+  await enterGame(page);
   await page.locator('#tray [data-place="bakery"]').click();
   await page.locator('#board [data-lot="0"]').click();
   await page.reload();
@@ -83,6 +85,7 @@ test('unknown native distribution never becomes public when metadata fails or st
   await page.addInitScript(() => { window.nookgridNative.getAnalyticsMetadata = () => new Promise(() => {}); });
   await page.goto('/');
   await expect(page.locator('#game')).toHaveAttribute('aria-busy','false');
+  await enterGame(page);
   await page.locator('#tray [data-place="bakery"]').click();
   await page.locator('#board [data-lot="0"]').click();
   await expect.poll(() => page.evaluate(() => window.captured.some(item => item.event === 'board_move'))).toBe(true);
@@ -97,6 +100,7 @@ test('native debug never requests analytics metadata or sends events',async ({pa
   await page.addInitScript(() => { window.nookgridNative.isDevelopment = true; });
   await page.goto('/');
   await expect(page.locator('#game')).toHaveAttribute('aria-busy','false');
+  await enterGame(page);
   await page.locator('#tray [data-place="bakery"]').click();
   await page.locator('#board [data-lot="0"]').click();
   expect(await page.evaluate(() => window.metadataCalls)).toBe(0);
@@ -123,10 +127,11 @@ test('native public tags wait for metadata and respect opt-out while it is pendi
 });
 
 
-test('cancelling the native share sheet leaves the solved board visible',async ({page}) => {
+test('cancelling the native share sheet leaves the result visible',async ({page}) => {
   await page.clock.install({time:new Date('2026-09-17T12:00:00Z')});
   await page.goto('/');
   await expect(page.locator('#game')).toHaveAttribute('aria-busy','false');
+  await enterGame(page);
   for (let count = 0; count < 9; count++) {
     await page.locator('#hint').click();
     await page.locator('#confirm-hint').click();

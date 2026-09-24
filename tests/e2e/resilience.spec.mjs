@@ -1,4 +1,4 @@
-import { test, expect, bank, daily, emptyBoard, openGame, place, expectBoard, seedProgress, readProgress } from './fixtures.mjs';
+import { test, expect, bank, daily, emptyBoard, enterGame, openGame, place, expectBoard, seedProgress, readProgress } from './fixtures.mjs';
 
 test('loading remains inert until the puzzle resource arrives', async ({ page }) => {
   let release;
@@ -38,7 +38,7 @@ for (const failure of ['unavailable', 'malformed']) {
     await page.keyboard.press('Escape');
     await page.unroute('**/puzzles.json');
     await page.getByRole('link', { name: 'Try again' }).click();
-    await expect(page.locator('#game')).toBeVisible();
+    await enterGame(page);
     await expectBoard(page, emptyBoard);
   });
 }

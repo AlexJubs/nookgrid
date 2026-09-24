@@ -10,7 +10,9 @@ final class NookGridUITests: XCTestCase {
         app = XCUIApplication()
         app.launchArguments = ["nookgrid-reset-test-state", "nookgrid-offline"]
         app.launch()
-        XCTAssertTrue(button("Lot A1, empty").waitForExistence(timeout: 60), app.debugDescription)
+        XCTAssertTrue(button("Play today's puzzle").waitForExistence(timeout: 60), app.debugDescription)
+        tap(button("Play today's puzzle"))
+        XCTAssertTrue(button("Lot A1, empty").waitForExistence(timeout: 5), app.debugDescription)
     }
 
     override func tearDownWithError() throws {
@@ -56,9 +58,16 @@ final class NookGridUITests: XCTestCase {
         }
         XCTAssertTrue(viewport.contains(element.frame), "Element remains outside its scroll area: \(element), frame \(element.frame), viewport \(viewport). \(app.debugDescription)")
     }
+    private func viewResult() {
+        let result = button("View result")
+        tap(result.exists ? result : button("View today's result"))
+    }
     private func assertLot(_ address: String, _ place: String, file: StaticString = #filePath, line: UInt = #line) {
+        let wasResult = button("View solved puzzle").exists
+        if wasResult { tap(button("View solved puzzle")) }
         let target = button("Lot \(address), \(place)")
         XCTAssertTrue(target.exists || target.waitForExistence(timeout: 5), app.debugDescription, file: file, line: line)
+        if wasResult { viewResult() }
     }
     private func place(_ name: String, at address: String) {
         tap(button("\(name), choose a lot"))
@@ -67,8 +76,13 @@ final class NookGridUITests: XCTestCase {
         assertLot(address, name)
     }
     private func openTutorial() {
-        tap(app.webViews.links.matching(NSPredicate(format: "label == 'Tutorial' OR label == 'Tutorial, completed'")).firstMatch)
-        XCTAssertTrue(app.webViews.links["Today's puzzle"].firstMatch.waitForExistence(timeout: 5))
+        let tutorial = app.webViews.links.matching(NSPredicate(format: "label == 'Tutorial' OR label == 'Tutorial, completed'")).firstMatch
+        if tutorial.exists { tap(tutorial) }
+        else {
+            tap(button("How to play"))
+            tap(app.webViews.links["Play tutorial"].firstMatch)
+        }
+        XCTAssertTrue(app.staticTexts["Tutorial plan"].waitForExistence(timeout: 5))
         XCTAssertTrue(lot("A1").exists)
         XCTAssertTrue(button("How to play").exists)
     }
@@ -86,7 +100,7 @@ final class NookGridUITests: XCTestCase {
         options.iterationCount = 3
         measure(metrics: [XCTApplicationLaunchMetric(waitUntilResponsive: true)], options: options) {
             app.launch()
-            XCTAssertTrue(button("Lot A1, empty").waitForExistence(timeout: 10))
+            XCTAssertTrue(button("Play today's puzzle").waitForExistence(timeout: 10))
             app.terminate()
         }
     }
@@ -101,18 +115,49 @@ final class NookGridUITests: XCTestCase {
             XCTAssertGreaterThanOrEqual(button("\(name), choose a lot").frame.width, 44)
             XCTAssertGreaterThanOrEqual(button("\(name), choose a lot").frame.height, 44)
         }
-        let controls = [button("How to play"), button("Menu"), button("Undo"), button("Reset"), button("Hint, 0 hints used")]
-        for target in controls + lots.map(lot) + places.map({ button("\($0), choose a lot") }) {
+        let controls = [button("How to play"), button("Settings"), button("Undo"), button("Reset"), button("Hint, 0 hints used")]
+        let targets = controls + lots.map(lot) + places.map { button("\($0), choose a lot") }
+        let fitsInitially = targets.allSatisfy { $0.frame.minY >= 20 && $0.frame.maxY <= app.frame.maxY - 8 }
+        let headerY = app.webViews.links["NookGrid home"].frame.minY
+        for target in targets {
+            scrollTo(target)
+            XCTAssertGreaterThanOrEqual(target.frame.minX, app.frame.minX, target.label)
+            XCTAssertLessThanOrEqual(target.frame.maxX, app.frame.maxX, target.label)
             XCTAssertGreaterThanOrEqual(target.frame.minY, 20, target.label)
             XCTAssertLessThanOrEqual(target.frame.maxY, app.frame.maxY - 8, target.label)
         }
-        let headerY = app.webViews.links["NookGrid home"].frame.minY
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.8))
-            .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.2)))
-        XCTAssertEqual(app.webViews.links["NookGrid home"].frame.minY, headerY, accuracy: 1)
+        if fitsInitially {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.8))
+                .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.2)))
+            XCTAssertEqual(app.webViews.links["NookGrid home"].frame.minY, headerY, accuracy: 1)
+        }
+
     }
 
-    func testMovesSwapsRemovalUndoAndReset() {
+    func testHomeCalendarAndContinuePreserveNativeProgress() {
+        tap(button("Back to home"))
+        XCTAssertTrue(button("Play today's puzzle").waitForExistence(timeout: 5))
+        XCTAssertFalse(lot("A1").exists)
+        tap(button("Calendar"))
+        XCTAssertTrue(button("Close calendar").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["0-day streak"].exists)
+        let today = app.webViews.links.matching(NSPredicate(format: "label CONTAINS ', Today,'")).firstMatch
+        XCTAssertTrue(today.exists, app.debugDescription)
+        tap(today)
+        XCTAssertFalse(button("Close calendar").exists)
+        place("Bakery", at: "A1")
+        tap(button("Back to home"))
+        XCTAssertTrue(button("Continue today's puzzle").waitForExistence(timeout: 5))
+        tap(button("Continue today's puzzle"))
+        assertLot("A1", "Bakery")
+        app.terminate()
+        app.launchArguments = ["nookgrid-offline"]
+        app.launch()
+        XCTAssertTrue(button("Lot A1, Bakery").waitForExistence(timeout: 15))
+        XCTAssertFalse(button("Continue today's puzzle").exists)
+    }
+
+    func testMovesSwapsUndoAndReset() {
         place("Bakery", at: "A1")
         place("Cafe", at: "A2")
         tap(lot("A1"))
@@ -122,9 +167,7 @@ final class NookGridUITests: XCTestCase {
         tap(button("Undo"))
         assertLot("A1", "Bakery")
         assertLot("A2", "Cafe")
-        tap(lot("A1"))
-        tap(button("Put back"))
-        assertLot("A1", "empty")
+        XCTAssertFalse(button("Put back").exists)
         tap(button("Reset"))
         XCTAssertEqual(app.webViews.firstMatch.descendants(matching: .any).matching(NSPredicate(format: "label MATCHES %@", "Lot [ABC][123], empty")).count, 9)
     }
@@ -158,7 +201,7 @@ final class NookGridUITests: XCTestCase {
         let remainingPlace = try XCTUnwrap(places.first { button("\($0), choose a lot").exists })
         let remainingLot = try XCTUnwrap(lots.first { button("Lot \($0), empty").exists })
         place(remainingPlace, at: remainingLot)
-        XCTAssertTrue(app.staticTexts["Solved!"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Neighborhood complete"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["1-day streak"].exists)
         XCTAssertTrue(button("Reset").isEnabled)
         tap(button("Reset"))
@@ -173,7 +216,9 @@ final class NookGridUITests: XCTestCase {
         app.terminate()
         app.launchArguments = ["nookgrid-offline"]
         app.launch()
-        XCTAssertTrue(button("Lot \(remainingLot), empty").waitForExistence(timeout: 15))
+        XCTAssertTrue(button("Replay today's puzzle").waitForExistence(timeout: 15))
+        tap(button("Replay today's puzzle"))
+        XCTAssertTrue(button("Lot \(remainingLot), empty").waitForExistence(timeout: 5))
         for address in lots { assertLot(address, "empty") }
         XCTAssertTrue(button("Hint, 0 hints used").exists)
         XCTAssertFalse(button("Undo").isEnabled)
@@ -193,7 +238,7 @@ final class NookGridUITests: XCTestCase {
         let replayPlace = try XCTUnwrap(places.first { button("\($0), choose a lot").exists })
         let replayLot = try XCTUnwrap(lots.first { button("Lot \($0), empty").exists })
         place(replayPlace, at: replayLot)
-        XCTAssertTrue(app.staticTexts["Solved!"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Neighborhood complete"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["1-day streak"].exists)
         XCTAssertFalse(app.staticTexts["2-day streak"].exists)
     }
@@ -212,14 +257,16 @@ final class NookGridUITests: XCTestCase {
         tap(button("Undo"))
         XCTAssertTrue(app.staticTexts["Nice work!"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["9 hints used."].exists)
+        tap(button("View solved puzzle"))
         XCTAssertEqual(app.webViews.firstMatch.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH 'Lot ' AND label ENDSWITH 'fixed by a hint'")).count, 9)
+        viewResult()
         tap(button("Reset"))
         for address in lots { assertLot(address, "empty") }
 
         app.terminate()
         app.launchArguments = ["nookgrid-offline"]
         app.launch()
-        XCTAssertTrue(button("Menu").waitForExistence(timeout: 15))
+        XCTAssertTrue(button("Settings").waitForExistence(timeout: 15))
         openPuzzles()
         XCTAssertTrue(app.webViews.links["Tutorial, completed"].firstMatch.exists, app.debugDescription)
         openTutorial()
@@ -232,17 +279,17 @@ final class NookGridUITests: XCTestCase {
     func testTutorialGuidanceAndSavedPuzzlesAreSeparate() {
         openArchive()
         place("Park", at: "C3")
-        tap(button("Menu"))
+        tap(button("Settings"))
         tap(app.webViews.links["Privacy"].firstMatch)
         tap(app.webViews.links["Back"].firstMatch)
-        XCTAssertTrue(app.staticTexts["Sep 10, 2026"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Sep 10, 2026 plan"].waitForExistence(timeout: 5))
         assertLot("C3", "Park")
         openTutorial()
         XCTAssertFalse(button("Park, choose a lot").exists)
         place("Bakery", at: "A1")
         XCTAssertTrue(button("Cafe, choose a lot").exists)
         tap(lot("A1"))
-        XCTAssertTrue(button("Put back").exists)
+        XCTAssertFalse(button("Put back").exists)
         place("Cafe", at: "A2")
         place("Books", at: "A3")
         XCTAssertTrue(button("Park, choose a lot").exists)
@@ -280,7 +327,7 @@ final class NookGridUITests: XCTestCase {
     }
 
     private func openPuzzles() {
-        tap(button("Menu"))
+        tap(button("Settings"))
         XCTAssertTrue(button("Close menu").waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["Menu"].exists)
         tap(button("Puzzles"))
@@ -292,7 +339,7 @@ final class NookGridUITests: XCTestCase {
     private func openArchive() {
         openPuzzles()
         tap(app.webViews.links["Sep 10, 2026"].firstMatch)
-        XCTAssertTrue(app.staticTexts["Sep 10, 2026"].waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(app.staticTexts["Sep 10, 2026 plan"].waitForExistence(timeout: 5), app.debugDescription)
         XCTAssertFalse(button("Close puzzles").exists)
     }
 
@@ -309,7 +356,7 @@ final class NookGridUITests: XCTestCase {
         tap(button("How to play"))
         XCTAssertTrue(button("Close how to play").waitForExistence(timeout: 5))
         tap(button("Close how to play"))
-        XCTAssertTrue(app.staticTexts["Sep 10, 2026"].exists)
+        XCTAssertTrue(app.staticTexts["Sep 10, 2026 plan"].exists)
         assertLot("A1", "Bakery")
         openToday()
         assertLot("A1", "empty")
@@ -320,7 +367,8 @@ final class NookGridUITests: XCTestCase {
     }
 
     func testDialogsDismiss() {
-        let dateLabel = app.staticTexts.matching(NSPredicate(format: "label MATCHES %@", "[A-Z][a-z]{2} [0-9]{1,2}, [0-9]{4}")).firstMatch.label
+        let planTitle = app.staticTexts["Today’s plan"]
+        XCTAssertTrue(planTitle.exists, app.debugDescription)
         let headerY = app.webViews.links["NookGrid home"].frame.minY
         tap(button("How to play"))
         XCTAssertTrue(button("Close how to play").waitForExistence(timeout: 5))
@@ -332,7 +380,7 @@ final class NookGridUITests: XCTestCase {
         captureScreenshot("How to play over today's puzzle")
         tap(button("Close how to play"))
         XCTAssertFalse(button("Close how to play").exists)
-        XCTAssertTrue(app.staticTexts[dateLabel].exists)
+        XCTAssertTrue(planTitle.exists)
         XCTAssertTrue(button("Park, choose a lot").exists)
         XCTAssertEqual(app.webViews.links["NookGrid home"].frame.minY, headerY, accuracy: 1)
         assertLot("A1", "empty")
@@ -351,8 +399,10 @@ final class NookGridUITests: XCTestCase {
         XCTAssertTrue(button("Bakery, choose a lot").isHittable)
         assertLot("A1", "empty")
         openToday()
-        tap(button("Menu"))
         tap(button("Settings"))
+        let menu = app.webViews.firstMatch.descendants(matching: .other)
+            .matching(NSPredicate(format: "label == 'Menu, web dialog'")).firstMatch
+        tap(menu.descendants(matching: .any).matching(NSPredicate(format: "label == 'Settings'")).firstMatch)
         XCTAssertTrue(button("Close settings").waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Test mode: analytics are off."].exists)
         captureScreenshot("Settings")
@@ -361,7 +411,7 @@ final class NookGridUITests: XCTestCase {
         captureScreenshot("Hint touch focus")
         tap(button("Cancel"))
         XCTAssertFalse(app.staticTexts["Reveal a place?"].exists)
-        tap(button("Menu"))
+        tap(button("Settings"))
         tap(button("Feedback"))
         XCTAssertTrue(button("Close feedback").waitForExistence(timeout: 5))
         let emailLink = app.webViews.links["Email us"].firstMatch
@@ -380,11 +430,11 @@ final class NookGridUITests: XCTestCase {
         captureScreenshot("Puzzles")
         tap(button("Close puzzles"))
         XCTAssertFalse(button("Close puzzles").exists)
-        tap(button("Menu"))
+        tap(button("Settings"))
         captureScreenshot("Menu touch focus")
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.15)).tap()
         XCTAssertFalse(button("Close menu").exists)
-        tap(button("Menu"))
+        tap(button("Settings"))
         tap(app.webViews.links["Privacy"].firstMatch)
         let returnLink = app.webViews.links["Back"].firstMatch
         XCTAssertTrue(returnLink.waitForExistence(timeout: 5))
@@ -401,7 +451,7 @@ final class NookGridUITests: XCTestCase {
 
     func testSolveWithHintsAndNativeShareSheet() {
         for count in 0..<9 { reveal(count) }
-        XCTAssertTrue(app.staticTexts["Solved!"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Neighborhood complete"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["9 hints used."].exists)
         tap(button("Share result"))
         let copy = app.cells["Copy"].firstMatch
@@ -421,6 +471,6 @@ final class NookGridUITests: XCTestCase {
         XCTAssertTrue(copy.waitForExistence(timeout: 60), app.debugDescription)
         copy.tap()
         XCTAssertTrue(copy.waitForNonExistence(timeout: 5), app.debugDescription)
-        XCTAssertTrue(app.staticTexts["Solved!"].exists)
+        XCTAssertTrue(app.staticTexts["Neighborhood complete"].exists)
     }
 }

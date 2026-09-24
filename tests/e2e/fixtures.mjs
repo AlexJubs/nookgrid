@@ -28,7 +28,14 @@ export { expect };
 
 export async function openGame(page, query = '') {
   await page.goto(`/?test=1${query ? `&${query}` : ''}`);
+  await enterGame(page);
+}
+
+export async function enterGame(page) {
   await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
+  if (await page.locator('#home').isVisible()) {
+    await choose(page.locator(await page.locator('#home-result').isVisible() ? '#home-result' : '#home-play'));
+  }
   await expect(page.locator('#game')).toBeVisible();
   await expect(page.locator('#game')).not.toHaveAttribute('inert', '');
   await expect(page.locator('#board .lot')).toHaveCount(9);

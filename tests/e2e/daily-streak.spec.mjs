@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { test, expect, bank, daily, today, emptyBoard, openGame, place, expectBoard, solvePuzzle, readProgress, seedProgress } from './fixtures.mjs';
+import { test, expect, bank, daily, today, emptyBoard, openGame, enterGame, place, expectBoard, solvePuzzle, readProgress, seedProgress } from './fixtures.mjs';
 
 const streakKey = 'nookgrid:test:v1:streak';
 const almostSolved = { board: [...daily.solution.slice(0, 8), null], moves: 8 };
@@ -36,6 +36,7 @@ test('a daily completion survives Reset, replay and reload without earning twice
   await page.getByRole('button', { name: 'Close puzzles', exact: true }).click();
   await solvePuzzle(page);
   await page.reload();
+  await enterGame(page);
   await expect(page.locator('#completion')).toBeVisible();
   await expect(page.locator('#daily-streak')).toHaveText('1-day streak');
   expect(await readStreak(page)).toEqual([today]);
@@ -116,14 +117,14 @@ test('local midnight refreshes Today without replacing the current board', async
   await expect(page.locator('#new-day')).toBeHidden();
   await expect(page.locator('#puzzle-date')).toHaveText('Sep 17, 2026');
   await openPuzzles(page);
-  await expect(page.locator('[data-puzzle-date="2026-09-17"]')).toHaveAttribute('aria-current', 'page');
-  await expect(page.locator('[data-puzzle-date="2026-09-17"] small')).toHaveText('Today');
-  await expect(page.locator('[data-puzzle-date="2026-09-18"]')).toHaveCount(0);
+  await expect(page.locator('#puzzles-dialog [data-puzzle-date="2026-09-17"]')).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('#puzzles-dialog [data-puzzle-date="2026-09-17"] small')).toHaveText('Today');
+  await expect(page.locator('#puzzles-dialog [data-puzzle-date="2026-09-18"]')).toHaveCount(0);
 
   await page.clock.setSystemTime(new Date('2026-09-17T23:59:58-04:00'));
   await page.clock.fastForward(4_000);
-  const previous = page.locator('[data-puzzle-date="2026-09-17"]');
-  const current = page.locator('[data-puzzle-date="2026-09-18"]');
+  const previous = page.locator('#puzzles-dialog [data-puzzle-date="2026-09-17"]');
+  const current = page.locator('#puzzles-dialog [data-puzzle-date="2026-09-18"]');
   await expect(previous).toHaveAttribute('aria-current', 'page');
   await expect(previous.locator('.puzzle-current')).toHaveText('');
   await expect(previous.locator('.puzzle-current use')).toHaveAttribute('href', /#play-circle$/);
@@ -139,7 +140,7 @@ test('local midnight refreshes Today without replacing the current board', async
   await expectBoard(page, emptyBoard);
   await place(page, 'park', 4);
   await openPuzzles(page);
-  await page.locator('[data-puzzle-date="2026-09-17"]').click();
+  await page.locator('#puzzles-dialog [data-puzzle-date="2026-09-17"]').click();
   await expect(page.locator('#puzzle-date')).toHaveText('Sep 17, 2026');
   await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
   expect((await readProgress(page, '2026-09-18')).board).toEqual([null, null, null, null, 'park', null, null, null, null]);

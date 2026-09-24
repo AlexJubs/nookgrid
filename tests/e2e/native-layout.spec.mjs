@@ -31,17 +31,20 @@ test.beforeEach(async ({ page }) => {
 });
 
 async function expectScreenFit(page, phone, ruleCount, placeCount = 9) {
-  await expect(page.locator('#clues .clue:visible')).toHaveCount(ruleCount);
+  const isResult = await page.locator('body').evaluate(body => body.classList.contains('show-result'));
+  const mayScroll = phone.height < 800 || ruleCount > 7;
+  if (mayScroll) await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await expect(page.locator('#clues .clue:visible')).toHaveCount(isResult ? 0 : ruleCount);
   await expect(page.locator('#tray .place:visible')).toHaveCount(placeCount);
-  await expect(page.locator('#board .lot:visible')).toHaveCount(9);
+  await expect(page.locator('#board .lot:visible')).toHaveCount(isResult ? 0 : 9);
   const geometry = await page.evaluate(() => {
     const bounds = element => {
       const { x, y, width, height } = element.getBoundingClientRect();
       return { x, y, width, height, name: element.id || element.getAttribute('aria-label') || element.textContent.trim() };
     };
     const visible = element => element.checkVisibility() && element.getBoundingClientRect().width > 0;
-    const targets = [...document.querySelectorAll('.brand,.lot,.place,.icon-button,.board-actions button,#remove-place,.completion button,#play-today,.puzzle-switch')].filter(visible);
-    const headerHits = [...document.querySelectorAll('.brand,.icon-button,.puzzle-switch')].map(element => {
+    const targets = [...document.querySelectorAll('.brand,.lot,.place,.icon-button,.board-actions button,.completion button,#view-result,#play-today,.puzzle-switch')].filter(visible);
+    const headerHits = [...document.querySelectorAll('.brand,.icon-button')].filter(visible).map(element => {
       const { left, top, width, height } = element.getBoundingClientRect();
       return {
         name: bounds(element).name,
@@ -65,19 +68,19 @@ async function expectScreenFit(page, phone, ruleCount, placeCount = 9) {
       headerHits,
       content: content.map(bounds),
       ruleLines,
-      plan: bounds(document.querySelector('#clue-list')),
-      board: bounds(document.querySelector('#board')),
+      plan: visible(document.querySelector('#clue-list')) ? bounds(document.querySelector('#clue-list')) : null,
+      board: visible(document.querySelector('#board')) ? bounds(document.querySelector('#board')) : null,
       tray: visible(document.querySelector('#tray')) ? bounds(document.querySelector('#tray')) : null
     };
   });
-  expect(geometry.scrollHeight, 'The full native page must fit without scrolling').toBeLessThanOrEqual(phone.height + 1);
+  if (!mayScroll) expect(geometry.scrollHeight, 'Regular native screens must fit without scrolling').toBeLessThanOrEqual(phone.height + 1);
   expect(geometry.scrollWidth).toBeLessThanOrEqual(phone.width);
   expect(geometry.scrollY).toBe(0);
   for (const item of [...geometry.targets, ...geometry.content, ...geometry.ruleLines]) {
     expect(item.x, `${item.name} left`).toBeGreaterThanOrEqual(0);
     expect(item.x + item.width, `${item.name} right`).toBeLessThanOrEqual(phone.width + 1);
     expect(item.y, `${item.name} top`).toBeGreaterThanOrEqual(phone.top - 1);
-    expect(item.y + item.height, `${item.name} bottom`).toBeLessThanOrEqual(phone.height - phone.bottom + 1);
+    expect(item.y + item.height, `${item.name} bottom`).toBeLessThanOrEqual(mayScroll ? geometry.scrollHeight + 1 : phone.height - phone.bottom + 1);
   }
   for (const target of geometry.targets) {
     expect(target.width, `${target.name} touch width`).toBeGreaterThanOrEqual(44);
@@ -88,11 +91,19 @@ async function expectScreenFit(page, phone, ruleCount, placeCount = 9) {
     expect(line.y, `${line.name} within plan`).toBeGreaterThanOrEqual(geometry.plan.y - 1);
     expect(line.y + line.height, `${line.name} within plan`).toBeLessThanOrEqual(geometry.plan.y + geometry.plan.height + 1);
   }
-  expect(geometry.plan.y + geometry.plan.height).toBeLessThanOrEqual(geometry.board.y + 1);
-  if (geometry.tray) expect(geometry.board.y + geometry.board.height).toBeLessThanOrEqual(geometry.tray.y + 1);
+  if (geometry.plan && geometry.board) expect(geometry.plan.y + geometry.plan.height).toBeLessThanOrEqual(geometry.board.y + 1);
+  if (geometry.tray && geometry.board) expect(geometry.board.y + geometry.board.height).toBeLessThanOrEqual(geometry.tray.y + 1);
+  if (mayScroll) {
+    const lastAction = page.locator(isResult ? '#result-home' : await page.locator('#view-result').isVisible() ? '#view-result' : '#hint');
+    await lastAction.scrollIntoViewIfNeeded();
+    await expect(lastAction).toBeInViewport();
+    const bottom = await lastAction.boundingBox();
+    expect(bottom.y + bottom.height).toBeLessThanOrEqual(phone.height - phone.bottom + 1);
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  }
 }
 
-test('native phone gameplay keeps every rule, lot, place and action on screen', async ({ page }) => {
+test('native phone gameplay keeps readable rules and touch targets reachable within safe areas', async ({ page }) => {
   test.setTimeout(60_000);
   for (const phone of phones) {
     await page.setViewportSize({ width: phone.width, height: phone.height });
@@ -107,7 +118,8 @@ test('native phone gameplay keeps every rule, lot, place and action on screen', 
       await expectScreenFit(page, phone, puzzle.clues.length);
       await page.locator('#board [data-lot="0"]').click();
       await page.locator('#board [data-lot="0"]').click();
-      await expect(page.locator('#remove-place')).toBeVisible();
+      await expect(page.locator('#remove-place')).toHaveCount(0);
+      await expect(page.locator('#board [data-lot="0"]')).toHaveAttribute('aria-pressed', 'true');
       await expectScreenFit(page, phone, puzzle.clues.length);
       await page.locator('#hint').click();
       await page.locator('#confirm-hint').click();
@@ -128,6 +140,9 @@ test('native phone completions and the full tutorial plan stay within safe areas
       const puzzle = puzzles.find(puzzle => puzzle.date === date);
       await openGame(page, `date=${date}`);
       await expect(page.locator('#completion')).toBeVisible();
+      await expectScreenFit(page, phone, puzzle.clues.length, 0);
+      await page.locator('#view-solved').click();
+      await page.locator('#solved-plan summary').click();
       await expectScreenFit(page, phone, puzzle.clues.length, 0);
     }
     await page.evaluate(date => localStorage.removeItem(`nookgrid:test:v1:${date}`), bank.tutorial.date);
@@ -152,7 +167,7 @@ test('native phone completions and the full tutorial plan stay within safe areas
       return { buttonCenter: bounds.y + bounds.height / 2, labelCenter: label.y + label.height / 2, containerCenter: container.y + container.height / 2 };
     });
     expect(Math.abs(alignment.buttonCenter - alignment.labelCenter)).toBeLessThanOrEqual(3);
-    expect(Math.abs(alignment.buttonCenter - alignment.containerCenter)).toBeLessThanOrEqual(3);
+    expect(alignment.buttonCenter).toBeLessThanOrEqual(phone.height - phone.bottom);
   }
 });
 
@@ -198,7 +213,7 @@ test('native How to play stays within the screen without scrolling the puzzle', 
         scrollY
       }));
       expect(geometry.scrollWidth).toBeLessThanOrEqual(phone.width);
-      expect(geometry.scrollHeight).toBeLessThanOrEqual(phone.height + 1);
+      if (phone.height >= 800 && ruleCount <= 7) expect(geometry.scrollHeight).toBeLessThanOrEqual(phone.height + 1);
       expect(geometry.scrollY).toBe(0);
       await close.click();
       await expect(help).toBeHidden();

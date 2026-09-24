@@ -19,15 +19,16 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="NookGrid gameplay with three places on a nine-lot neighborhood board, a tray of places, and the neighborhood plan alongside.">
   <link rel="icon" href="./favicon.svg?v=20260918-logo1" type="image/svg+xml"><link rel="apple-touch-icon" href="./apple-touch-icon.png?v=20260918-logo1" sizes="180x180">
-  <link rel="stylesheet" href="./style.css?v=20260919-polish1">
-  <script type="module" src="./app.mjs?v=20260923-share-challenge1"></script>
+  <link rel="stylesheet" href="./style.css?v=20260924-home1">
+  <script type="module" src="./app.mjs?v=20260924-home1"></script>
 </head>
 <body class="game-page">
   <a class="skip-link" href="#game" data-track="index-a-1">Skip to puzzle</a>
   <header class="site-header">
+    <button class="icon-button" id="home-open" aria-label="Back to home" hidden><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#caret-right"/></svg></button>
+    <div class="puzzle-heading"><h1><a class="brand" href="./" aria-label="NookGrid home" data-track="index-a-2">NookGrid</a></h1><p class="puzzle-meta sr-only"><span id="puzzle-label">Daily puzzle</span><span aria-hidden="true"> · </span><span id="puzzle-date">Loading…</span></p></div>
     <button class="icon-button" id="help-open" aria-label="How to play" aria-haspopup="dialog" aria-controls="help-dialog"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#question"/></svg></button>
-    <div class="puzzle-heading"><h1><a class="brand" href="./" aria-label="NookGrid home" data-track="index-a-2">NookGrid</a></h1><p class="puzzle-meta"><span id="puzzle-label">Daily puzzle</span><span aria-hidden="true"> · </span><span id="puzzle-date">Loading…</span></p></div>
-    <button class="icon-button" id="menu-open" aria-label="Menu" aria-haspopup="dialog"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#list"/></svg></button>
+    <button class="icon-button" id="menu-open" aria-label="Settings" aria-haspopup="dialog"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#list"/></svg></button>
   </header>
   <aside id="app-store-prompt" class="app-store-prompt" hidden aria-label="iPhone app"><a id="app-store-link" rel="noreferrer">Play NookGrid on iPhone</a><button id="app-store-dismiss" class="text-button" aria-label="Dismiss app suggestion"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#x"/></svg></button></aside>
   <main>
@@ -37,14 +38,22 @@
     <p id="load-status" class="empty-state" role="status">Loading the neighborhood…</p>
     <div id="load-error" class="empty-state" role="alert" hidden><h2>Couldn't load the puzzle</h2><p>Please try again.</p><a class="primary inline-button" href="" data-track="index-a-5">Try again</a></div>
     <noscript><p class="notice">NookGrid needs JavaScript to play. Enable it, then reload this page.</p></noscript>
+    <section class="home-screen" id="home" aria-label="NookGrid home" hidden>
+      <h2 class="home-title">Your daily brain game.</h2>
+      <div class="home-streak"><strong class="streak-number" id="home-streak-count">0</strong><span class="streak-label">day streak</span></div>
+      <div class="week-heading"><span>This week</span><button id="calendar-open" class="text-button" aria-haspopup="dialog" aria-controls="calendar-dialog">Calendar</button></div>
+      <div class="week-strip" id="home-week" aria-label="This week's puzzles"></div>
+      <div class="home-actions"><button id="home-play" class="primary">Play today's puzzle</button><button id="home-result" class="text-button" hidden>View today's result</button><button id="home-archive" class="secondary" aria-haspopup="dialog">Past puzzles</button></div>
+      <p id="home-date"></p>
+    </section>
     <section class="game-layout" id="game" aria-label="Neighborhood puzzle" aria-busy="true" inert>
-      <p class="puzzle-instruction">Arrange the places to match the plan.</p>
-      <section class="clue-panel" id="clue-list" aria-labelledby="clues-title"><div class="clues-header"><h2 id="clues-title">Neighborhood plan</h2><a class="puzzle-switch" id="puzzle-switch" href="?date=practice" data-track="puzzle-switch">Tutorial</a></div><ol class="clues" id="clues" aria-label="Neighborhood plan"></ol></section>
+      <p class="puzzle-instruction sr-only">Arrange the places to match the plan.</p>
+      <section class="clue-panel" id="clue-list" aria-labelledby="clues-title"><div class="clues-header"><h2 id="clues-title">Today’s plan</h2></div><details id="solved-plan" hidden><summary>Plan complete</summary></details><ol class="clues" id="clues" aria-label="Neighborhood plan"></ol></section>
       <div class="play-area">
         <div class="board-wrap"><div class="board" id="board" role="group" aria-label="Neighborhood lots, three rows and three columns"></div></div>
         <div class="play-controls"><div class="place-tray" id="tray" role="group" aria-label="Places to arrange"></div></div>
         <div class="play-controls">
-          <div class="selection-bar"><p id="selection-status" role="status">Drag a place, or tap a place then a square.</p><button id="remove-place" class="text-button" hidden>Put back</button></div>
+          <div class="selection-bar"><p id="selection-status" role="status" class="sr-only">Drag a place, or tap a place then a square.</p></div>
           <div class="board-actions" role="group" aria-label="Puzzle actions">
             <button id="undo" class="text-button" disabled><svg class="ui-icon action-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#arrow-u-up-left"/></svg><span>Undo</span></button>
             <button id="clear" class="text-button" disabled><svg class="ui-icon action-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#arrow-counter-clockwise"/></svg><span>Reset</span></button>
@@ -52,15 +61,20 @@
           </div>
         </div>
         <section class="completion" id="completion" hidden aria-labelledby="completion-title" tabindex="-1">
+          <div class="completion-board" id="completion-board" aria-hidden="true"></div>
           <div class="completion-summary">
-            <div><h2 id="completion-title">Solved!</h2><p id="completion-time" hidden></p><p id="completion-detail">The neighborhood plan is complete.</p><p id="daily-streak" hidden></p></div>
+            <div><h2 id="completion-title">Neighborhood complete</h2><p id="daily-streak" hidden></p><p id="completion-time" hidden></p><p id="completion-detail">Plan complete.</p></div>
+            <div class="result-history"><div class="week-heading"><span>This week</span><button id="result-calendar-open" class="text-button" aria-haspopup="dialog" aria-controls="calendar-dialog">Calendar</button></div><div class="week-strip" id="result-week" aria-label="This week's puzzles"></div></div>
             <button class="primary" id="share">Share result</button>
+            <button class="secondary" id="view-solved">View solved puzzle</button>
             <p id="share-status" role="status"></p>
             <div id="next-puzzle" hidden><span>Next puzzle at midnight</span><strong id="next-puzzle-time" role="timer" aria-live="off">00:00:00</strong></div>
             <a class="text-button inline-button" id="play-today" href="./" hidden>Play today's puzzle</a>
           </div>
           <div class="completion-actions"><button class="text-button" id="clear-win">Reset</button><button class="text-button" id="feedback-win">Feedback</button></div>
+          <div class="result-navigation"><button class="text-button" id="result-archive" aria-haspopup="dialog">Past puzzles</button><button class="text-button" id="result-home">Home</button></div>
         </section>
+        <button class="secondary" id="view-result" hidden>View today's result</button>
       </div>
     </section>
   </main>
@@ -70,7 +84,6 @@
     <h2 id="help-title">How to play</h2>
     <p>Match all nine places to the neighborhood plan.</p>
     <p>Drag a place, or tap it then a square. Occupied squares swap places.</p>
-    <p><strong>Remove:</strong> Drag to the tray, or select a place and tap Put back.</p>
     <div class="help-status"><span><span class="plan-status met"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#check-square"/></svg></span> Fits this layout</span><span><span class="plan-status conflict"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#x-square"/></svg></span> Needs a change</span></div>
     <dl class="help-terms"><dt>Directly left</dt><dd>One square left, same row.</dd><dt>Above</dt><dd>Anywhere higher, same column.</dd><dt>Touching</dt><dd>Sharing a side, never a diagonal.</dd></dl>
     <p class="help-note">A–C are rows; 1–3 are columns.</p>
@@ -95,6 +108,11 @@
     <p id="puzzles-status" role="status">Loading puzzles…</p>
     <nav id="puzzle-list" class="menu-links" aria-label="Choose a puzzle" hidden></nav>
     <button id="puzzles-more" class="text-button" hidden>Earlier puzzles</button>
+  </dialog>
+  <dialog id="calendar-dialog" aria-labelledby="calendar-title">
+    <button class="close-dialog" data-close aria-label="Close calendar"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#x"/></svg></button>
+    <h2 id="calendar-title">Your calendar</h2><p id="calendar-streak"></p><p class="calendar-note">Completed puzzles are checked. Daily streak days are highlighted.</p>
+    <div id="calendar-months" aria-label="Puzzle completion history"></div>
   </dialog>
   <dialog id="share-dialog" aria-labelledby="share-title"><button class="close-dialog" data-close aria-label="Close share result" data-track="share-close"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#x"/></svg></button><h2 id="share-title">Share your result</h2><p>Copy this result and send it to a friend.</p><label class="sr-only" for="share-text">Result text</label><textarea id="share-text" rows="7" readonly></textarea></dialog>
   <dialog id="hint-dialog" aria-labelledby="hint-title" aria-describedby="hint-description">

@@ -3,7 +3,8 @@ import { movePlace, selectPuzzle, restoreProgress, hasPuzzleCompletion, shareTex
 import { placeArt } from './art.mjs?v=20260915-teaser1';
 import { testMode, analytics } from './session.mjs?v=20260918-simple1';
 import { native, savedValue, saveValue } from './platform.mjs';
-import { updatePuzzleLinks } from './navigation.mjs?v=20260918-simple1';
+import { updatePuzzleLinks } from './navigation.mjs?v=20260924-home1';
+import { getWeekDates, renderCalendar } from './calendar.mjs?v=20260924-home1';
 
 const $ = id => document.getElementById(id);
 const renderIcon = (name, className = '') => `<svg class="ui-icon ${className}" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg#${name}"/></svg>`;
@@ -20,6 +21,7 @@ let puzzle, mode, bank, progress, selected = null, history = [], started = false
 let wasSolved = false, feedbackKey = null, feedbackPayload = null;
 let hasGuidance = false, shouldShowGuidance = false;
 let solveTimer = {elapsedMs:0,startedAt:null};
+let screen = 'puzzle';
 
 function read(key) {
   return savedValue(key);
@@ -59,13 +61,98 @@ function openDialog(id, opener) {
   const isFromMenu = $('menu-dialog').open;
   if (isFromMenu) $('menu-dialog').close();
   if (id === 'puzzles-dialog' && bank && puzzle) preparePuzzleList();
+  if (id === 'calendar-dialog' && bank && puzzle) prepareCalendar();
   $(id).showModal();
   $(id).addEventListener('close', () => (isFromMenu ? $('menu-open') : opener).focus({preventScroll:true}), {once:true});
 }
-for (const [button, dialog] of [['help-open','help-dialog'],['menu-open','menu-dialog'],['puzzles-open','puzzles-dialog'],['feedback-open','feedback-dialog'],['feedback-win','feedback-dialog'],['settings-open','settings-dialog'],['hint','hint-dialog']]) {
+for (const [button, dialog] of [['help-open','help-dialog'],['menu-open','menu-dialog'],['puzzles-open','puzzles-dialog'],['home-archive','puzzles-dialog'],['result-archive','puzzles-dialog'],['calendar-open','calendar-dialog'],['result-calendar-open','calendar-dialog'],['feedback-open','feedback-dialog'],['feedback-win','feedback-dialog'],['settings-open','settings-dialog'],['hint','hint-dialog']]) {
   $(button).addEventListener('click', () => openDialog(dialog, $(button)));
 }
 $('help-tutorial').href = `?date=practice${testMode ? '&test=1' : ''}`;
+
+function getCompletedDates() {
+  return bank.puzzles.filter(item => item.date <= today && (
+    item.date === puzzle.date && (progress.reported || isSolved(puzzle,progress.board)) ||
+    hasPuzzleCompletion(read(`${progressPrefix}${item.date}`),ids,item.solution)
+  )).map(item => item.date);
+}
+
+function prepareCalendar(resetScroll = true) {
+  const focusedDate = $('calendar-months').contains(document.activeElement) ? document.activeElement.dataset.puzzleDate : null;
+  const scrollTop = $('calendar-months').scrollTop;
+  $('calendar-streak').textContent = `${streakLength(streakDays,today)}-day streak`;
+  $('calendar-months').replaceChildren(renderCalendar({
+    dates:bank.puzzles.map(item => item.date),today,completedDates:getCompletedDates(),streakDays,
+    currentDate:screen === 'home' ? null : puzzle.date,isTest:testMode
+  }));
+  if (focusedDate) $('calendar-months').querySelector(`a[data-puzzle-date="${focusedDate}"]`)?.focus({preventScroll:true});
+  $('calendar-months').scrollTop = resetScroll ? 0 : scrollTop;
+}
+
+function renderHistory() {
+  if (!bank || !puzzle) return;
+  const completed = new Set(getCompletedDates());
+  const daily = bank.puzzles.find(item => item.date === today);
+  const saved = daily ? daily.date === puzzle.date ? progress : restoreProgress(read(`${progressPrefix}${today}`),ids,daily.solution) : null;
+  const hasAttempt = saved?.board.some(Boolean) && !isSolved(daily,saved.board);
+  const isComplete = completed.has(today);
+  const hasFinishedBoard = saved && isSolved(daily,saved.board);
+  $('home-streak-count').textContent = streakLength(streakDays,today);
+  $('home-play').textContent = hasAttempt ? "Continue today's puzzle" : isComplete ? "Replay today's puzzle" : "Play today's puzzle";
+  $('home-play').hidden = Boolean(hasFinishedBoard);
+  $('home-play').disabled = !daily;
+  $('home-result').hidden = !hasFinishedBoard;
+  $('home-archive').className = hasFinishedBoard ? 'primary' : 'secondary';
+  $('home-date').textContent = new Date(`${today}T12:00:00Z`).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'});
+  for (const id of ['home-week','result-week']) {
+    $(id).replaceChildren(...getWeekDates(today).map(date => {
+      const day = document.createElement('div');
+      const value = new Date(`${date}T12:00:00Z`);
+      const isAvailable = date <= today && bank.puzzles.some(item => item.date === date);
+      day.className = `week-day${completed.has(date) ? ' is-completed' : ''}${date === today ? ' is-today' : ''}${!isAvailable ? ' is-unreleased' : ''}`;
+      day.setAttribute('role','img');
+      day.setAttribute('aria-label',`${value.toLocaleDateString('en-US',{month:'long',day:'numeric',timeZone:'UTC'})}${date === today ? ', today' : ''}${completed.has(date) ? ', completed' : !isAvailable ? ', unavailable' : ', not completed'}`);
+      day.innerHTML = `<span class="week-label" aria-hidden="true">${value.toLocaleDateString('en-US',{weekday:'short',timeZone:'UTC'})}</span><span class="week-tile" aria-hidden="true">${completed.has(date) ? renderIcon('check') : value.getUTCDate()}</span>`;
+      return day;
+    }));
+  }
+}
+
+function renderScreen() {
+  const solved = isSolved(puzzle,progress.board);
+  updatePuzzleLinks(screen === 'home' ? null : mode === 'practice' ? 'practice' : puzzle.date,screen === 'home' ? 'home' : null);
+  document.body.classList.toggle('show-home',screen === 'home');
+  document.body.classList.toggle('show-result',screen === 'result');
+  $('home').hidden = screen !== 'home';
+  $('game').hidden = screen === 'home';
+  $('home-open').hidden = screen === 'home';
+  $('completion').hidden = screen !== 'result' || !solved;
+  $('view-result').hidden = screen !== 'puzzle' || !solved;
+  $('view-result').textContent = mode === 'daily' ? "View today's result" : 'View result';
+  document.querySelector('.skip-link').href = screen === 'home' ? '#home' : screen === 'result' ? '#completion' : '#game';
+}
+
+function showScreen(next) {
+  if (!puzzle) return;
+  save(false);
+  screen = next;
+  selected = null;
+  render();
+  save();
+  window.scrollTo({top:0,behavior:'instant'});
+  (next === 'home' ? $('home-play').hidden ? $('home-result') : $('home-play') : next === 'result' ? $('share').hidden ? $('play-today') : $('share') : $('home-open')).focus({preventScroll:true});
+}
+
+for (const id of ['home-open','result-home']) $(id).addEventListener('click',() => showScreen('home'));
+document.querySelector('.brand').addEventListener('click',event => {
+  if (!puzzle || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  showScreen('home');
+});
+$('home-play').addEventListener('click',() => puzzle.date === today ? showScreen('puzzle') : navigateTo(`?date=${today}${testMode ? '&test=1' : ''}`));
+$('home-result').addEventListener('click',() => puzzle.date === today && isSolved(puzzle,progress.board) ? showScreen('result') : navigateTo(`?date=${today}${testMode ? '&test=1' : ''}`));
+$('view-solved').addEventListener('click',() => showScreen('puzzle'));
+$('view-result').addEventListener('click',() => showScreen('result'));
 
 function preparePuzzleList() {
   const focusedDate = document.activeElement?.dataset.puzzleDate;
@@ -156,7 +243,7 @@ function startPlay(action) {
 }
 
 async function save(shouldRun = !document.hidden) {
-  solveTimer = advanceSolveTimer(solveTimer,performance.now(),progress.board.some(Boolean),shouldRun && !isSolved(puzzle,progress.board));
+  solveTimer = advanceSolveTimer(solveTimer,performance.now(),progress.board.some(Boolean),shouldRun && screen === 'puzzle' && !isSolved(puzzle,progress.board));
   progress.elapsedMs = solveTimer.elapsedMs;
   progress.reported ||= restoreProgress(read(`${progressPrefix}${puzzle.date}`),ids,puzzle.solution).reported;
   streakDays = [...new Set([...restoreStreakDays(read(streakKey)),...streakDays])].sort();
@@ -218,6 +305,7 @@ function applyBoard(board, message, action = 'place') {
   if (action === 'reset') solveTimer = {elapsedMs:0,startedAt:null};
   if (shouldClearHints) { progress.hints = 0; progress.hintedPlaces = []; }
   progress.board = board;
+  screen = 'puzzle';
   shouldShowGuidance = false;
   selected = null;
   startPlay(action);
@@ -226,7 +314,6 @@ function applyBoard(board, message, action = 'place') {
   render();
   if (message && !wasSolved) {
     $('selection-status').textContent = message;
-    if (action === 'hint' && mode !== 'practice') $('selection-status').classList.remove('sr-only');
   }
   return hasChanged;
 }
@@ -249,7 +336,7 @@ function dropTarget(x, y) {
   const element = document.elementFromPoint(x,y);
   const lot = element?.closest('#board [data-lot]');
   if (lot?.classList.contains('locked')) return null;
-  return lot || (progress.board.includes(drag.id) ? element?.closest('#tray') : null);
+  return lot;
 }
 
 function paintDrag() {
@@ -282,10 +369,10 @@ function finishDrag(event, cancelled = false) {
   event?.preventDefault();
   let result = 'cancelled';
   if (target) {
-    const index = target.id === 'tray' ? null : Number(target.dataset.lot);
+    const index = Number(target.dataset.lot);
     const board = movePlace(progress.board,current.id,index);
-    const changed = applyBoard(board,index === null ? `${nameOf(current.id)} is back in the tray.` : `${nameOf(current.id)} moved to ${'ABC'[Math.floor(index / 3)]}${index % 3 + 1}.`,index === null ? 'remove' : 'place');
-    result = changed ? index === null ? 'returned' : 'placed' : 'unchanged';
+    const changed = applyBoard(board,`${nameOf(current.id)} moved to ${'ABC'[Math.floor(index / 3)]}${index % 3 + 1}.`);
+    result = changed ? 'placed' : 'unchanged';
   }
   track('drag_result',{result,action:current.pointerType});
 }
@@ -349,7 +436,12 @@ function makeBoard() {
     const item = document.createElement('li');
     item.dataset.teaser = String(hasGuidance && ['left:bakery:books','sameRow:bakery:park','adjacent:books:park'].includes(`${clue.type}:${clue.a}:${clue.b}`));
     item.innerHTML = '<span class="clue-icon" aria-hidden="true"></span><span class="clue-text"></span><span class="sr-only clue-state"></span>';
-    item.querySelector('.clue-text').textContent = clueText(clue);
+    const text = item.querySelector('.clue-text');
+    for (const word of clueText(clue).split(/(\b[A-Z][a-z]+\b)/)) {
+      const part = document.createElement(PLACES.some(place => place.name === word) ? 'strong' : 'span');
+      part.textContent = word;
+      text.append(part);
+    }
     $('clues').append(item);
   }
 }
@@ -374,9 +466,13 @@ function updateReturnPrompt() {
       document.title = `NookGrid | ${isToday ? 'Free daily brain game' : `Brain game ${number}`}`;
     }
     preparePuzzleList();
+    renderHistory();
+    if ($('calendar-dialog').open) prepareCalendar(false);
   }
   $('new-day').hidden = currentDay === openedDay || isToday || !hasToday || mode === 'practice';
   $('play-today').hidden = isToday || !hasToday;
+  $('play-today').href = `?date=${currentDay}${testMode ? '&test=1' : ''}`;
+  $('new-day').querySelector('a').href = $('play-today').href;
   $('next-puzzle').hidden = !isToday || !hasTomorrow;
   if (isToday && hasTomorrow) $('next-puzzle-time').textContent = nextPuzzleCountdown(now);
   const streak = streakLength(streakDays,currentDay);
@@ -384,12 +480,15 @@ function updateReturnPrompt() {
     $(id).textContent = `${streak}-day streak`;
     $(id).hidden = streak === 0 || (id === 'daily-streak' && !isToday);
   }
+  $('clues-title').textContent = mode === 'practice' ? 'Tutorial plan' : isToday ? 'Today’s plan' : `${$('puzzle-date').textContent} plan`;
 }
 
 window.addEventListener('storage',event => {
-  if (event.key !== streakKey) return;
-  streakDays = [...new Set([...restoreStreakDays(event.newValue),...streakDays])].sort();
+  if (event.key !== null && !event.key.startsWith(progressPrefix)) return;
+  streakDays = restoreStreakDays(read(streakKey));
   updateReturnPrompt();
+  renderHistory();
+  if ($('calendar-dialog').open) prepareCalendar(false);
 });
 
 function render() {
@@ -403,7 +502,7 @@ function render() {
   const isLearning = starterStep >= 0 && starterStep < 3;
   const shouldFocusCompletion = solved && (!wasSolved || (!selected && Boolean(document.activeElement?.closest('.play-controls'))));
   $('game').classList.toggle('has-guidance', shouldShowGuidance);
-  const instruction = mode === 'practice' && selected && board.includes(selected) ? 'Tap another square to move or swap, or choose Put back.' : mode === 'practice' && solved ? 'Your neighborhood is complete.' : starterStep >= 0 ? [
+  const instruction = mode === 'practice' && selected && board.includes(selected) ? 'Tap another square to move or swap.' : mode === 'practice' && solved ? 'Your neighborhood is complete.' : starterStep >= 0 ? [
     selected === 'bakery' ? 'Tap A1 to place Bakery.' : 'Tap Bakery, then A1, the outlined square.',
     'Place Cafe in the next square to the right of Bakery.',
     'Cafe fits. Use the plan to place Books.',
@@ -438,18 +537,21 @@ function render() {
     item.querySelector('.clue-icon').innerHTML = renderIcon(isStartingClue ? 'star' : {met:'check-square',conflict:'x-square',pending:'minus'}[status]);
     item.querySelector('.clue-state').textContent = (isStartingClue ? ' Start here.' : '') + {met:' Matches the plan.',conflict:' Needs a move.',pending:' Required places are not placed yet.'}[status];
   });
-  $('selection-status').classList.toggle('sr-only', mode === 'practice' || (!selected && !isLearning));
+  $('selection-status').classList.add('sr-only');
   $('selection-status').textContent = selected ? `${nameOf(selected)} selected. Choose a lot.` : isLearning ? `Drag ${nameOf(starterPlaces[starterStep])}, or tap it then a square.` : 'Drag a place, or tap a place then a square.';
-  $('remove-place').hidden = !selected || !board.includes(selected);
   $('undo').disabled = !history.some(previous => restoreHintedPlaces(previous.board,progress.hintedPlaces,puzzle.solution).some((id,index) => id !== board[index]));
   for (const id of ['clear','clear-win']) $(id).disabled = !board.some(Boolean);
   $('game').classList.toggle('is-solved', solved);
   $('game').classList.toggle('has-selection', Boolean(selected));
   $('hint').disabled = solved;
   $('hint').setAttribute('aria-label',`Hint, ${progress.hints} hint${progress.hints === 1 ? '' : 's'} used`);
-  $('completion').hidden = !solved;
+  $('solved-plan').hidden = !solved;
+  const plan = solved ? $('solved-plan') : $('clue-list');
+  if ($('clues').parentElement !== plan) plan.append($('clues'));
   if (!solved) document.querySelector('.confetti')?.remove();
   if (solved) {
+    if (!wasSolved && screen !== 'home') screen = 'result';
+    $('completion-board').innerHTML = board.map(id => `<span class="completion-place">${placeArt(id)}</span>`).join('');
     const hintNote = progress.hints ? `${progress.hints} hint${progress.hints === 1 ? '' : 's'} used.` : 'Solved without hints.';
     $('completion-detail').textContent = hintNote;
     const solveTime = formatSolveTime(progress.elapsedMs);
@@ -462,19 +564,19 @@ function render() {
     const shouldReport = !progress.reported;
     if (shouldReport) { track('puzzle_complete',{active_ms_this_page:analytics.activeMilliseconds()}); progress.reported = true; }
     if (shouldReport || hasEarnedDay) save();
-    if (shouldFocusCompletion) {
+    renderScreen();
+    if (shouldFocusCompletion && screen === 'result') {
+      window.scrollTo({top:0,behavior:'instant'});
       $('completion').focus({preventScroll:true});
-      $('completion').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',block:'nearest'});
     }
     if (!wasSolved) celebrateSolve();
   }
   wasSolved = solved;
+  renderScreen();
   updateReturnPrompt();
+  renderHistory();
 }
 
-$('remove-place').addEventListener('click', () => {
-  if (selected) applyBoard(movePlace(progress.board,selected,null),'The place is back in the tray.','remove');
-});
 $('undo').addEventListener('click', () => {
   let previous, board;
   do {
@@ -561,6 +663,13 @@ async function init() {
     updatePuzzleLinks(mode === 'practice' ? 'practice' : puzzle.date);
     progress = restoreProgress(read(`${progressPrefix}${puzzle.date}`),ids,puzzle.solution);
     if (native && !native.storage) $('save-warning').hidden = false;
+    const solved = isSolved(puzzle,progress.board);
+    screen = mode !== 'practice' && (params.get('view') === 'home' || !params.has('date') && (!progress.board.some(Boolean) || solved)) ? 'home' : solved ? 'result' : 'puzzle';
+    if (params.get('view') === 'home') {
+      const url = new URL(location.href);
+      url.searchParams.delete('view');
+      window.history.replaceState(null,'',url);
+    }
     solveTimer.elapsedMs = progress.elapsedMs;
     save();
     hasGuidance = params.get('teaser') === 'park' && params.get('date') === '2026-09-11' && puzzle.date === '2026-09-11';
@@ -578,14 +687,13 @@ async function init() {
     $('puzzle-date').previousElementSibling.hidden = mode === 'practice';
     $('help-tutorial').hidden = mode === 'practice';
     if (mode === 'practice') {
-      $('puzzle-switch').textContent = "Today's puzzle";
-      $('puzzle-switch').href = `./index.html${testMode ? '?test=1' : ''}`;
       document.querySelector('.puzzle-instruction').setAttribute('role','status');
       document.querySelector('.puzzle-instruction').classList.add('sr-only');
       $('completion-title').textContent = 'Nice work!';
       $('share').hidden = true;
       $('play-today').classList.replace('text-button','primary');
     }
+    $('play-today').href = `?date=${today}${testMode ? '&test=1' : ''}`;
     $('board-title').textContent = {daily:"Today's puzzle",archive:'Archived puzzle',practice:'The tutorial puzzle'}[mode];
     document.title = `NookGrid | ${mode === 'daily' ? 'Free daily brain game' : mode === 'practice' ? 'Tutorial brain game' : `Brain game ${number}`}`;
     preparePuzzleList();
