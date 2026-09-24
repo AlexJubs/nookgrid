@@ -113,7 +113,7 @@ final class NookGridUITests: XCTestCase {
             XCTAssertGreaterThanOrEqual(button("\(name), choose a lot").frame.width, 44)
             XCTAssertGreaterThanOrEqual(button("\(name), choose a lot").frame.height, 44)
         }
-        let controls = [button("How to play"), button("Settings"), button("Undo"), button("Reset"), button("Hint, 0 hints used")]
+        let controls = [button("How to play"), button("Menu"), button("Undo"), button("Reset"), button("Hint, 0 hints used")]
         let targets = controls + lots.map(lot) + places.map { button("\($0), choose a lot") }
         let fitsInitially = targets.allSatisfy { $0.frame.minY >= 20 && $0.frame.maxY <= app.frame.maxY - 8 }
         let headerY = app.webViews.links["NookGrid home"].frame.minY
@@ -136,7 +136,7 @@ final class NookGridUITests: XCTestCase {
         tap(button("Back to home"))
         XCTAssertTrue(button("Play today's puzzle").waitForExistence(timeout: 5))
         XCTAssertFalse(lot("A1").exists)
-        tap(button("Calendar"))
+        tap(button("All puzzles"))
         XCTAssertTrue(button("Close calendar").waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["0-day streak"].exists)
         XCTAssertTrue(getCalendarMonthTitle().exists, app.debugDescription)
@@ -289,7 +289,7 @@ final class NookGridUITests: XCTestCase {
         app.terminate()
         app.launchArguments = ["nookgrid-offline"]
         app.launch()
-        XCTAssertTrue(button("Settings").waitForExistence(timeout: 15))
+        XCTAssertTrue(button("Menu").waitForExistence(timeout: 15))
         openCalendar()
         XCTAssertFalse(app.webViews.links.matching(NSPredicate(format: "label CONTAINS 'Tutorial'")).firstMatch.exists)
         XCTAssertTrue(app.staticTexts["0-day streak"].exists)
@@ -304,7 +304,7 @@ final class NookGridUITests: XCTestCase {
     func testTutorialGuidanceAndSavedPuzzlesAreSeparate() {
         openArchive()
         place("Park", at: "C3")
-        tap(button("Settings"))
+        tap(button("Menu"))
         tap(app.webViews.links["Privacy"].firstMatch)
         tap(app.webViews.links["Back"].firstMatch)
         XCTAssertTrue(app.staticTexts["Sep 10, 2026 plan"].waitForExistence(timeout: 5))
@@ -346,7 +346,7 @@ final class NookGridUITests: XCTestCase {
         let elapsed = components[0] * 60 + components[1]
         XCTAssertLessThan(Double(elapsed), Date().timeIntervalSince(started) - 5, "Background time must not count toward solve time")
         XCTAssertTrue(app.webViews.links["Play today's puzzle"].exists)
-        tap(button("Calendar"))
+        tap(button("All puzzles"))
         XCTAssertTrue(button("Close calendar").waitForExistence(timeout: 5))
         XCTAssertFalse(app.webViews.links.matching(NSPredicate(format: "label CONTAINS 'Tutorial'")).firstMatch.exists)
         XCTAssertTrue(app.staticTexts["0-day streak"].exists)
@@ -375,10 +375,10 @@ final class NookGridUITests: XCTestCase {
     }
 
     private func openCalendar() {
-        tap(button("Settings"))
+        tap(button("Menu"))
         XCTAssertTrue(button("Close menu").waitForExistence(timeout: 5))
-        XCTAssertFalse(app.staticTexts["Menu"].exists)
-        tap(button("Calendar"))
+        XCTAssertTrue(app.staticTexts["Menu"].exists)
+        tap(button("All puzzles"))
         XCTAssertTrue(button("Close calendar").waitForExistence(timeout: 5))
         XCTAssertFalse(button("Close menu").exists)
         XCTAssertTrue(getCalendarMonthTitle().exists, app.debugDescription)
@@ -451,7 +451,7 @@ final class NookGridUITests: XCTestCase {
         XCTAssertTrue(button("Bakery, choose a lot").isHittable)
         assertLot("A1", "empty")
         openToday()
-        tap(button("Settings"))
+        tap(button("Menu"))
         let menu = app.webViews.firstMatch.descendants(matching: .other)
             .matching(NSPredicate(format: "label == 'Menu, web dialog'")).firstMatch
         tap(menu.descendants(matching: .any).matching(NSPredicate(format: "label == 'Settings'")).firstMatch)
@@ -463,7 +463,7 @@ final class NookGridUITests: XCTestCase {
         captureScreenshot("Hint touch focus")
         tap(button("Cancel"))
         XCTAssertFalse(app.staticTexts["Reveal a place?"].exists)
-        tap(button("Settings"))
+        tap(button("Menu"))
         tap(button("Feedback"))
         XCTAssertTrue(button("Close feedback").waitForExistence(timeout: 5))
         let emailLink = app.webViews.links["Email us"].firstMatch
@@ -482,11 +482,11 @@ final class NookGridUITests: XCTestCase {
         captureScreenshot("Calendar")
         tap(button("Close calendar"))
         XCTAssertFalse(button("Close calendar").exists)
-        tap(button("Settings"))
+        tap(button("Menu"))
         captureScreenshot("Menu touch focus")
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.15)).tap()
         XCTAssertFalse(button("Close menu").exists)
-        tap(button("Settings"))
+        tap(button("Menu"))
         tap(app.webViews.links["Privacy"].firstMatch)
         let returnLink = app.webViews.links["Back"].firstMatch
         XCTAssertTrue(returnLink.waitForExistence(timeout: 5))

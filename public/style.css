@@ -148,17 +148,14 @@ textarea{background:var(--white)}
 .drag-ghost{background:var(--white);color:var(--ink);border-radius:4px;border-color:var(--focus)}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline-color:var(--focus)}
 .game-page #menu-dialog{width:min(360px,calc(100% - 32px))}
-.game-page #menu-dialog .close-dialog{position:static;margin:0 auto 12px}
 
 .game-page .menu-links{display:grid;grid-template-columns:1fr;gap:0;background:transparent}
-.game-page .menu-links a,.game-page .menu-links .text-button{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;margin:0;padding:12px;font-size:var(--font-body);font-weight:600;color:var(--ink);text-align:left;text-decoration:none;border-radius:0}
+.game-page .menu-links a,.game-page .menu-links .text-button{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;margin:0;padding:12px 0;font-size:var(--font-body);line-height:1.5;font-weight:600;color:var(--ink);text-align:left;text-decoration:none;border-radius:0}
 .menu-chevron{flex:none;width:16px;height:16px;color:var(--muted)}
 .game-page .menu-links>:not(:last-child){border-bottom:1px solid var(--line)}
 .game-page .menu-links a:hover,.game-page .menu-links button:hover{background:var(--surface)}
 .game-page .menu-links>:first-child{border-radius:8px 8px 0 0}
 .game-page .menu-links>:last-child{border-radius:0 0 8px 8px}
-.menu-footer{display:flex;justify-content:center;gap:24px;margin-top:16px;padding-top:8px;border-top:1px solid var(--line)}
-.game-page .menu-footer a,.game-page .menu-footer button{display:inline-flex;align-items:center;min-height:44px;padding:0;font-size:var(--font-body);font-weight:500;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
 .game-page .notice{padding:12px;margin-bottom:12px;line-height:1.5;background:var(--surface);border:0;color:var(--ink)}
 .game-page #save-warning{background:#fff7e8;color:#6d532a}
 .game-page #retry-save{color:inherit;text-decoration:underline;text-underline-offset:3px;padding:0;min-height:44px}

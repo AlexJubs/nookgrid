@@ -10,7 +10,7 @@ test('a new player reaches today in one action and returns to the same unfinishe
   await openHome(page);
   await expect(page.locator('#home-streak-count')).toHaveText('0');
   await expect(page.locator('#home-play')).toContainText(/play/i);
-  await expect(page.locator('#home').getByRole('button', { name: 'Calendar', exact: true })).toBeVisible();
+  await expect(page.locator('#home').getByRole('button', { name: 'All puzzles', exact: true })).toBeVisible();
   await expect(page.locator('#calendar-open svg')).toHaveAttribute('aria-hidden', 'true');
   await expect(page.locator('#calendar-open use')).toHaveAttribute('href', /#calendar-blank$/);
   await expect(page.locator('#puzzles-dialog,#home-archive,#result-archive')).toHaveCount(0);
@@ -60,7 +60,7 @@ test('completion has a dedicated recap, accessible solved plan and replay withou
   await expect(page.locator('#tray')).toBeHidden();
   await expect(page.locator('#daily-streak')).toContainText('1-day streak');
   const resultCalendar = page.locator('#result-calendar-open');
-  await expect(resultCalendar).toHaveAccessibleName('Calendar');
+  await expect(resultCalendar).toHaveAccessibleName('All puzzles');
   await expect(resultCalendar.locator('use')).toHaveAttribute('href', /#calendar-blank$/);
   await resultCalendar.press('Enter');
   await expect(page.locator('#calendar-dialog')).toBeVisible();

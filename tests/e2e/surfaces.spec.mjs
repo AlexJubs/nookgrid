@@ -5,11 +5,11 @@ test('calendar navigation preserves progress and exposes only released dates', a
   await place(page, 'cafe', 0);
   await page.locator('#menu-open').click();
   const menu = page.locator('#menu-dialog');
-  expect(await menu.locator('h2').evaluateAll(headings => headings.every(heading => !heading.checkVisibility() || heading.getBoundingClientRect().height <= 1))).toBe(true);
+  await expect(menu.getByRole('heading', { name: 'Menu', exact: true })).toBeVisible();
   await expect(menu.getByRole('button', { name: 'Settings', exact: true })).toBeVisible();
   await expect(menu.getByRole('button', { name: 'Feedback', exact: true })).toBeVisible();
   await expect(menu.getByRole('link', { name: 'Privacy', exact: true })).toBeVisible();
-  await menu.getByRole('button', { name: 'Calendar', exact: true }).click();
+  await menu.getByRole('button', { name: 'All puzzles', exact: true }).click();
   const calendar = page.locator('#calendar-dialog');
   const links = calendar.locator('a[data-puzzle-date]');
   expect(await links.evaluateAll(items => items.map(item => item.dataset.puzzleDate))).toEqual([
@@ -448,32 +448,39 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
   test(`mobile navigation and typography stay consistent at ${viewport.width} by ${viewport.height}`, async ({ page }) => {
     await page.setViewportSize(viewport);
     await openGame(page);
-    const titleSizes = await page.locator('dialog:not(#menu-dialog) h2').evaluateAll(headings => headings.map(heading => parseFloat(getComputedStyle(heading).fontSize)));
+    const titleSizes = await page.locator('dialog h2').evaluateAll(headings => headings.map(heading => parseFloat(getComputedStyle(heading).fontSize)));
     expect(new Set(titleSizes)).toEqual(new Set([20]));
     expect(titleSizes[0]).toBeLessThan(await page.locator('.brand').evaluate(brand => parseFloat(getComputedStyle(brand).fontSize)));
     await choose(page.locator('#menu-open'));
-    const rows = await page.locator('#menu-calendar-open, #settings-open').evaluateAll(elements => elements.map(element => {
+    const rows = await page.locator('#menu-dialog .menu-links > *').evaluateAll(elements => elements.map(element => {
       const style = getComputedStyle(element), bounds = element.getBoundingClientRect();
       const chevron = element.querySelector('.menu-chevron');
       return {
         label: element.textContent.trim(), width: bounds.width, height: bounds.height,
+        left: bounds.left, top: bounds.top, bottom: bounds.bottom,
         fontSize: style.fontSize, fontWeight: style.fontWeight,
         background: getComputedStyle(element.parentElement).backgroundColor,
         dividerWidth: parseFloat(style.borderBottomWidth),
         hasChevron: Boolean(chevron?.checkVisibility() && chevron.getAttribute('aria-hidden') === 'true')
       };
     }));
-    expect(rows).toHaveLength(2);
+    expect(rows.map(row => row.label)).toEqual(['All puzzles', 'Settings', 'Feedback', 'Privacy']);
     for (const row of rows) {
       expect(row.width, row.label).toBeGreaterThanOrEqual(44);
       expect(row.height, row.label).toBeGreaterThanOrEqual(44);
+      expect(row.height, row.label).toBe(rows[0].height);
       expect(row.fontSize, row.label).toBe('14px');
       expect(row.fontWeight, row.label).toBe('600');
       expect(row.background, row.label).toBe(rows[0].background);
       expect(row.background, row.label).toBe('rgba(0, 0, 0, 0)');
       expect(row.hasChevron, row.label).toBe(true);
     }
-    expect(rows[0].dividerWidth).toBeGreaterThanOrEqual(1);
+    for (let index = 1; index < rows.length; index++) {
+      expect(rows[index].left).toBe(rows[0].left);
+      expect(rows[index].width).toBe(rows[0].width);
+      expect(rows[index].top).toBe(rows[index - 1].bottom);
+      expect(rows[index - 1].dividerWidth).toBe(1);
+    }
     for (const control of [page.locator('#feedback-open'), page.locator('#menu-dialog').getByRole('link', { name: 'Privacy', exact: true })]) {
       await expect(control).toBeInViewport();
       const bounds = await control.boundingBox();
