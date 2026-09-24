@@ -177,6 +177,15 @@ final class NookGridUITests: XCTestCase {
         lot("A1").press(forDuration: 0.15, thenDragTo: lot("B2"))
         assertLot("A1", "empty")
         assertLot("B2", "Bakery")
+        let trayPlace = button("Bakery, already on the board")
+        scrollTo(trayPlace)
+        lot("B2").press(forDuration: 0.15, thenDragTo: trayPlace)
+        assertLot("B2", "empty")
+        XCTAssertTrue(button("Bakery, choose a lot").isEnabled)
+        XCTAssertFalse(button("Put back").exists)
+        tap(button("Undo"))
+        assertLot("B2", "Bakery")
+        XCTAssertTrue(button("Bakery, already on the board").exists)
     }
 
     func testHintPersistsThroughResetAndProcessRestart() {

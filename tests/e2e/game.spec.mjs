@@ -120,7 +120,7 @@ test('tap controls select, deselect, swap, undo and reset', async ({ page }) => 
   await expect(page.locator('#undo')).toBeDisabled();
 });
 
-test('drag controls place, displace and swap while dropping on the tray cancels', async ({ page }) => {
+test('drag controls place, displace, swap and return pieces to the tray', async ({ page }) => {
   await openGame(page);
   const lot = index => page.locator(`[data-lot="${index}"]`);
   await dragPlace(page, page.locator('[data-place="bakery"]'), lot(0));
@@ -131,15 +131,26 @@ test('drag controls place, displace and swap while dropping on the tray cancels'
   await dragPlace(page, lot(0), lot(1));
   await expectBoard(page, ['bakery', 'cafe', ...Array(7).fill(null)]);
   await dragPlace(page, lot(1), page.locator('#tray'));
-  await expectBoard(page, ['bakery', 'cafe', ...Array(7).fill(null)]);
-  await place(page, 'books', 2);
-  await expectBoard(page, ['bakery', 'cafe', 'books', ...Array(6).fill(null)]);
+  await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
+  await expect(page.locator('[data-place="cafe"]')).toHaveAccessibleName('Cafe, choose a lot');
   await page.locator('#undo').click();
   await expectBoard(page, ['bakery', 'cafe', ...Array(7).fill(null)]);
+  await dragPlace(page, lot(1), page.locator('[data-place="cafe"]'));
+  await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
+  expect((await readProgress(page)).board).toEqual(['bakery', ...Array(8).fill(null)]);
+  await page.reload();
+  await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
+  await place(page, 'books', 2);
+  await expectBoard(page, ['bakery', null, 'books', ...Array(6).fill(null)]);
+  await page.locator('#undo').click();
+  await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
+  await expect(page.getByRole('button', { name: 'Put back', exact: true })).toHaveCount(0);
 });
 
 test('invalid drops and Escape cancel drags without swallowing the next tap', async ({ page }) => {
   await openGame(page);
+  await dragPlace(page, page.locator('[data-place="bakery"]'), page.locator('[data-place="cafe"]'));
+  await expectBoard(page, emptyBoard);
   await dragPlace(page, page.locator('[data-place="bakery"]'), null);
   await expectBoard(page, emptyBoard);
   await dragPlace(page, page.locator('[data-place="bakery"]'), page.locator('[data-lot="0"]'), true);
@@ -148,6 +159,24 @@ test('invalid drops and Escape cancel drags without swallowing the next tap', as
   await expectBoard(page, [null, null, 'cafe', ...Array(6).fill(null)]);
   expect((await readProgress(page)).moves).toBe(1);
 });
+
+for (const date of ['practice', bank.puzzles[0].date]) {
+  test(`tray return preserves saved progress and Undo for ${date}`, async ({ page }) => {
+    await openGame(page, `date=${date}`);
+    await place(page, 'bakery', 0);
+    await dragPlace(page, page.locator('[data-lot="0"]'), page.locator('[data-place="bakery"]'));
+    await expectBoard(page, emptyBoard);
+    expect((await readProgress(page, date === 'practice' ? bank.tutorial.date : date)).board).toEqual(emptyBoard);
+    if (date === 'practice') {
+      await expect(page.locator('#tray .place:visible')).toHaveCount(1);
+      await expect(page.locator('.puzzle-instruction')).toHaveText('Tap Bakery, then A1, the outlined square.');
+    }
+    await page.locator('#undo').click();
+    await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
+    await page.reload();
+    await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
+  });
+}
 
 test('hints require confirmation and stay fixed through moves, undo, reset and reload', async ({ page }) => {
   await openGame(page);
@@ -176,6 +205,8 @@ test('hints require confirmation and stay fixed through moves, undo, reset and r
   await expectBoard(page, [...daily.solution.slice(0, 2), ...Array(7).fill(null)]);
   await page.keyboard.press('Escape');
   await dragPlace(page, page.locator(`[data-place="${daily.solution[2]}"]`), page.locator('[data-lot="0"]'));
+  await expectBoard(page, [...daily.solution.slice(0, 2), ...Array(7).fill(null)]);
+  await dragPlace(page, page.locator('[data-lot="0"]'), fixed);
   await expectBoard(page, [...daily.solution.slice(0, 2), ...Array(7).fill(null)]);
   await page.locator('#clear').click();
   await expectBoard(page, [daily.solution[0], ...Array(8).fill(null)]);

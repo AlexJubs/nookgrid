@@ -293,7 +293,7 @@ function dropTarget(x, y) {
   const element = document.elementFromPoint(x,y);
   const lot = element?.closest('#board [data-lot]');
   if (lot?.classList.contains('locked')) return null;
-  return lot;
+  return lot || (progress.board.includes(drag.id) ? element?.closest('#tray') : null);
 }
 
 function paintDrag() {
@@ -326,10 +326,10 @@ function finishDrag(event, cancelled = false) {
   event?.preventDefault();
   let result = 'cancelled';
   if (target) {
-    const index = Number(target.dataset.lot);
+    const index = target.id === 'tray' ? null : Number(target.dataset.lot);
     const board = movePlace(progress.board,current.id,index);
-    const changed = applyBoard(board,`${nameOf(current.id)} moved to ${'ABC'[Math.floor(index / 3)]}${index % 3 + 1}.`);
-    result = changed ? 'placed' : 'unchanged';
+    const changed = applyBoard(board,index === null ? `${nameOf(current.id)} is back in the tray.` : `${nameOf(current.id)} moved to ${'ABC'[Math.floor(index / 3)]}${index % 3 + 1}.`,index === null ? 'remove' : 'place');
+    result = changed ? index === null ? 'returned' : 'placed' : 'unchanged';
   }
   track('drag_result',{result,action:current.pointerType});
 }
