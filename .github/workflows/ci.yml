@@ -40,10 +40,10 @@ jobs:
 
   ios:
     name: iOS simulator
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 30
     env:
-      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_26.4.1.app/Contents/Developer
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -53,6 +53,20 @@ jobs:
           node-version: 22
           cache: npm
       - run: xcodebuild -version
+      - name: Select iOS 26.4 simulator
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import subprocess
+          runtimes = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', 'runtimes', '--json']))['runtimes']
+          runtime = next(item for item in runtimes if item['isAvailable'] and item['name'].startswith('iOS ') and item['version'].split('.')[:2] == ['26', '4'])
+          devices = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', 'devices', 'available', '--json']))['devices']
+          device = next(item for item in devices[runtime['identifier']] if item['name'] == 'iPhone 17 Pro')
+          with open(os.environ['GITHUB_ENV'], 'a') as environment:
+              environment.write(f"NOOKGRID_SIMULATOR_ID={device['udid']}\n")
+          print(f"Selected {runtime['name']} ({runtime['version']}), {device['name']}: {device['udid']}")
+          PY
       - run: npm ci
       - run: npm run build:ios
       - run: npm run test:ios

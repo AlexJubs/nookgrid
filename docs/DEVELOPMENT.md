@@ -34,7 +34,7 @@ Edit source rather than generated `dist/`, `ios/App/App/public/` or Capacitor co
 
 ## iOS development
 
-Use a Mac with Xcode 26 or newer and an installed iPhone Simulator runtime. Complete Xcode's first-launch setup and select that Xcode in Settings > Locations > Command Line Tools. CI currently uses Xcode 26.3. After the clone and `npm ci` above:
+Use a Mac with Xcode 26 or newer and an installed iPhone Simulator runtime. Complete Xcode's first-launch setup and select that Xcode in Settings > Locations > Command Line Tools. Simulator CI uses Xcode 26.4.1 with iOS 26.4. After the clone and `npm ci` above:
 
 ```sh
 xcodebuild -version
