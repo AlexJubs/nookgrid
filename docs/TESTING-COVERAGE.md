@@ -18,12 +18,13 @@ The same browser scenarios run on desktop Chromium at 1280 by 900 and WebKit wit
 | Navigation | Home, Tutorial and monthly calendar; month navigation and restored focus; failed navigation exposes saved-progress recovery; future dates rejected; dated saves isolated; fresh Tutorial reentry; expired calendar fallback; UTC-midnight rollover preserves the active board |
 | Daily streak | UTC midnight across time zones and daylight-saving boundaries; one credit for today's completion with or without hints; Reset/replay and native process restart retain credit; archive/Tutorial exclusion; missed days; failed-write retry |
 | Dialogs | Menu, Calendar, Hint, Feedback, Settings and Share: button, Escape and outside dismissal, inside clicks, one modal, focus restoration |
-| Supporting pages | Inline Tutorial tips, contextual move guidance and compact return, worked example, privacy navigation, retained QA mode and saved analytics opt-out |
+| Supporting pages | Optional guided Tutorial, How to play, contextual puzzle return, privacy navigation, retained QA mode and saved analytics opt-out |
 | Recovery | Loading/inert state, failed or malformed puzzle request, retry, malformed/duplicate/unknown/short saved boards, repaired saved hints, unknown legacy solve time |
 | Persistence failure | Denied browser storage still allows moves, hints and undo with a visible warning |
 | Network isolation | Local resources, play while offline after load, optional settings failure, feedback validation and dry-run retention |
+| Native analytics | Visible-board funnel order, internal-page and brief-resume continuity, 30-minute/24-hour entry expiry, UTC mode changes, modal-only returns, saved-completion retry/reset, consent changes and resolved/unknown launch sources. SDK capture is mocked; actual delivery is a separate check. |
 | Accessibility basics | Accessible control names, pressed/disabled states, keyboard selection and placement, visible focus, dialog focus containment, clue text alongside icons, move announcements preserved when the selection row collapses |
-| Geometry | Desktop fit, stacked phone plan/board/tray/actions, completion below the board, 44px game controls, no horizontal overflow, narrow 320px solved state, saved screenshots |
+| Geometry | Desktop fit, stacked phone plan/board/tray/actions, separate result screen with bottom actions, 44px game controls, no horizontal overflow, narrow 320px solved state, saved screenshots |
 
 This suite covers representative transitions and unique UI states. It does not enumerate every ordering of actions, every puzzle solution path or every possible operating-system event. Engine and state unit tests cover the pure rules and data validity separately.
 
@@ -31,4 +32,4 @@ The following require complementary native or manual verification: cold launch w
 
 Screenshots provide review evidence, not automatically accepted pixel baselines. Inspect the empty, solved and narrow solved images before a release. Automated geometry and accessible-name assertions are not a complete accessibility audit.
 
-Visual review on September 17, 2026 inspected the rendered empty and solved Chromium desktop and WebKit phone screenshots plus the 320px solved phone image. The updated phone layout stacks the plan, a centered 300px board, two rows of items and the action row. Completion appears below the solved board. Share keeps the main emphasis and Reset/Feedback remain peer utilities. Short phone screens and solved states may scroll vertically, with no horizontal clipping; desktop columns remain unchanged. The intentional mobile pattern is recorded in `DESIGN.md`.
+The current phone layout stacks the plan, a centered board, two rows of places and the action row. Completion has a separate recap with a borderless arrangement and one bottom action group. Share keeps the main emphasis; Reset remains on the solved board and Feedback in Menu. Calendar is the only archive destination. Short screens and enlarged text may scroll vertically without horizontal clipping. Review current light/dark renders against `DESIGN.md` before release; historical screenshots do not verify a newer candidate.

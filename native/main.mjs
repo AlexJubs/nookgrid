@@ -16,6 +16,8 @@ window.nookgridReady = (async () => {
   window.nookgridNative = {
     isDevelopment:globalThis.nookgridDebug === true || !__NOOKGRID_PRODUCTION__,
     storage,
+    launchId:globalThis.nookgridLaunchId,
+    launchSource:async () => (await App.getLaunchUrl())?.url ? 'deep_link' : 'direct',
     share:text => Share.share({title:'NookGrid',text,dialogTitle:'Share your result'}),
     onStateChange:listener => App.addListener('appStateChange',listener),
     getAnalyticsMetadata:() => AnalyticsMetadata.getMetadata(),

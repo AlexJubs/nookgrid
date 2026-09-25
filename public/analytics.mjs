@@ -1,15 +1,27 @@
 import { native, savedValue, saveValue } from './platform.mjs';
 
-const EVENTS = new Set(['$pageview','engagement','puzzle_view','puzzle_start','puzzle_complete','hint_used','board_move','board_undo','board_reset','share_result','feedback_result','app_error','ui_click','control_change','drag_result']);
+const EVENTS = new Set(['app_entry','$pageview','engagement','puzzle_view','puzzle_start','puzzle_complete','hint_used','board_move','board_undo','board_reset','share_result','feedback_result','app_error','ui_click','control_change','drag_result']);
 const LABELS = new Set(['action','control','result']);
 const CAMPAIGNS = {utm_source:['listdle','playlin','itch','share','playtest','dlelist','goldles','slowden','reddit','twitter','dledirectory','dailydles','dailydle','puzzled','twelvegames','wordfinder','dles','puzzlerzone','bontegames','puzzleprime','freegameplanet'],utm_medium:['directory','community','result','usability','paid_social','editorial'],utm_campaign:['launch14','daily','paid_test1'],utm_content:['clarity','puzzles','playmygame','aigamedev','devlog','park_hook','game_page','get_feedback','jam_request','embed_feedback','wpg_trial','result_card','listing']};
-const COUNTS = new Set(['moves','hints','puzzle_version','active_ms','visible_ms','active_ms_this_page','elapsed_active_ms']);
+const COUNTS = new Set(['moves','hints','puzzle_version','active_ms','visible_ms','active_ms_this_page','elapsed_active_ms','analytics_version']);
 const SDK_STRINGS = new Set(['token','distinct_id','$device_id','$session_id','$window_id','$pageview_id','$lib','$lib_version']);
 const URLS = new Set(['$current_url','$session_entry_url','$initial_current_url']);
 const SITE_HOSTS = new Set(['nookgrid.com','www.nookgrid.com','oaken-buddha-zchb.here.now']);
 const SOURCE_KEY = 'nookgrid:analytics-source', CONSENT_KEY = 'nookgrid:analytics', WITHDRAWAL_KEY = 'nookgrid:analytics-withdrawn';
 const label = value => typeof value === 'string' && /^[a-zA-Z0-9_.-]{1,80}$/.test(value);
 const host = value => typeof value === 'string' && /^(?:[a-z0-9-]+\.)*[a-z0-9-]+$/i.test(value) && value.length <= 253;
+const uuid = value => typeof value === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value);
+const ENTRY_KEY = 'nookgrid:analytics-entry';
+
+export function nextAppEntry(previous, launchId, at = Date.now()) {
+  const sameLaunch = uuid(launchId) && previous?.launch_id === launchId;
+  if (sameLaunch && uuid(previous.entry_id) && Number.isSafeInteger(previous.event_index) && previous.event_index >= 1 && Number.isFinite(previous.started_at) && at >= previous.started_at && at - previous.started_at < 86400000 &&
+      ['direct','deep_link','unknown'].includes(previous.entry_source) && ['cold','warm','unknown'].includes(previous.entry_kind) &&
+      (previous.background_at === null || Number.isFinite(previous.background_at) && at >= previous.background_at && at - previous.background_at < 1800000)) {
+    return {...previous,background_at:null};
+  }
+  return {launch_id:uuid(launchId) ? launchId : null,entry_id:crypto.randomUUID(),entry_source:'unknown',entry_kind:!uuid(launchId) ? 'unknown' : sameLaunch ? 'warm' : 'cold',started_at:at,background_at:null,event_index:1,reported:false};
+}
 
 function safeProperties(properties = {}) {
   const clean = {};
@@ -19,6 +31,12 @@ function safeProperties(properties = {}) {
     else if (Object.hasOwn(CAMPAIGNS,campaignKey) && CAMPAIGNS[campaignKey].includes(value)) clean[key] = value;
     else if (COUNTS.has(key) && Number.isFinite(value) && value >= 0 && value <= 2678400000) clean[key] = Math.round(value);
     else if (SDK_STRINGS.has(key) && typeof value === 'string' && /^[a-zA-Z0-9_.:-]{1,256}$/.test(value)) clean[key] = value;
+    else if (['entry_id','event_id'].includes(key) && uuid(value)) clean[key] = value;
+    else if (key === 'event_index' && Number.isSafeInteger(value) && value >= 1) clean[key] = value;
+    else if (key === 'occurred_at' && typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(value) && Number.isFinite(Date.parse(value))) clean[key] = value;
+    else if (key === 'entry_source' && ['direct','deep_link','unknown'].includes(value)) clean[key] = value;
+    else if (key === 'entry_kind' && ['cold','warm','unknown'].includes(value)) clean[key] = value;
+    else if (key === 'puzzle_state' && ['fresh','resumed','replay'].includes(value)) clean[key] = value;
     else if (['has_guidance','$process_person_profile'].includes(key) && typeof value === 'boolean') clean[key] = value;
     else if (key === 'measurement_mode' && ['cookieless','installation'].includes(value)) clean[key] = value;
     else if (key === 'platform' && value === 'ios') clean[key] = value;
@@ -106,8 +124,50 @@ export function createAnalytics({testMode = false} = {}) {
   let context = {}, pending = [], source = null, entrySource = null, lastReport = clock.sample(performance.now()), activeOrigin = lastReport.active;
   let available = false;
   let appMetadata = native ? {distribution_channel:'unknown'} : {};
+  let entry = null, shouldReportEntry = false, hasEntryListener = false;
   const permitted = () => available && choice !== 'no' && !testMode && !privacy();
   const sample = () => clock.sample(performance.now());
+
+  function storeEntry() {
+    try { entry ? sessionStorage.setItem(ENTRY_KEY,JSON.stringify(entry)) : sessionStorage.removeItem(ENTRY_KEY); } catch {}
+  }
+
+  function entryProperties() {
+    return entry ? {analytics_version:2,entry_id:entry.entry_id,entry_source:entry.entry_source,entry_kind:entry.entry_kind} : {};
+  }
+
+  function snapshot() {
+    if (!permitted()) return null;
+    if (!native || !entry) return {};
+    const properties = {...entryProperties(),event_id:crypto.randomUUID(),event_index:++entry.event_index,occurred_at:new Date().toISOString()};
+    storeEntry();
+    return properties;
+  }
+
+  function updateEntry(at = Date.now()) {
+    if (!native || !permitted()) return false;
+    if (!entry) { try { entry = JSON.parse(sessionStorage.getItem(ENTRY_KEY)); } catch {} }
+    const next = nextAppEntry(entry,native.launchId,at);
+    const changed = next.entry_id !== entry?.entry_id;
+    entry = next;
+    storeEntry();
+    shouldReportEntry ||= changed || entry.reported !== true;
+    return changed;
+  }
+
+  function reportEntry() {
+    if (!ready || !shouldReportEntry) return;
+    shouldReportEntry = false;
+    track('app_entry',{...entryProperties(),event_id:entry.entry_id,event_index:1,occurred_at:new Date(entry.started_at).toISOString()});
+    entry.reported = true;
+    storeEntry();
+    document.dispatchEvent(new Event('nookgrid:entry'));
+  }
+
+  function entryId() {
+    if (native && entry && (Date.now() < entry.started_at || Date.now() - entry.started_at >= 86400000)) { updateEntry(); reportEntry(); }
+    return entry?.entry_id;
+  }
 
   function renderChoice() {
     const checkbox = document.getElementById('metrics-setting');
@@ -137,14 +197,18 @@ export function createAnalytics({testMode = false} = {}) {
 
   function track(name,properties = {},instant = false) {
     if (!permitted() || !EVENTS.has(name)) return;
-    const event = {name,properties:{...safeProperties(context),...safeProperties(properties),...attribution(),measurement_mode:native ? 'installation' : 'cookieless',...(native ? {platform:'ios'} : {}),device_type:window.innerWidth < 768 ? 'mobile' : 'desktop',active_ms_this_page:ready ? Math.max(0,sample().active - activeOrigin) : 0}};
+    if (name !== 'app_entry') entryId();
+    const event = {name,properties:{...safeProperties(context),...(uuid(properties.event_id) && Number.isSafeInteger(properties.event_index) ? {} : snapshot()),...safeProperties(properties),...attribution(),measurement_mode:native ? 'installation' : 'cookieless',...(native ? {platform:'ios'} : {}),device_type:window.innerWidth < 768 ? 'mobile' : 'desktop',active_ms_this_page:ready ? Math.max(0,sample().active - activeOrigin) : 0}};
+    if (native && event.properties.entry_id === entry?.entry_id) event.properties.entry_source = entry.entry_source;
     if (name === '$pageview') Object.assign(event.properties,Object.fromEntries(Object.entries(entrySource).map(([key,value]) => [`entry_${key}`,value])));
     if (!ready) { if (pending.length < 100) pending.push(event); return; }
     send(event,instant);
   }
 
   function send(event,instant = false) {
-    try { client.capture(event.name,{...event.properties,...appMetadata},instant ? {send_instantly:true,transport:'sendBeacon'} : undefined); } catch {}
+    const options = native ? {uuid:event.properties.event_id,timestamp:new Date(event.properties.occurred_at)} : {};
+    if (instant) Object.assign(options,{send_instantly:true,transport:'sendBeacon'});
+    try { client.capture(event.name,{...event.properties,...appMetadata},options); } catch {}
   }
 
   function flush(instant = false) {
@@ -155,14 +219,27 @@ export function createAnalytics({testMode = false} = {}) {
 
   function stop() {
     epoch++; ready = false; pending = []; source = null; entrySource = null;
+    entry = null; shouldReportEntry = false; storeEntry();
     write(SOURCE_KEY,null);
     lastReport = sample(); activeOrigin = lastReport.active;
   }
 
-  async function start() {
+  async function start(isOptIn = false) {
     if (!permitted()) return;
     const currentEpoch = ++epoch;
     lastReport = sample();
+    if (native) {
+      updateEntry();
+      if (isOptIn && shouldReportEntry) entry.entry_kind = 'warm';
+      if (!hasEntryListener) {
+        hasEntryListener = true;
+        native.onStateChange(({isActive}) => {
+          if (!permitted()) return;
+          if (!isActive) { if (entry) { entry.background_at = Date.now(); storeEntry(); } flush(true); }
+          else { updateEntry(); reportEntry(); }
+        }).catch(() => {});
+      }
+    }
     try {
       if (!load && native) load = Promise.resolve(window.posthog);
       if (!load) load = new Promise((resolve,reject) => {
@@ -182,10 +259,14 @@ export function createAnalytics({testMode = false} = {}) {
       if (native) {
         let timeout, metadata;
         try {
-          metadata = await Promise.race([
-            native.getAnalyticsMetadata?.(),
+          const sourceEntry = entry.entry_id;
+          const launchSource = shouldReportEntry && entry.entry_kind === 'cold' ? native.launchSource?.() : null;
+          const resolved = await Promise.race([
+            Promise.all([Promise.resolve(native.getAnalyticsMetadata?.()).catch(() => null),Promise.resolve(launchSource).catch(() => null)]),
             new Promise(resolve => { timeout = setTimeout(resolve,1500); })
           ]);
+          metadata = resolved?.[0];
+          if (permitted() && currentEpoch === epoch && entry.entry_id === sourceEntry && ['direct','deep_link'].includes(resolved?.[1])) { entry.entry_source = resolved[1]; storeEntry(); }
         } catch {}
         finally { clearTimeout(timeout); }
         if (!permitted() || currentEpoch !== epoch) return;
@@ -196,8 +277,12 @@ export function createAnalytics({testMode = false} = {}) {
         if (!permitted() || currentEpoch !== epoch) return;
         lastReport = sample(); activeOrigin = lastReport.active;
         client = instance; ready = true;
+        reportEntry();
         track('$pageview',{$current_url:location.origin + location.pathname,$pathname:location.pathname});
-        for (const event of pending.splice(0)) send(event);
+        for (const event of pending.splice(0)) {
+          if (native && event.properties.entry_id === entry?.entry_id) event.properties.entry_source = entry.entry_source;
+          send(event);
+        }
       }
       if (client) onReady(client);
       else {
@@ -226,7 +311,7 @@ export function createAnalytics({testMode = false} = {}) {
     choiceSaved = write(CONSENT_KEY,choice);
     if (!persist && choice === 'yes' && !choiceSaved) choice = null;
     rememberWithdrawal(choice === 'no');
-    if (permitted()) start(); else stop();
+    if (permitted()) start(true); else stop();
     renderChoice();
   }
 
@@ -257,5 +342,14 @@ export function createAnalytics({testMode = false} = {}) {
     return value;
   });
   renderChoice();
-  return {config,track,setContext:properties => { context = safeProperties(properties); },activeMilliseconds:() => ready && permitted() ? Math.max(0,sample().active - activeOrigin) : 0};
+  return {config,track,entryId,epoch:() => epoch,
+    puzzleState:(date,mode,version,state) => {
+      if (!entry || !permitted()) return state;
+      const key = `${date}:${mode}:${version}`;
+      if (!entry.puzzles || typeof entry.puzzles !== 'object' || Array.isArray(entry.puzzles)) entry.puzzles = {};
+      if (!['fresh','resumed','replay'].includes(entry.puzzles[key])) { entry.puzzles[key] = state; storeEntry(); }
+      return entry.puzzles[key];
+    },
+    snapshot,
+    setContext:properties => { context = safeProperties(properties); },activeMilliseconds:() => ready && permitted() ? Math.max(0,sample().active - activeOrigin) : 0};
 }

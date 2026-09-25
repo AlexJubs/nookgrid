@@ -12,7 +12,11 @@ Results are in `artifacts/ios/NookGrid.xcresult` and `artifacts/ios/xcodebuild-1
 
 Simulator checks do not replace a physical iPhone pass for gestures, sharing and lifecycle behavior before App Store submission.
 
-## Verified September 17, 2026
+## Current coverage
+
+The suite now contains fourteen scenarios, including Home press behavior, calendar/continue, saved streaks, fresh Tutorial replay and native background timing. The September 24 source passed all fourteen in CI without retries. Verify the run for each new release commit; that result does not establish delivery or a physical-device pass.
+
+## Historical measurements, September 17, 2026
 
 | Simulator | Native scenarios | Responsive launch, three-run mean |
 | --- | --- | --- |

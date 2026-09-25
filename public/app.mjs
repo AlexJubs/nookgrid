@@ -23,6 +23,7 @@ let hasGuidance = false, shouldShowGuidance = false;
 let solveTimer = {elapsedMs:0,startedAt:null};
 let screen = 'puzzle';
 let calendarMonths = [], calendarMonth;
+let viewedEntry = null, puzzleState = 'fresh', completionEvent = null;
 
 function read(key) {
   return savedValue(key);
@@ -161,7 +162,20 @@ function renderScreen() {
   $('view-result').hidden = screen !== 'puzzle' || !solved;
   $('view-result').textContent = mode === 'daily' ? "View today's result" : 'View result';
   document.querySelector('.skip-link').href = screen === 'home' ? '#home' : screen === 'result' ? '#completion' : '#game';
+  recordPuzzleView();
 }
+
+function recordPuzzleView() {
+  if (!puzzle || screen !== 'puzzle' || $('game').inert || document.hidden || document.querySelector('dialog[open]')) return;
+  const entry = `${analytics.entryId() || 'page'}:${puzzle.date}:${mode}:${bank.version}`;
+  if (entry === viewedEntry) return;
+  viewedEntry = entry;
+  puzzleState = analytics.puzzleState(puzzle.date,mode,bank.version,progress.reported || isSolved(puzzle,progress.board) ? 'replay' : progress.board.some(Boolean) ? 'resumed' : 'fresh');
+  track('puzzle_view');
+}
+document.addEventListener('nookgrid:entry',recordPuzzleView);
+document.addEventListener('visibilitychange',recordPuzzleView);
+document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('close',recordPuzzleView));
 
 function showScreen(next) {
   if (!puzzle) return;
@@ -227,8 +241,9 @@ async function postRecord(collection, record, key) {
 }
 
 function track(event, properties = {}) {
+  if (event !== 'puzzle_view') { updateReturnPrompt(); recordPuzzleView(); }
   const currentMode = mode === 'practice' ? mode : puzzle?.date === puzzleDay() ? 'daily' : 'archive';
-  analytics.track(event,{moves:progress?.moves || 0,hints:progress?.hints || 0,puzzle_mode:currentMode,...properties});
+  analytics.track(event,{moves:progress?.moves || 0,hints:progress?.hints || 0,puzzle_mode:currentMode,puzzle_state:puzzleState,...properties});
 }
 
 function startPlay(action) {
@@ -240,13 +255,21 @@ function startPlay(action) {
 async function save(shouldRun = !document.hidden) {
   solveTimer = advanceSolveTimer(solveTimer,performance.now(),progress.board.some(Boolean),shouldRun && screen === 'puzzle' && !isSolved(puzzle,progress.board));
   progress.elapsedMs = solveTimer.elapsedMs;
-  if (mode === 'practice') return true;
+  const completed = isSolved(puzzle,progress.board) ? completionEvent : null;
+  const reportCompletion = () => {
+    if (!completed || completed.sent) return;
+    completed.sent = true;
+    if (completionEvent === completed) completionEvent = null;
+    if (completed.epoch === analytics.epoch()) analytics.track('puzzle_complete',completed.properties);
+  };
+  if (mode === 'practice') { reportCompletion(); return true; }
   progress.reported ||= restoreProgress(read(`${progressPrefix}${puzzle.date}`),ids,puzzle.solution).reported;
   streakDays = [...new Set([...restoreStreakDays(read(streakKey)),...streakDays])].sort();
   try {
     const writes = [saveValue(`${progressPrefix}${puzzle.date}`, JSON.stringify(progress))];
     if (streakDays.length) writes.push(saveValue(streakKey, JSON.stringify(streakDays)));
     await Promise.all(writes);
+    reportCompletion();
     $('save-warning').hidden = !native || Boolean(native.storage);
     return true;
   } catch {
@@ -280,6 +303,8 @@ function celebrateSolve() {
 }
 
 function applyBoard(board, message, action = 'place') {
+  updateReturnPrompt();
+  recordPuzzleView();
   const shouldClearHints = action === 'reset' && isSolved(puzzle,progress.board);
   if (!shouldClearHints && progress.hintedPlaces.some(id => board[puzzle.solution.indexOf(id)] !== id)) return false;
   const hasChanged = board.some((id,index) => id !== progress.board[index]);
@@ -298,7 +323,7 @@ function applyBoard(board, message, action = 'place') {
     if (history.length > 100) history.shift();
     progress.moves++;
   }
-  if (action === 'reset') solveTimer = {elapsedMs:0,startedAt:null};
+  if (action === 'reset') { solveTimer = {elapsedMs:0,startedAt:null}; completionEvent = null; }
   if (shouldClearHints) { progress.hints = 0; progress.hintedPlaces = []; }
   progress.board = board;
   screen = 'puzzle';
@@ -458,6 +483,7 @@ function updateReturnPrompt() {
       mode = isToday ? 'daily' : 'archive';
       $('board-title').textContent = isToday ? "Today's puzzle" : 'Archived puzzle';
       analytics.setContext({puzzle_date:puzzle.date,puzzle_mode:mode,puzzle_version:bank.version,has_guidance:hasGuidance});
+      recordPuzzleView();
       const number = bank.puzzles.findIndex(item => item.date === puzzle.date) + 1;
       document.title = `NookGrid | ${isToday ? 'Free daily brain game' : `Brain game ${number}`}`;
     }
@@ -555,7 +581,11 @@ function render() {
     const hasEarnedDay = earnedDays !== streakDays;
     streakDays = earnedDays;
     const shouldReport = !progress.reported;
-    if (shouldReport) { track('puzzle_complete',{active_ms_this_page:analytics.activeMilliseconds()}); progress.reported = true; }
+    if (shouldReport) {
+      const snapshot = wasSolved ? null : analytics.snapshot();
+      if (snapshot) completionEvent = {properties:{...snapshot,puzzle_date:puzzle.date,puzzle_mode:mode,puzzle_version:bank.version,puzzle_state:puzzleState,moves:progress.moves,hints:progress.hints,active_ms_this_page:analytics.activeMilliseconds()},epoch:analytics.epoch(),sent:false};
+      progress.reported = true;
+    }
     if (shouldReport || hasEarnedDay) save();
     renderScreen();
     if (shouldFocusCompletion && screen === 'result') {
@@ -571,6 +601,8 @@ function render() {
 }
 
 $('undo').addEventListener('click', () => {
+  updateReturnPrompt();
+  recordPuzzleView();
   let previous, board;
   do {
     previous = history.pop();
@@ -590,6 +622,8 @@ $('clear').addEventListener('click', () => {
 });
 $('confirm-hint').addEventListener('click', () => {
   $('hint-dialog').close();
+  updateReturnPrompt();
+  recordPuzzleView();
   const index = puzzle.solution.findIndex((id,i) => progress.board[i] !== id);
   if (index < 0) return;
   progress.hintedPlaces.push(puzzle.solution[index]);
@@ -669,7 +703,6 @@ async function init() {
     shouldShowGuidance = hasGuidance && progress.moves === 0 && progress.hints === 0 && !progress.reported && !progress.board.some(Boolean);
     if (shouldShowGuidance) selected = 'park';
     analytics.setContext({puzzle_date:puzzle.date,puzzle_mode:mode,puzzle_version:bank.version,has_guidance:hasGuidance});
-    track('puzzle_view');
     wasSolved = isSolved(puzzle,progress.board);
     $('feedback-unavailable').hidden = config.feedbackEnabled;
     $('feedback-form').hidden = !config.feedbackEnabled;
@@ -699,6 +732,7 @@ async function init() {
     if ($('calendar-dialog').open) prepareCalendar();
     $('game').setAttribute('aria-busy','false');
     $('game').inert = false;
+    recordPuzzleView();
     setInterval(updateReturnPrompt,1000);
     document.addEventListener('visibilitychange',updateReturnPrompt);
     document.addEventListener('visibilitychange',() => save());

@@ -49,8 +49,10 @@ class GameViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
         bridge?.registerPluginInstance(AnalyticsMetadataPlugin())
-        #if DEBUG
         guard let content = webView?.configuration.userContentController else { preconditionFailure("Missing game web view") }
+        let launch = WKUserScript(source: "Object.defineProperty(window, 'nookgridLaunchId', {value:'\(UUID().uuidString)'})", injectionTime: .atDocumentStart, forMainFrameOnly: true)
+        content.addUserScript(launch)
+        #if DEBUG
         let debug = WKUserScript(source: "Object.defineProperty(window, 'nookgridDebug', {value:true})", injectionTime: .atDocumentStart, forMainFrameOnly: true)
         content.addUserScript(debug)
         if ProcessInfo.processInfo.arguments.contains("nookgrid-offline") {
