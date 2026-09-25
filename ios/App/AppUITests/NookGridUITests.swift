@@ -59,8 +59,7 @@ final class NookGridUITests: XCTestCase {
         XCTAssertTrue(viewport.contains(element.frame), "Element remains outside its scroll area: \(element), frame \(element.frame), viewport \(viewport). \(app.debugDescription)")
     }
     private func viewResult() {
-        let result = button("View result")
-        tap(result.exists ? result : button("View today's result"))
+        tap(button("Back to results"))
     }
     private func assertLot(_ address: String, _ place: String, file: StaticString = #filePath, line: UInt = #line) {
         let wasResult = button("View solved puzzle").exists
@@ -250,19 +249,20 @@ final class NookGridUITests: XCTestCase {
         XCTAssertTrue(button("Hint, 1 hint used").exists)
     }
 
-    func testDailyStreakSurvivesResetRestartAndReplay() throws {
+    func testDailyStreakSurvivesSolvedReviewAndRestart() throws {
         for count in 0..<8 { reveal(count) }
+        tap(button("Reset"))
+        XCTAssertEqual(app.webViews.firstMatch.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH 'Lot ' AND label ENDSWITH 'fixed by a hint'")).count, 8)
+        XCTAssertTrue(button("Hint, 8 hints used").exists)
         let remainingPlace = try XCTUnwrap(places.first { button("\($0), choose a lot").exists })
         let remainingLot = try XCTUnwrap(lots.first { button("Lot \($0), empty").exists })
         place(remainingPlace, at: remainingLot)
         XCTAssertTrue(app.staticTexts["Neighborhood complete"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["1-day streak"].exists)
         tap(button("View solved puzzle"))
-        XCTAssertTrue(button("Reset").isEnabled)
-        tap(button("Reset"))
-        for address in lots { assertLot(address, "empty") }
-        XCTAssertTrue(button("Hint, 0 hints used").exists)
-        XCTAssertTrue(button("Undo").isEnabled)
+        let solvedLabels = lots.map { lot($0).label }
+        for address in lots { XCTAssertFalse(lot(address).isEnabled) }
+        for label in ["Undo", "Reset", "Hint, 8 hints used"] { XCTAssertFalse(button(label).exists) }
         openCalendar()
         XCTAssertTrue(app.staticTexts["1-day streak"].exists)
         XCTAssertTrue(app.webViews.links.matching(NSPredicate(format: "label CONTAINS ', Today, completed, daily streak day'")).firstMatch.exists, app.debugDescription)
@@ -271,54 +271,47 @@ final class NookGridUITests: XCTestCase {
         app.terminate()
         app.launchArguments = ["nookgrid-offline"]
         app.launch()
-        XCTAssertTrue(button("Replay today's puzzle").waitForExistence(timeout: 15))
-        tap(button("Replay today's puzzle"))
-        XCTAssertTrue(button("Lot \(remainingLot), empty").waitForExistence(timeout: 5))
-        for address in lots { assertLot(address, "empty") }
-        XCTAssertTrue(button("Hint, 0 hints used").exists)
-        XCTAssertFalse(button("Undo").isEnabled)
+        XCTAssertTrue(button("View today's result").waitForExistence(timeout: 15))
+        tap(button("View today's result"))
+        XCTAssertTrue(app.staticTexts["Neighborhood complete"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["1-day streak"].exists)
+        tap(button("View solved puzzle"))
+        XCTAssertEqual(lots.map { lot($0).label }, solvedLabels)
+        for address in lots { XCTAssertFalse(lot(address).isEnabled) }
+        for label in ["Undo", "Reset", "Hint, 8 hints used"] { XCTAssertFalse(button(label).exists) }
         openCalendar()
         XCTAssertTrue(app.staticTexts["1-day streak"].exists)
         XCTAssertTrue(app.webViews.links.matching(NSPredicate(format: "label CONTAINS ', Today, completed, daily streak day'")).firstMatch.exists, app.debugDescription)
         tap(button("Close calendar"))
-        reveal(0)
-        let fixed = app.webViews.firstMatch.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH 'Lot ' AND label ENDSWITH 'fixed by a hint'")).firstMatch
-        XCTAssertTrue(fixed.waitForExistence(timeout: 5))
-        let fixedLabel = fixed.label
-        tap(button("Reset"))
-        XCTAssertTrue(button(fixedLabel).exists)
-        XCTAssertFalse(button(fixedLabel).isEnabled)
-        XCTAssertTrue(button("Hint, 1 hint used").exists)
-        for count in 1..<8 { reveal(count) }
-        let replayPlace = try XCTUnwrap(places.first { button("\($0), choose a lot").exists })
-        let replayLot = try XCTUnwrap(lots.first { button("Lot \($0), empty").exists })
-        place(replayPlace, at: replayLot)
-        XCTAssertTrue(app.staticTexts["Neighborhood complete"].waitForExistence(timeout: 5))
+        viewResult()
         XCTAssertTrue(app.staticTexts["1-day streak"].exists)
         XCTAssertFalse(app.staticTexts["2-day streak"].exists)
     }
 
-    func testTutorialResetClearsAllHintsAfterCompletionAndRestart() {
+    func testTutorialSolvedReviewAndFreshReplayAfterRestart() {
         openTutorial()
-        for count in 0..<9 { reveal(count) }
-        XCTAssertTrue(app.staticTexts["Nice work!"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["9 hints used."].exists)
-        tap(button("View solved puzzle"))
-        XCTAssertTrue(button("Reset").isEnabled)
+        reveal(0)
+        place("Cafe", at: "A2")
         tap(button("Reset"))
-        for address in lots { assertLot(address, "empty") }
-        XCTAssertTrue(button("Hint, 0 hints used").exists)
-        XCTAssertTrue(button("Undo").isEnabled)
-        XCTAssertFalse(app.staticTexts["Nice work!"].exists)
+        XCTAssertTrue(button("Lot A1, Bakery, fixed by a hint").exists)
+        assertLot("A2", "empty")
         tap(button("Undo"))
+        assertLot("A2", "Cafe")
+        tap(button("Reset"))
+        for count in 1..<9 { reveal(count) }
         XCTAssertTrue(app.staticTexts["Nice work!"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["9 hints used."].exists)
+        XCTAssertTrue(app.staticTexts["9 hints"].exists)
         tap(button("View solved puzzle"))
         XCTAssertEqual(app.webViews.firstMatch.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH 'Lot ' AND label ENDSWITH 'fixed by a hint'")).count, 9)
+        for address in lots { XCTAssertFalse(lot(address).isEnabled) }
+        for label in ["Undo", "Reset", "Hint, 9 hints used"] { XCTAssertFalse(button(label).exists) }
         viewResult()
-        tap(button("View solved puzzle"))
-        tap(button("Reset"))
+        XCTAssertTrue(app.staticTexts["9 hints"].exists)
+        tap(button("Back to home"))
+        tap(button("Play tutorial"))
         for address in lots { assertLot(address, "empty") }
+        XCTAssertTrue(button("Hint, 0 hints used").exists)
+        XCTAssertFalse(button("Undo").isEnabled)
 
         app.terminate()
         app.launchArguments = ["nookgrid-offline"]
@@ -375,7 +368,7 @@ final class NookGridUITests: XCTestCase {
         assertLot("A1", "Bakery")
         for index in 1..<places.count { place(places[index], at: lots[index]) }
         XCTAssertTrue(app.staticTexts["Nice work!"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Solved without hints."].exists)
+        XCTAssertTrue(app.staticTexts["No hints"].exists)
         let result = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Solved in '")).firstMatch.label
         let components = result.replacingOccurrences(of: "Solved in ", with: "").split(separator: ":").compactMap { Int($0) }
         XCTAssertEqual(components.count, 2)
@@ -549,7 +542,7 @@ final class NookGridUITests: XCTestCase {
     func testSolveWithHintsAndNativeShareSheet() {
         for count in 0..<9 { reveal(count) }
         XCTAssertTrue(app.staticTexts["Neighborhood complete"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["9 hints used."].exists)
+        XCTAssertTrue(app.staticTexts["9 hints"].exists)
         tap(button("Share result"))
         let copy = app.cells["Copy"].firstMatch
         XCTAssertTrue(copy.waitForExistence(timeout: 60), app.debugDescription)

@@ -103,6 +103,40 @@ async function expectScreenFit(page, phone, ruleCount, placeCount = 9) {
   }
 }
 
+for (const [hints, elapsedMs] of [[0, 59_000], [1, 90_000], [9, 3_661_000]]) {
+  test(`completion metrics fit one iPhone row with ${hints} hints and wrap cleanly at larger text`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 393, height: 852 });
+    await seedProgress(page, ['2026-09-12', '2026-09-13', '2026-09-14', '2026-09-15', '2026-09-16'], 'streak');
+    await seedProgress(page, { board: bank.puzzles.find(puzzle => puzzle.date === '2026-09-17').solution, moves: 9, hints, elapsedMs });
+    await openGame(page);
+    await expect(page.locator('#daily-streak')).toHaveText('6-day streak');
+    const metrics = page.locator('.completion-meta p:visible');
+    await expect(metrics).toHaveCount(3);
+    for (const theme of ['light', 'dark']) {
+      await page.emulateMedia({ colorScheme: theme });
+      for (const width of [393, 402]) {
+        await page.setViewportSize({ width, height: 852 });
+        const rows = await metrics.evaluateAll(items => items.map(item => item.getBoundingClientRect().top));
+        expect(Math.max(...rows) - Math.min(...rows), 'All three metrics fit one row at standard iPhone text size').toBeLessThanOrEqual(1);
+      }
+      await page.screenshot({ path: testInfo.outputPath(`${theme}.png`) });
+    }
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.addStyleTag({ content: '.game-page .completion .completion-meta p{font-size:32px}' });
+    const wrapped = await metrics.evaluateAll(items => items.map(item => {
+      const bounds = item.getBoundingClientRect();
+      return { top: bounds.top, right: bounds.right, before: getComputedStyle(item, '::before').content };
+    }));
+    expect(new Set(wrapped.map(item => item.top)).size).toBeGreaterThan(1);
+    for (const item of wrapped) {
+      expect(item.before).not.toContain('·');
+      expect(item.right).toBeLessThanOrEqual(320);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+    await page.screenshot({ path: testInfo.outputPath('large-text.png'), fullPage: true });
+  });
+}
+
 test('native phone gameplay keeps readable rules and touch targets reachable within safe areas', async ({ page }) => {
   test.setTimeout(60_000);
   for (const phone of phones) {

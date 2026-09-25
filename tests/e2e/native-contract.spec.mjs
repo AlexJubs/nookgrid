@@ -148,11 +148,13 @@ test('a modal-only warm return opens the puzzle funnel only after the dialog clo
 });
 
 test('UTC rollover and the entry age limit preserve view then move ordering on the old puzzle', async ({ page }) => {
-  await page.clock.install({time:new Date('2026-09-17T23:59:59Z')});
+  await page.clock.setFixedTime(new Date('2026-09-17T23:59:59Z'));
   await page.goto('/');
   await enterGame(page);
   await place(page,daily.solution[0],0);
-  await page.clock.setSystemTime(new Date('2026-09-18T00:00:00Z'));
+  await expect.poll(() => page.evaluate(() => window.captured.find(item => item.event === 'board_move')?.properties))
+    .toMatchObject({puzzle_mode:'daily',puzzle_state:'fresh',occurred_at:'2026-09-17T23:59:59.000Z'});
+  await page.clock.setFixedTime(new Date('2026-09-18T00:00:00Z'));
   await place(page,daily.solution[1],1);
   let events = await page.evaluate(() => window.captured.filter(item => ['puzzle_view','board_move'].includes(item.event)).map(item => item.properties));
   let move = events.at(-1), view = events.find(item => item.puzzle_mode === 'archive' && !item.action);
@@ -160,7 +162,7 @@ test('UTC rollover and the entry age limit preserve view then move ordering on t
   expect(move).toMatchObject({puzzle_mode:'archive',puzzle_state:'resumed',entry_id:view.entry_id});
   expect(move.event_index).toBeGreaterThan(view.event_index);
   const startedAt = await page.evaluate(() => JSON.parse(sessionStorage.getItem('nookgrid:analytics-entry')).started_at);
-  await page.clock.setSystemTime(new Date(startedAt + 86400000));
+  await page.clock.setFixedTime(new Date(startedAt + 86400000));
   await place(page,daily.solution[2],2);
   events = await page.evaluate(() => window.captured.filter(item => ['app_entry','puzzle_view','board_move'].includes(item.event)));
   const entry = events.filter(item => item.event === 'app_entry').at(-1).properties;
@@ -172,7 +174,7 @@ test('UTC rollover and the entry age limit preserve view then move ordering on t
   expect(move.event_index).toBeGreaterThan(view.event_index);
 });
 
-for (const recovery of ['retry','reset']) test(`failed completion save ${recovery} keeps only the original successfully saved result`, async ({ page }) => {
+for (const recovery of ['retry','review']) test(`failed completion save ${recovery} keeps only the original successfully saved result`, async ({ page }) => {
   await page.clock.install({time:new Date('2026-09-17T12:00:00Z')});
   await page.addInitScript({content:`${storageSource}
     window.nookgridReady = (async () => {
@@ -200,22 +202,20 @@ for (const recovery of ['retry','reset']) test(`failed completion save ${recover
   expect(await page.evaluate(() => window.captured.some(item => item.event === 'puzzle_complete'))).toBe(false);
   const lastMove = await page.evaluate(() => window.captured.filter(item => item.event === 'board_move').at(-1).properties);
   await page.clock.setSystemTime(new Date('2026-09-17T12:05:00Z'));
-  if (recovery === 'reset') {
+  if (recovery === 'review') {
     await page.locator('#view-solved').click();
-    await page.locator('#clear').click();
-    await expect(page.locator('#board .occupied')).toHaveCount(0);
+    await expect(page.locator('#clear')).toBeHidden();
+    await expect(page.locator('#board .occupied')).toHaveCount(9);
   }
   await page.evaluate(() => { window.failSolvedSave = false; });
   if (recovery === 'retry') await page.locator('#retry-save').click();
   else await page.evaluate(() => window.nativeStateListeners.forEach(listener => listener({isActive:false})));
   await expect(page.locator('#save-warning')).toBeHidden();
   const completions = await page.evaluate(() => window.captured.filter(item => item.event === 'puzzle_complete'));
-  expect(completions).toHaveLength(recovery === 'retry' ? 1 : 0);
-  if (recovery === 'retry') {
-    expect(completions[0].properties.entry_id).toBe(lastMove.entry_id);
-    expect(completions[0].properties.event_index).toBeGreaterThan(lastMove.event_index);
-    expect(Date.parse(completions[0].properties.occurred_at)).toBeLessThan(Date.parse('2026-09-17T12:05:00Z'));
-  }
+  expect(completions).toHaveLength(1);
+  expect(completions[0].properties.entry_id).toBe(lastMove.entry_id);
+  expect(completions[0].properties.event_index).toBeGreaterThan(lastMove.event_index);
+  expect(Date.parse(completions[0].properties.occurred_at)).toBeLessThan(Date.parse('2026-09-17T12:05:00Z'));
 });
 
 for (const wasEnabled of [false,true]) test(`a deferred completion cannot cross analytics consent changes from ${wasEnabled ? 'enabled' : 'disabled'}`, async ({ page }) => {

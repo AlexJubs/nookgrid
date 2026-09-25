@@ -165,7 +165,6 @@ function renderScreen() {
   $('help-tutorial').hidden = mode === 'practice' && screen !== 'home';
   $('completion').hidden = screen !== 'result' || !solved;
   $('view-result').hidden = screen !== 'puzzle' || !solved;
-  $('view-result').textContent = mode === 'daily' ? "View today's result" : 'View result';
   document.querySelector('.skip-link').href = screen === 'home' ? '#home' : screen === 'result' ? '#completion' : '#game';
   recordPuzzleView();
 }
@@ -309,10 +308,10 @@ function celebrateSolve() {
 }
 
 function applyBoard(board, message, action = 'place') {
+  if (isSolved(puzzle,progress.board)) return false;
   updateReturnPrompt();
   recordPuzzleView();
-  const shouldClearHints = action === 'reset' && isSolved(puzzle,progress.board);
-  if (!shouldClearHints && progress.hintedPlaces.some(id => board[puzzle.solution.indexOf(id)] !== id)) return false;
+  if (progress.hintedPlaces.some(id => board[puzzle.solution.indexOf(id)] !== id)) return false;
   const hasChanged = board.some((id,index) => id !== progress.board[index]);
   if (!hasChanged && action !== 'reset') return false;
   if (hasChanged) {
@@ -320,17 +319,12 @@ function applyBoard(board, message, action = 'place') {
     if (action === 'reset') {
       save(false);
       previous.elapsedMs = progress.elapsedMs;
-      if (shouldClearHints) {
-        previous.hints = progress.hints;
-        previous.hintedPlaces = [...progress.hintedPlaces];
-      }
     }
     history.push(previous);
     if (history.length > 100) history.shift();
     progress.moves++;
   }
   if (action === 'reset') { solveTimer = {elapsedMs:0,startedAt:null}; completionEvent = null; }
-  if (shouldClearHints) { progress.hints = 0; progress.hintedPlaces = []; }
   progress.board = board;
   screen = 'puzzle';
   shouldShowGuidance = false;
@@ -346,7 +340,7 @@ function applyBoard(board, message, action = 'place') {
 }
 
 function chooseLot(index) {
-  if (progress.hintedPlaces.includes(progress.board[index])) return;
+  if (isSolved(puzzle,progress.board) || progress.hintedPlaces.includes(progress.board[index])) return;
   if (!selected) {
     selected = progress.board[index];
     render();
@@ -412,7 +406,7 @@ window.addEventListener('click',event => {
 },true);
 document.addEventListener('pointerdown',event => {
   if (drag) { finishDrag(null,true); return; }
-  if (!event.isPrimary || event.button !== 0 || !puzzle || $('game').inert) return;
+  if (!event.isPrimary || event.button !== 0 || !puzzle || $('game').inert || isSolved(puzzle,progress.board)) return;
   const source = event.target.closest('#tray [data-place],#board [data-lot]');
   if (!source) return;
   const id = source.dataset.place || progress.board[Number(source.dataset.lot)];
@@ -455,7 +449,7 @@ function makeBoard() {
     const button = document.createElement('button');
     button.className = 'place'; button.dataset.place = place.id;
     button.innerHTML = `${placeArt(place.id)}<span class="place-name">${place.name}${renderIcon('check','placed-check')}</span>`;
-    button.addEventListener('click', () => { if (progress.hintedPlaces.includes(place.id)) return; selected = selected === place.id ? null : place.id; render(); });
+    button.addEventListener('click', () => { if (isSolved(puzzle,progress.board) || progress.hintedPlaces.includes(place.id)) return; selected = selected === place.id ? null : place.id; render(); });
     $('tray').append(button);
   }
   $('clues').replaceChildren();
@@ -540,7 +534,7 @@ function render() {
     const isLocked = progress.hintedPlaces.includes(id);
     button.className = `lot${id ? ' occupied' : ''}${isLocked ? ' locked' : ''}${id && id === selected ? ' selected' : ''}${selected && !isLocked ? ' target' : ''}`;
     button.classList.toggle('starter-target',starterStep === 0 && index === 0);
-    button.setAttribute('aria-disabled',String(isLocked));
+    button.setAttribute('aria-disabled',String(solved || isLocked));
     button.setAttribute('aria-label', `Lot ${address}, ${id ? nameOf(id) : 'empty'}${isLocked ? ', fixed by a hint' : id === selected && id ? ', selected' : ''}`);
     button.setAttribute('aria-pressed', String(Boolean(id && id === selected)));
     button.innerHTML = `<span class="address">${address}</span>${id ? `${placeArt(id)}<span class="place-name">${nameOf(id)}</span>` : ''}${isLocked ? renderIcon('lock-key','hint-lock') : ''}`;
@@ -564,8 +558,9 @@ function render() {
   });
   $('selection-status').classList.add('sr-only');
   $('selection-status').textContent = selected ? `${nameOf(selected)} selected. Choose a lot.` : isLearning ? `Drag ${nameOf(starterPlaces[starterStep])}, or tap it then a square.` : 'Drag a place, or tap a place then a square.';
-  $('undo').disabled = !history.some(previous => restoreHintedPlaces(previous.board,progress.hintedPlaces,puzzle.solution).some((id,index) => id !== board[index]));
-  $('clear').disabled = !board.some(Boolean);
+  $('undo').closest('.play-controls').hidden = solved;
+  $('undo').disabled = solved || !history.some(previous => restoreHintedPlaces(previous.board,progress.hintedPlaces,puzzle.solution).some((id,index) => id !== board[index]));
+  $('clear').disabled = solved || !board.some(Boolean);
   $('game').classList.toggle('is-solved', solved);
   $('game').classList.toggle('has-selection', Boolean(selected));
   $('hint').disabled = solved;
@@ -577,7 +572,7 @@ function render() {
   if (solved) {
     if (!wasSolved && screen !== 'home') screen = 'result';
     $('completion-board').innerHTML = board.map(id => `<span class="completion-place">${placeArt(id)}</span>`).join('');
-    const hintNote = progress.hints ? `${progress.hints} hint${progress.hints === 1 ? '' : 's'} used.` : 'Solved without hints.';
+    const hintNote = progress.hints ? `${progress.hints} hint${progress.hints === 1 ? '' : 's'}` : 'No hints';
     $('completion-detail').textContent = hintNote;
     const solveTime = formatSolveTime(progress.elapsedMs);
     $('completion-time').textContent = solveTime ? `Solved in ${solveTime}` : '';
@@ -607,22 +602,23 @@ function render() {
 }
 
 $('undo').addEventListener('click', () => {
+  if (isSolved(puzzle,progress.board)) return;
   updateReturnPrompt();
   recordPuzzleView();
   let previous, board;
   do {
     previous = history.pop();
     if (!previous) return;
-    board = restoreHintedPlaces(previous.board,previous.hintedPlaces ?? progress.hintedPlaces,puzzle.solution);
+    board = restoreHintedPlaces(previous.board,progress.hintedPlaces,puzzle.solution);
   } while (board.every((id,index) => id === progress.board[index]));
   progress.board = board; progress.moves = previous.moves; selected = null;
-  if (previous.hintedPlaces) { progress.hintedPlaces = previous.hintedPlaces; progress.hints = previous.hints; }
   if ('elapsedMs' in previous) solveTimer = {elapsedMs:previous.elapsedMs,startedAt:null};
   track('board_undo');
   save(); render();
 });
 $('clear').addEventListener('click', () => {
-  const hintsToKeep = isSolved(puzzle,progress.board) ? [] : progress.hintedPlaces;
+  if (isSolved(puzzle,progress.board)) return;
+  const hintsToKeep = progress.hintedPlaces;
   applyBoard(restoreHintedPlaces(Array(9).fill(null),hintsToKeep,puzzle.solution),hintsToKeep.length ? 'Board reset. Hinted places stay fixed.' : 'Board cleared.','reset');
   ($('undo').disabled ? $('hint') : $('undo')).focus({preventScroll:true});
 });

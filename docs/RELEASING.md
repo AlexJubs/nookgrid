@@ -20,7 +20,7 @@ Before publishing a UI or gameplay release, record the source, browser/device an
 
 - Home: new, unfinished and completed daily puzzle; Play/Continue, result and Calendar navigation.
 - Daily, Tutorial and archive: drag on and off, move, swap, cancelled drop, tap and keyboard controls, Undo, Reset, hint cancellation and fixed hints, reload with saved progress.
-- Completion: time and hints, daily streak credit, archive/Tutorial exclusion, solved-plan disclosure, replay, clean share text and share cancellation/fallback.
+- Completion: time and hints, daily streak credit, archive/Tutorial exclusion, read-only solved-plan disclosure, fresh Tutorial reentry, clean share text and share cancellation/fallback.
 - Calendar: one whole month without a scrolling history list, month boundaries, current-puzzle underline, completion checks, streak marks, disabled dates and saved completion after Reset.
 - Dialogs and reading pages: Help, Menu, Settings, Feedback, Share, About and both Privacy pages; close, Escape, outside dismissal, focus restoration, text editing and the return to the correct puzzle.
 - Recovery and fit: load failure and retry, short-phone calendar fit, readable scrolling on long help/privacy pages, desktop controls and native safe areas.

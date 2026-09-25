@@ -43,6 +43,8 @@ button,.inline-button{-webkit-user-select:none;user-select:none}
 .game-page .lot:not(.occupied) .address{background:none;color:var(--muted);font-size:12px}
 .game-page .lot .address{color:var(--muted)}
 .game-page .lot:hover{background:var(--line)}
+.game-page .is-solved .lot{cursor:default}
+.game-page .is-solved .lot:hover{background:var(--surface)}
 .game-page .lot.selected,.game-page .place.selected{background:var(--surface);outline:2px solid var(--focus);outline-offset:1px}
 .game-page .lot:focus-visible{z-index:1}
 .game-page .lot.drop-target{z-index:2}
@@ -78,9 +80,8 @@ button,.inline-button{-webkit-user-select:none;user-select:none}
 .completion-summary{display:flex;flex-direction:column;flex:1;gap:12px;width:100%;padding:0;background:transparent}
 .game-page .completion h2{font-size:26px;line-height:1.2;margin-bottom:4px}
 .game-page .completion p{font-size:14px;line-height:1.5}
-.completion-meta{display:flex;flex-wrap:wrap;gap:4px;color:var(--ink);font-variant-numeric:tabular-nums}
+.completion-meta{display:flex;flex-wrap:wrap;gap:4px 12px;color:var(--ink);font-variant-numeric:tabular-nums}
 .game-page .completion .completion-meta p{font-size:16px}
-.completion-meta p:not([hidden])~p:not([hidden])::before{content:"·";margin-right:4px}
 .confetti{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:30}
 .confetti i{position:absolute;top:0;left:0;width:8px;height:12px;border-radius:2px}
 @media(prefers-reduced-motion:reduce){.confetti{display:none}}

@@ -1,4 +1,4 @@
-import { test, expect, bank, daily, today, emptyBoard, openGame, place, expectBoard, solvePuzzle, seedProgress, readProgress, choose } from './fixtures.mjs';
+import { test, expect, bank, daily, today, emptyBoard, openGame, enterGame, place, expectBoard, solvePuzzle, seedProgress, readProgress, choose } from './fixtures.mjs';
 
 for (const state of ['drag', 'focus']) {
   test(`${state} rings stay visible over neighboring cells on every edge`, async ({ page, isMobile }, testInfo) => {
@@ -112,7 +112,7 @@ test('calendar navigation preserves progress and exposes only released dates', a
   await expectBoard(page, ['cafe', ...Array(8).fill(null)]);
 });
 
-test('dated completions stay recorded while Tutorial stays unsaved after Reset and reload', async ({ page }) => {
+test('dated completions stay read-only while Tutorial starts fresh after reload', async ({ page }) => {
   test.setTimeout(60_000);
   const archive = bank.puzzles.find(puzzle => puzzle.date === '2026-09-11');
   for (const puzzle of [daily, archive]) {
@@ -127,12 +127,13 @@ test('dated completions stay recorded while Tutorial stays unsaved after Reset a
     if (date === 'practice') expect(await readProgress(page, puzzle.date)).toBeNull();
     else await expect.poll(async () => (await readProgress(page, puzzle.date)).reported).toBe(true);
     await choose(page.locator('#view-solved'));
-    await page.locator('#clear').click();
-    await expectBoard(page, emptyBoard);
+    await expectBoard(page, puzzle.solution);
+    for (const control of ['#clear', '#undo', '#hint']) await expect(page.locator(control)).toBeHidden();
     await page.reload();
-    await expectBoard(page, emptyBoard);
+    await enterGame(page);
+    await expectBoard(page, date === 'practice' ? emptyBoard : puzzle.solution);
     if (date === 'practice') expect(await readProgress(page, puzzle.date)).toBeNull();
-    else expect((await readProgress(page, puzzle.date)).reported).toBe(true);
+    else expect(await readProgress(page, puzzle.date)).toMatchObject({ board: puzzle.solution, reported: true });
     await page.locator('#menu-open').click();
     await page.locator('#menu-calendar-open').click();
     const day = page.locator(`#calendar-dialog [data-puzzle-date="${date}"]`);
@@ -697,9 +698,13 @@ test('phone layout stacks the plan, board, items and actions without overlap', a
   await expect(page.locator('#completion')).toBeVisible();
   await page.locator('#view-solved').click();
   await page.locator('#solved-plan summary').click();
-  await page.locator('#board [data-lot="0"]').click();
-  await expect(page.locator('#tray')).toBeVisible();
-  await verifyStack();
+  await expect(page.locator('#tray')).toBeHidden();
+  await expect(page.locator('.board-actions')).toBeHidden();
+  const [plan, board, result] = await Promise.all(['#solved-plan', '#board', '#view-result'].map(getBounds));
+  expect(plan.y + plan.height).toBeLessThanOrEqual(board.y);
+  expect(board.width).toBeGreaterThanOrEqual(280);
+  expect(board.y + board.height).toBeLessThan(result.y);
+  await expectBoard(page, daily.solution);
   await openGame(page, 'date=practice');
   await expect(page.locator('#tutorial-intro')).toHaveCount(0);
   await expect(page.locator('#selection-status')).toContainText('Drag Bakery');

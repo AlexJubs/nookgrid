@@ -1,4 +1,4 @@
-import { test, expect, bank, daily, today, emptyBoard, seedProgress, place, expectBoard, readProgress, choose, solvePuzzle } from './fixtures.mjs';
+import { test, expect, bank, daily, today, emptyBoard, seedProgress, place, expectBoard, readProgress, choose, solvePuzzle, dragPlace } from './fixtures.mjs';
 
 async function openHome(page) {
   await page.goto('/?test=1');
@@ -112,7 +112,7 @@ test('explicit puzzle links bypass home for today, archives and the Tutorial', a
   }
 });
 
-test('completion has a dedicated recap, accessible solved plan and replay without duplicate credit', async ({ page }) => {
+test('completion has a dedicated recap and read-only solved plan without duplicate credit', async ({ page }) => {
   await seedProgress(page, { board: [...daily.solution.slice(0, 8), null], moves: 8, elapsedMs: 62_000 });
   await page.goto('/?test=1');
   await expect(page.locator('#board')).toBeVisible();
@@ -152,10 +152,11 @@ test('completion has a dedicated recap, accessible solved plan and replay withou
   await choose(page.locator('#home-result'));
   await expect(page.locator('#completion')).toBeVisible();
   await choose(page.locator('#view-solved'));
-  await choose(page.locator('#clear'));
+  await expect(page.locator('#clear')).toBeHidden();
   await expect(page.locator('#board')).toBeVisible();
-  await expectBoard(page, emptyBoard);
-  expect(await readProgress(page)).toMatchObject({ hints: 0, hintedPlaces: [], reported: true, elapsedMs: 0 });
+  await expectBoard(page, daily.solution);
+  expect(await readProgress(page)).toMatchObject({ hints: 0, hintedPlaces: [], reported: true });
+  expect((await readProgress(page)).elapsedMs).toBeGreaterThanOrEqual(62_000);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('nookgrid:test:v1:streak')))).toEqual([today]);
 });
 
@@ -245,8 +246,8 @@ for (const native of [false, true]) {
     await expect(page).toHaveURL(/date=2026-09-16/);
     await expect(page.locator('#completion')).toBeVisible();
     await choose(page.locator('#view-solved'));
-    await choose(page.locator('#clear'));
-    await expectBoard(page, emptyBoard);
+    await expect(page.locator('#clear')).toBeHidden();
+    await expectBoard(page, archive.solution);
     await choose(page.locator('#home-open'));
     await choose(page.locator('#calendar-open'));
     await expect(previous).toHaveAccessibleName(/completed/);
@@ -501,8 +502,22 @@ for (const [label, puzzle, date] of [
       await expect(page.locator('#result-calendar-open')).toBeInViewport();
     }
     await choose(page.locator('#view-solved'));
-    await expect(page.locator('#clear')).toBeVisible();
-    await expect(page.locator('#clear')).toBeEnabled();
+    for (const control of ['undo', 'clear', 'hint']) await expect(page.locator(`#${control}`)).toBeHidden();
+    await expect(page.locator('#board [aria-disabled="true"]')).toHaveCount(9);
     await expect(page.locator('#tray')).toBeHidden();
+    const saved = await readProgress(page, puzzle.date);
+    const firstLot = page.locator('#board [data-lot="0"]');
+    await firstLot.focus();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Delete');
+    await dragPlace(page, firstLot, page.locator('#board [data-lot="1"]'));
+    await expectBoard(page, puzzle.solution);
+    await expect(page.locator('#board .selected, .drag-ghost')).toHaveCount(0);
+    expect(await readProgress(page, puzzle.date)).toEqual(saved);
+    await page.locator('#solved-plan summary').press('Enter');
+    await expect(page.locator('#clues .clue:visible')).toHaveCount(puzzle.clues.length);
+    await expect(page.locator('#view-result')).toHaveAccessibleName('Back to results');
+    await choose(page.locator('#view-result'));
+    await expect(page.locator('#completion')).toBeVisible();
   });
 }

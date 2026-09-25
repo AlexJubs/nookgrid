@@ -16,7 +16,7 @@ async function openCalendar(page) {
   await expect(page.locator('#calendar-dialog')).toBeVisible();
 }
 
-test('a daily completion survives Reset, replay and reload without earning twice', async ({ page }) => {
+test('a daily completion stays read-only across review and reload without earning twice', async ({ page }) => {
   await seedProgress(page, almostSolved);
   await openGame(page);
   await openCalendar(page);
@@ -29,13 +29,14 @@ test('a daily completion survives Reset, replay and reload without earning twice
   await expect.poll(() => readStreak(page)).toEqual([today]);
 
   await choose(page.locator('#view-solved'));
-  await page.locator('#clear').click();
-  await expectBoard(page, emptyBoard);
+  await expectBoard(page, daily.solution);
+  for (const control of ['#clear', '#undo', '#hint']) await expect(page.locator(control)).toBeHidden();
   await expect(page.locator('#completion')).toBeHidden();
   await openCalendar(page);
   await expect(page.locator('#calendar-streak')).toHaveText('1-day streak');
   await page.getByRole('button', { name: 'Close calendar', exact: true }).click();
-  await solvePuzzle(page);
+  await page.locator('#view-result').click();
+  await expect(page.locator('#daily-streak')).toHaveText('1-day streak');
   await page.reload();
   await enterGame(page);
   await expect(page.locator('#completion')).toBeVisible();
@@ -226,7 +227,7 @@ test.describe('saved history from the previous local-day schedule', () => {
     await expect(page.locator('#completion')).toBeVisible();
     await expect(page.locator('#daily-streak')).toHaveText('3-day streak');
     await expect(page.locator('#completion-time')).toHaveText('Solved in 1:30');
-    await expect(page.locator('#completion-detail')).toHaveText('1 hint used.');
+    await expect(page.locator('#completion-detail')).toHaveText('1 hint');
     expect(await readStreak(page)).toEqual(earned);
     await page.reload();
     await enterGame(page);
