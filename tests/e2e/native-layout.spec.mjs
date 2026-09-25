@@ -169,6 +169,24 @@ test('native phone completions and the full tutorial plan stay within safe areas
 });
 
 
+test('native long Help stays inside safe insets and scrolls to Tutorial', async ({ page }) => {
+  const phone = phones[2];
+  await page.setViewportSize({ width: phone.width, height: phone.height });
+  await openGame(page);
+  await page.locator('#help-dialog').evaluate(dialog => dialog.style.setProperty('--font-body', '20px'));
+  await page.locator('#help-open').click();
+  const help = page.locator('#help-dialog');
+  const bounds = await help.boundingBox();
+  expect(bounds.y).toBeGreaterThanOrEqual(phone.top);
+  expect(bounds.y + bounds.height).toBeLessThanOrEqual(phone.height - phone.bottom);
+  expect(await help.evaluate(dialog => dialog.scrollHeight > dialog.clientHeight)).toBe(true);
+  await expect(help.getByRole('button', { name: 'Close how to play', exact: true })).toBeInViewport();
+  await page.locator('#help-tutorial').scrollIntoViewIfNeeded();
+  await expect(page.locator('#help-tutorial')).toBeInViewport();
+  await page.locator('#help-tutorial').click();
+  await expect(page.locator('#puzzle-label')).toHaveText('Tutorial');
+});
+
 test('native How to play stays within the screen without scrolling the puzzle', async ({ page }) => {
   test.setTimeout(60_000);
   for (const phone of phones) {

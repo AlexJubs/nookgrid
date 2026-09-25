@@ -289,7 +289,7 @@ a.calendar-day.is-streak:hover{background:var(--accent-hover)}
 @media(max-width:927px) and (orientation:portrait){
   .native-app{--safe-top:env(safe-area-inset-top);--safe-bottom:env(safe-area-inset-bottom);--header-height:52px}
   .native-app .game-page{height:100dvh;min-height:0;padding-top:var(--safe-top);padding-bottom:var(--safe-bottom);display:flex;flex-direction:column}
-  .native-app .game-page #calendar-dialog{top:var(--safe-top);bottom:var(--safe-bottom);max-height:calc(100dvh - var(--safe-top) - var(--safe-bottom) - 24px)}
+  .native-app .game-page dialog{top:var(--safe-top);bottom:var(--safe-bottom);max-height:calc(100dvh - var(--safe-top) - var(--safe-bottom) - 24px)}
   .native-app .game-page .site-header{height:var(--header-height);flex:none;width:100%;padding-block:4px}
   .native-app .game-page .brand{font-size:24px}
   .native-app .puzzle-heading h1{font-size:24px;margin:0}
