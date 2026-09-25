@@ -36,8 +36,7 @@ test('Tutorial completion lasts for the current visit and Play tutorial starts a
   await expect(page.locator('#calendar-dialog a[data-puzzle-date="practice"]')).toHaveCount(0);
   await page.locator('#calendar-dialog [data-close]').click();
   await page.locator('#home-open').click();
-  await page.locator('#help-open').click();
-  await page.locator('#help-tutorial').click();
+  await page.locator('#home-tutorial').click();
   await expectBoard(page, emptyBoard);
   await expect(page.locator('#completion')).toBeHidden();
   await expect(page.locator('#hint')).toHaveAccessibleName('Hint, 0 hints used');

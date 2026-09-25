@@ -6,6 +6,70 @@ async function openHome(page) {
   await expect(page.locator('#home')).toBeVisible();
 }
 
+test('Home offers fresh Tutorial practice below its dated puzzle actions', async ({ page }) => {
+  await openHome(page);
+  const tutorial = page.locator('#home').getByRole('link', { name: 'Play tutorial', exact: true });
+  await expect(tutorial).toBeVisible();
+  const calendar = await page.locator('#calendar-open').boundingBox();
+  const practice = await tutorial.boundingBox();
+  expect(practice.y).toBeGreaterThanOrEqual(calendar.y + calendar.height);
+  await choose(tutorial);
+  await expect(page).toHaveURL(/date=practice/);
+  await expect(page.locator('#clues-title')).toHaveText('Tutorial plan');
+  await expectBoard(page, emptyBoard);
+});
+
+test('week dates open saved completed, unfinished and current puzzles from Home and results', async ({ page }) => {
+  const monday = bank.puzzles.find(puzzle => puzzle.date === '2026-09-14');
+  await seedProgress(page, { board: monday.solution, reported: true }, monday.date);
+  await seedProgress(page, { board: ['park', ...Array(8).fill(null)], moves: 1 }, '2026-09-15');
+  await openHome(page);
+  await expect(page.locator('#home-week a')).toHaveCount(4);
+  const completed = page.locator('#home-week a[data-puzzle-date="2026-09-14"]');
+  await expect(completed).toHaveAccessibleName(/September 14, completed/);
+  await choose(completed.locator('.week-tile'));
+  await expect(page).toHaveURL(/date=2026-09-14/);
+  await expect(page.locator('#completion')).toBeVisible();
+  await choose(page.locator('#view-solved'));
+  await expect(page.locator('#clues-title')).toHaveText('Mon, Sep 14, 2026');
+  await expectBoard(page, monday.solution);
+  await choose(page.locator('#view-result'));
+  await choose(page.locator('#result-week a[data-puzzle-date="2026-09-15"] .week-tile'));
+  await expect(page.locator('#clues-title')).toHaveText('Tue, Sep 15, 2026');
+  await expectBoard(page, ['park', ...Array(8).fill(null)]);
+  await choose(page.locator('#home-open'));
+  const current = page.locator(`#home-week a[data-puzzle-date="${today}"]`);
+  await current.focus();
+  await page.evaluate(() => window.dispatchEvent(new StorageEvent('storage', { key: 'nookgrid:test:v1:2026-09-14' })));
+  await expect(current).toBeFocused();
+  await current.press('Enter');
+  await expect(page).toHaveURL(new RegExp(`date=${today}`));
+  await expect(page.locator('#clues-title')).toHaveText('Thu, Sep 17, 2026');
+  await expectBoard(page, emptyBoard);
+  expect((await readProgress(page, '2026-09-15')).board).toEqual(['park', ...Array(8).fill(null)]);
+});
+
+test('week strip leaves prelaunch, missing and future puzzles unavailable', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-09-11T12:00:00Z'));
+  await page.route('**/puzzles.json', route => route.fulfill({ json: { ...bank, puzzles: bank.puzzles.filter(puzzle => puzzle.date !== '2026-09-10') } }));
+  await openHome(page);
+  await expect(page.locator('#home-week a')).toHaveCount(1);
+  await expect(page.locator('#home-week a')).toHaveAttribute('href', '?date=2026-09-11&test=1');
+  await expect(page.locator('#home-week [role="img"]')).toHaveCount(6);
+  await expect(page.locator('#home-week [data-puzzle-date="2026-09-10"]')).toHaveAccessibleName(/unavailable/);
+});
+
+test('week rollover keeps keyboard focus on the new current puzzle', async ({ page }) => {
+  await page.clock.setSystemTime(new Date('2026-09-20T23:59:58Z'));
+  await openHome(page);
+  await page.locator('#home-week a[data-puzzle-date="2026-09-20"]').focus();
+  await page.clock.fastForward(4_000);
+  const current = page.locator('#home-week a[data-puzzle-date="2026-09-21"]');
+  await expect(current).toBeFocused();
+  await current.press('Enter');
+  await expect(page.locator('#clues-title')).toHaveText('Mon, Sep 21, 2026');
+});
+
 test('a new player reaches today in one action and returns to the same unfinished puzzle', async ({ page }) => {
   await openHome(page);
   await expect(page.locator('#home-streak-count')).toHaveText('0');
@@ -121,20 +185,21 @@ for (const native of [false, true]) {
       expect(actions.y + actions.height).toBeGreaterThan(height * 0.8);
       await expect(page.locator('#home-play')).toBeInViewport();
       await expect(page.locator('#calendar-open')).toBeInViewport();
+      await expect(page.locator('#home-tutorial')).toBeInViewport();
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
       actionPositions.push(actions.y);
     }
     expect(actionPositions[1] - actionPositions[0]).toBeGreaterThan(60);
     await page.setViewportSize({ width: 390, height: 667 });
     await openHome(page);
-    const calendar = page.locator('#calendar-open');
-    await calendar.scrollIntoViewIfNeeded();
-    await expect(calendar).toBeInViewport();
-    const bounds = await calendar.boundingBox();
+    const tutorial = page.locator('#home-tutorial');
+    await tutorial.scrollIntoViewIfNeeded();
+    await expect(tutorial).toBeInViewport();
+    const bounds = await tutorial.boundingBox();
     expect(bounds.y).toBeGreaterThanOrEqual(safeTop);
     expect(bounds.y + bounds.height).toBeLessThanOrEqual(667 - safeBottom);
     expect(bounds.height).toBeGreaterThanOrEqual(44);
-    await calendar.press('Enter');
+    await page.locator('#calendar-open').press('Enter');
     await expect(page.locator('#calendar-dialog')).toBeVisible();
   });
 
@@ -190,17 +255,19 @@ for (const native of [false, true]) {
 }
 
 test('home and calendar retain keyboard focus, touch targets and narrow-screen access', async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 568 });
   await openHome(page);
-  const targets = await page.locator('#home button:visible,#home a:visible,.site-header button:visible').evaluateAll(elements => elements.map(element => {
-    const { width, height } = element.getBoundingClientRect();
-    return { label: element.getAttribute('aria-label') || element.textContent.trim(), width, height };
-  }));
-  for (const target of targets) {
-    expect(target.width, target.label).toBeGreaterThanOrEqual(44);
-    expect(target.height, target.label).toBeGreaterThanOrEqual(44);
+  for (const width of [375, 361, 320]) {
+    await page.setViewportSize({ width, height: 568 });
+    const targets = await page.locator('#home button:visible,#home a:visible,.site-header button:visible').evaluateAll(elements => elements.map(element => {
+      const { width, height } = element.getBoundingClientRect();
+      return { label: element.getAttribute('aria-label') || element.textContent.trim(), width, height };
+    }));
+    for (const target of targets) {
+      expect(target.width, target.label).toBeGreaterThanOrEqual(44);
+      expect(target.height, target.label).toBeGreaterThanOrEqual(44);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   }
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   await page.locator('#calendar-open').press('Enter');
   const calendar = page.locator('#calendar-dialog');
   await expect(calendar).toBeVisible();
@@ -389,7 +456,7 @@ for (const [label, puzzle, date] of [
     }
     await expect(page.locator('#completion')).toBeVisible();
     const labels = [label === 'Tutorial' ? "Play today's puzzle" : 'Share result', 'View solved puzzle', 'All puzzles'];
-    await expect(page.locator('#completion button:visible, #completion a:visible')).toHaveText(labels);
+    await expect(page.locator('#completion button:visible, #completion a:visible:not(.week-day)')).toHaveText(labels);
     await expect(page.locator('.completion-actions button:visible, .completion-actions a:visible')).toHaveText(labels);
     await expect(page.locator('.result-history button')).toHaveCount(0);
     await expect(page.locator('#home-open')).toBeVisible();

@@ -177,6 +177,24 @@ final class NookGridUITests: XCTestCase {
         XCTAssertTrue(button("Continue today's puzzle").waitForExistence(timeout: 5))
         tap(button("Continue today's puzzle"))
         assertLot("A1", "Bakery")
+        tap(button("Back to home"))
+        let tutorial = app.webViews.links["Play tutorial"].firstMatch
+        XCTAssertTrue(tutorial.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertGreaterThanOrEqual(tutorial.frame.width, 44)
+        XCTAssertGreaterThanOrEqual(tutorial.frame.height, 44)
+        tap(tutorial)
+        XCTAssertTrue(app.staticTexts["Tutorial plan"].waitForExistence(timeout: 5))
+        for address in lots { assertLot(address, "empty") }
+        tap(button("Back to home"))
+        XCTAssertTrue(button("Continue today's puzzle").waitForExistence(timeout: 5))
+        let weekToday = app.webViews.links.matching(NSPredicate(format: "label CONTAINS[c] ', today,'")).firstMatch
+        XCTAssertTrue(weekToday.exists, app.debugDescription)
+        XCTAssertGreaterThanOrEqual(weekToday.frame.width, 44)
+        XCTAssertGreaterThanOrEqual(weekToday.frame.height, 44)
+        tap(weekToday)
+        dateFormat.dateFormat = "EEE, MMM d, yyyy"
+        XCTAssertTrue(app.staticTexts[dateFormat.string(from: Date())].waitForExistence(timeout: 5), app.debugDescription)
+        assertLot("A1", "Bakery")
         app.terminate()
         app.launchArguments = ["nookgrid-offline"]
         app.launch()
@@ -323,7 +341,7 @@ final class NookGridUITests: XCTestCase {
         tap(button("Menu"))
         tap(app.webViews.links["Privacy"].firstMatch)
         tap(app.webViews.links["Back"].firstMatch)
-        XCTAssertTrue(app.staticTexts["Sep 10, 2026 plan"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Thu, Sep 10, 2026"].waitForExistence(timeout: 5))
         assertLot("C3", "Park")
         openTutorial()
         XCTAssertFalse(button("Park, choose a lot").exists)
@@ -414,7 +432,7 @@ final class NookGridUITests: XCTestCase {
         goToCalendarBoundary("Previous month")
         XCTAssertEqual(getCalendarMonthTitle().label, "September 2026")
         tap(app.webViews.links.matching(NSPredicate(format: "label BEGINSWITH 'Thursday, September 10, 2026,'")).firstMatch)
-        XCTAssertTrue(app.staticTexts["Sep 10, 2026 plan"].waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(app.staticTexts["Thu, Sep 10, 2026"].waitForExistence(timeout: 5), app.debugDescription)
         XCTAssertFalse(button("Close calendar").exists)
     }
 
@@ -432,7 +450,7 @@ final class NookGridUITests: XCTestCase {
         tap(button("How to play"))
         XCTAssertTrue(button("Close how to play").waitForExistence(timeout: 5))
         tap(button("Close how to play"))
-        XCTAssertTrue(app.staticTexts["Sep 10, 2026 plan"].exists)
+        XCTAssertTrue(app.staticTexts["Thu, Sep 10, 2026"].exists)
         assertLot("A1", "Bakery")
         openToday()
         assertLot("A1", "empty")
@@ -442,7 +460,11 @@ final class NookGridUITests: XCTestCase {
     }
 
     func testDialogsDismiss() {
-        let planTitle = app.staticTexts["Today’s plan"]
+        let dateFormat = DateFormatter()
+        dateFormat.locale = Locale(identifier: "en_US_POSIX")
+        dateFormat.timeZone = TimeZone(secondsFromGMT: 0)
+        dateFormat.dateFormat = "EEE, MMM d, yyyy"
+        let planTitle = app.staticTexts[dateFormat.string(from: Date())]
         XCTAssertTrue(planTitle.exists, app.debugDescription)
         let headerY = app.webViews.links["NookGrid home"].frame.minY
         tap(button("How to play"))

@@ -69,7 +69,7 @@ function openDialog(id, opener) {
 for (const [button, dialog] of [['help-open','help-dialog'],['menu-open','menu-dialog'],['menu-calendar-open','calendar-dialog'],['calendar-open','calendar-dialog'],['result-calendar-open','calendar-dialog'],['feedback-open','feedback-dialog'],['settings-open','settings-dialog'],['hint','hint-dialog']]) {
   $(button).addEventListener('click', () => openDialog(dialog, $(button)));
 }
-$('help-tutorial').href = `?date=practice${testMode ? '&test=1' : ''}`;
+for (const id of ['help-tutorial','home-tutorial']) $(id).href = `?date=practice${testMode ? '&test=1' : ''}`;
 
 function getCompletedDates() {
   return bank.puzzles.filter(item => item.date <= today && (
@@ -136,16 +136,21 @@ function renderHistory() {
   $('calendar-open').classList.toggle('secondary',!hasFinishedBoard);
   $('home-date').textContent = new Date(`${today}T12:00:00Z`).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'});
   for (const id of ['home-week','result-week']) {
+    const focusedDate = $(id).contains(document.activeElement) ? document.activeElement.dataset.puzzleDate : null;
     $(id).replaceChildren(...getWeekDates(today).map(date => {
-      const day = document.createElement('div');
       const value = new Date(`${date}T12:00:00Z`);
       const isAvailable = date <= today && bank.puzzles.some(item => item.date === date);
+      const day = document.createElement(isAvailable ? 'a' : 'span');
+      day.dataset.puzzleDate = date;
       day.className = `week-day${completed.has(date) ? ' is-completed' : ''}${date === today ? ' is-today' : ''}${!isAvailable ? ' is-unreleased' : ''}`;
-      day.setAttribute('role','img');
+      if (isAvailable) day.href = `?date=${date}${testMode ? '&test=1' : ''}`;
+      else day.setAttribute('role','img');
+      if (date === today) day.setAttribute('aria-current','date');
       day.setAttribute('aria-label',`${value.toLocaleDateString('en-US',{month:'long',day:'numeric',timeZone:'UTC'})}${date === today ? ', today' : ''}${completed.has(date) ? ', completed' : !isAvailable ? ', unavailable' : ', not completed'}`);
       day.innerHTML = `<span class="week-label" aria-hidden="true">${value.toLocaleDateString('en-US',{weekday:'short',timeZone:'UTC'})}</span><span class="week-tile" aria-hidden="true">${completed.has(date) ? renderIcon('check') : value.getUTCDate()}</span>`;
       return day;
     }));
+    if (focusedDate) ($(id).querySelector(`a[data-puzzle-date="${focusedDate}"]`) || $(id).querySelector('a[aria-current="date"]'))?.focus({preventScroll:true});
   }
 }
 
@@ -499,7 +504,7 @@ function updateReturnPrompt() {
   const streak = streakLength(streakDays,currentDay);
   $('daily-streak').textContent = `${streak}-day streak`;
   $('daily-streak').hidden = streak === 0 || !isToday;
-  $('clues-title').textContent = mode === 'practice' ? 'Tutorial plan' : isToday ? 'Today’s plan' : `${$('puzzle-date').textContent} plan`;
+  $('clues-title').textContent = mode === 'practice' ? 'Tutorial plan' : new Date(`${puzzle.date}T12:00:00Z`).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
 }
 
 window.addEventListener('storage',event => {

@@ -28,7 +28,7 @@ test.beforeEach(async ({ page }) => {
   ` });
 });
 
-for (const destination of ['tutorial', 'archive']) {
+for (const destination of ['tutorial', 'archive', 'home tutorial', 'week']) {
   test(`native ${destination} navigation waits for queued saves`, async ({ page }) => {
     await openGame(page);
     await page.evaluate(async () => {
@@ -42,14 +42,18 @@ for (const destination of ['tutorial', 'archive']) {
       await page.locator('#help-open').click();
       await page.locator('#help-tutorial').click();
     }
-    else {
+    else if (destination === 'archive') {
       await page.locator('#menu-open').click();
       await page.locator('#menu-calendar-open').click();
       await page.locator('#calendar-dialog a[data-puzzle-date="2026-09-16"]').click();
     }
+    else {
+      await page.locator('#home-open').click();
+      await page.locator(destination === 'home tutorial' ? '#home-tutorial' : '#home-week a[data-puzzle-date="2026-09-16"]').click();
+    }
     await expect(page).toHaveURL(originalUrl);
     await page.evaluate(() => window.releaseNativeWrite());
-    await expect(page).toHaveURL(destination === 'tutorial' ? /date=practice/ : /date=2026-09-16/);
+    await expect(page).toHaveURL(destination.includes('tutorial') ? /date=practice/ : /date=2026-09-16/);
     await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
     await page.goto('/?test=1');
     await expect(page.locator('#board [data-lot="0"]')).toHaveAttribute('aria-label', 'Lot A1, Bakery');
