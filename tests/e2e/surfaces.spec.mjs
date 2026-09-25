@@ -106,30 +106,33 @@ test('calendar navigation preserves progress and exposes only released dates', a
   await openGame(page, 'date=2026-09-11');
   await expectBoard(page, ['park', ...Array(8).fill(null)]);
   await openGame(page, 'date=practice');
-  await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
+  await expectBoard(page, emptyBoard);
   await openGame(page, 'date=2099-01-01');
   await expect(page.locator('#puzzle-date')).toHaveText('Sep 17, 2026');
   await expectBoard(page, ['cafe', ...Array(8).fill(null)]);
 });
 
-test('completed puzzles stay recorded after selection changes, Reset and reload', async ({ page }) => {
+test('dated completions stay recorded while Tutorial stays unsaved after Reset and reload', async ({ page }) => {
   test.setTimeout(60_000);
   const archive = bank.puzzles.find(puzzle => puzzle.date === '2026-09-11');
-  for (const puzzle of [daily, archive, bank.tutorial]) {
+  for (const puzzle of [daily, archive]) {
     await seedProgress(page, { board: [...puzzle.solution.slice(0, 8), null], moves: 8 }, puzzle.date);
   }
   for (const puzzle of [daily, archive, bank.tutorial]) {
     const date = puzzle === bank.tutorial ? 'practice' : puzzle.date;
     await openGame(page, `date=${date}`);
-    await place(page, puzzle.solution[8], 8);
+    if (date === 'practice') await solvePuzzle(page, puzzle.solution);
+    else await place(page, puzzle.solution[8], 8);
     await expect(page.locator('#completion')).toBeVisible();
-    await expect.poll(async () => (await readProgress(page, puzzle.date)).reported).toBe(true);
+    if (date === 'practice') expect(await readProgress(page, puzzle.date)).toBeNull();
+    else await expect.poll(async () => (await readProgress(page, puzzle.date)).reported).toBe(true);
     await choose(page.locator('#view-solved'));
     await page.locator('#clear').click();
     await expectBoard(page, emptyBoard);
     await page.reload();
     await expectBoard(page, emptyBoard);
-    expect((await readProgress(page, puzzle.date)).reported).toBe(true);
+    if (date === 'practice') expect(await readProgress(page, puzzle.date)).toBeNull();
+    else expect((await readProgress(page, puzzle.date)).reported).toBe(true);
     await page.locator('#menu-open').click();
     await page.locator('#menu-calendar-open').click();
     const day = page.locator(`#calendar-dialog [data-puzzle-date="${date}"]`);
@@ -292,7 +295,7 @@ test('archived completion reaches today through Home and has no countdown', asyn
 for (const [mode, query, date] of [
   ['daily', '', today], ['archive', 'date=2026-09-11', '2026-09-11'], ['tutorial', 'date=practice', 'practice']
 ]) {
-  test(`How to play preserves the ${mode} route and saved board`, async ({ page }) => {
+  test(`How to play preserves the ${mode} route and current board`, async ({ page }) => {
     await openGame(page, query);
     await place(page, 'bakery', 0);
     const originalUrl = page.url();
@@ -328,9 +331,10 @@ for (const [mode, query, date] of [
     expect(await opener.evaluate(element => getComputedStyle(element).outlineStyle)).toBe('solid');
     await expect(page).toHaveURL(originalUrl);
     await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
-    expect(await readProgress(page, saveDate)).toMatchObject({ board: saved.board, moves: saved.moves, hints: saved.hints, hintedPlaces: saved.hintedPlaces });
+    if (mode === 'tutorial') expect(await readProgress(page, saveDate)).toBeNull();
+    else expect(await readProgress(page, saveDate)).toMatchObject({ board: saved.board, moves: saved.moves, hints: saved.hints, hintedPlaces: saved.hintedPlaces });
     await openGame(page, query);
-    await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
+    await expectBoard(page, mode === 'tutorial' ? emptyBoard : ['bakery', ...Array(8).fill(null)]);
     if (mode !== 'tutorial') {
       await opener.click();
       await tutorial.click();
@@ -342,7 +346,7 @@ for (const [mode, query, date] of [
   });
 }
 
-test('privacy keeps explicit puzzle context and returns to the saved board', async ({ page }) => {
+test('privacy keeps puzzle context, restoring dated saves and restarting Tutorial', async ({ page }) => {
   for (const [query, date] of [['date=2099-01-01', today], ['date=2026-09-11', '2026-09-11'], ['date=practice', 'practice']]) {
     await openGame(page, query);
     await place(page, 'bakery', 0);
@@ -360,7 +364,7 @@ test('privacy keeps explicit puzzle context and returns to the saved board', asy
     await choose(page.getByRole('link', { name: 'Back', exact: true }));
     await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
     expect(new URL(page.url()).searchParams.get('date')).toBe(date);
-    await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
+    await expectBoard(page, date === 'practice' ? emptyBoard : ['bakery', ...Array(8).fill(null)]);
     await expect(page.locator('#board-title')).toHaveText(date === 'practice' ? 'The tutorial puzzle' : date === today ? "Today's puzzle" : 'Archived puzzle');
   }
 });

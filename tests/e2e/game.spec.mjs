@@ -1,5 +1,71 @@
 import { test, expect, bank, daily, emptyBoard, today, openGame, enterGame, choose, place, expectBoard, solvePuzzle, readProgress, seedProgress, dragPlace } from './fixtures.mjs';
 
+test('Tutorial ignores a legacy saved completion and starts fresh', async ({ page }) => {
+  await seedProgress(page, { board: bank.tutorial.solution, hints: 9, hintedPlaces: bank.tutorial.solution, reported: true, elapsedMs: 62_000 }, bank.tutorial.date);
+  await openGame(page, 'date=practice');
+  await expectBoard(page, emptyBoard);
+  await expect(page.locator('#completion')).toBeHidden();
+  await expect(page.locator('#hint')).toHaveAccessibleName('Hint, 0 hints used');
+  await expect(page.locator('#undo')).toBeDisabled();
+  await expect(page.locator('#board .locked')).toHaveCount(0);
+  await expect(page.locator('#tray .place:visible')).toHaveCount(1);
+});
+
+test('Tutorial completion lasts for the current visit and Play tutorial starts a new attempt', async ({ page }) => {
+  await seedProgress(page, { board: ['park', ...Array(8).fill(null)], moves: 1 }, today);
+  await seedProgress(page, ['2026-09-16'], 'streak');
+  await openGame(page, 'date=practice');
+  await page.locator('#hint').click();
+  await page.locator('#confirm-hint').click();
+  await page.clock.fastForward(65_000);
+  await solvePuzzle(page, bank.tutorial.solution, 1);
+  await expect(page.locator('#completion-detail')).toHaveText('1 hint used.');
+  await choose(page.locator('#view-solved'));
+  await expectBoard(page, bank.tutorial.solution);
+  await page.locator('#help-open').click();
+  await expect(page.locator('#help-tutorial')).toBeHidden();
+  await page.locator('#help-dialog [data-close]').click();
+  await page.locator('#view-result').click();
+  await expect(page.locator('#completion')).toBeVisible();
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: false })));
+  await expect(page.locator('#completion')).toBeVisible();
+  expect(await readProgress(page, bank.tutorial.date)).toBeNull();
+  expect(await readProgress(page, 'streak')).toEqual(['2026-09-16']);
+  await page.locator('#result-calendar-open').click();
+  await expect(page.locator('#calendar-dialog .is-completed')).toHaveCount(0);
+  await expect(page.locator('#calendar-dialog a[data-puzzle-date="practice"]')).toHaveCount(0);
+  await page.locator('#calendar-dialog [data-close]').click();
+  await page.locator('#home-open').click();
+  await page.locator('#help-open').click();
+  await page.locator('#help-tutorial').click();
+  await expectBoard(page, emptyBoard);
+  await expect(page.locator('#completion')).toBeHidden();
+  await expect(page.locator('#hint')).toHaveAccessibleName('Hint, 0 hints used');
+  await expect(page.locator('#undo')).toBeDisabled();
+  await expect(page.locator('#tray .place:visible')).toHaveCount(1);
+  await openGame(page);
+  await expectBoard(page, ['park', ...Array(8).fill(null)]);
+  expect(await readProgress(page, 'streak')).toEqual(['2026-09-16']);
+});
+
+test('restoring a cached Tutorial visit restarts practice without affecting ordinary page show', async ({ page }) => {
+  await openGame(page, 'date=practice');
+  await place(page, 'bakery', 0);
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: false })));
+  await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
+  await Promise.all([
+    page.waitForEvent('load'),
+    page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })))
+  ]);
+  await expectBoard(page, emptyBoard);
+  await expect(page.locator('#tray .place:visible')).toHaveCount(1);
+  await page.locator('#home-open').click();
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+  await expect(page.locator('#home')).toBeVisible();
+  await page.locator('#help-open').click();
+  await expect(page.locator('#help-tutorial')).toBeVisible();
+});
+
 test('tutorial guides all three moves, unlocks the full plan and completes', async ({ page }) => {
   await openGame(page, 'date=practice');
   await expect(page.locator('#puzzle-label')).toHaveText('Tutorial');
@@ -121,7 +187,7 @@ test('tap controls select, deselect, swap, undo and reset', async ({ page }) => 
 });
 
 for (const date of [today, 'practice', bank.puzzles[0].date]) {
-  test(`keyboard returns a selected place to the tray with Undo and saved progress for ${date}`, async ({ page }) => {
+  test(`keyboard returns a selected place to the tray with Undo for ${date}`, async ({ page }) => {
     await openGame(page, `date=${date}`);
     const saveDate = date === 'practice' ? bank.tutorial.date : date;
     const board = ['bakery', ...Array(8).fill(null)];
@@ -131,18 +197,21 @@ for (const date of [today, 'practice', bank.puzzles[0].date]) {
     await page.keyboard.press('Delete');
     await expectBoard(page, emptyBoard);
     await expect(page.locator('#selection-status')).toHaveText('Bakery is back in the tray.');
-    expect((await readProgress(page, saveDate)).board).toEqual(emptyBoard);
+    if (date === 'practice') expect(await readProgress(page, saveDate)).toBeNull();
+    else expect((await readProgress(page, saveDate)).board).toEqual(emptyBoard);
     await page.locator('#undo').press('Enter');
     await expectBoard(page, board);
     await page.reload();
-    await expectBoard(page, board);
+    await expectBoard(page, date === 'practice' ? emptyBoard : board);
+    if (date === 'practice') await place(page, 'bakery', 0);
     await page.locator('[data-place="bakery"]').press('Enter');
     await page.keyboard.press('Backspace');
     await expectBoard(page, emptyBoard);
     await page.reload();
     await enterGame(page);
     await expectBoard(page, emptyBoard);
-    expect((await readProgress(page, saveDate)).board).toEqual(emptyBoard);
+    if (date === 'practice') expect(await readProgress(page, saveDate)).toBeNull();
+    else expect((await readProgress(page, saveDate)).board).toEqual(emptyBoard);
     await expect(page.getByRole('button', { name: 'Put back', exact: true })).toHaveCount(0);
   });
 }
@@ -264,12 +333,13 @@ test('invalid drops and Escape cancel drags without swallowing the next tap', as
 });
 
 for (const date of ['practice', bank.puzzles[0].date]) {
-  test(`tray return preserves saved progress and Undo for ${date}`, async ({ page }) => {
+  test(`tray return preserves Undo for ${date}`, async ({ page }) => {
     await openGame(page, `date=${date}`);
     await place(page, 'bakery', 0);
     await dragPlace(page, page.locator('[data-lot="0"]'), page.locator('[data-place="bakery"]'));
     await expectBoard(page, emptyBoard);
-    expect((await readProgress(page, date === 'practice' ? bank.tutorial.date : date)).board).toEqual(emptyBoard);
+    if (date === 'practice') expect(await readProgress(page, bank.tutorial.date)).toBeNull();
+    else expect((await readProgress(page, date)).board).toEqual(emptyBoard);
     if (date === 'practice') {
       await expect(page.locator('#tray .place:visible')).toHaveCount(1);
       await expect(page.locator('.puzzle-instruction')).toHaveText('Tap Bakery, then A1, the outlined square.');
@@ -277,7 +347,7 @@ for (const date of ['practice', bank.puzzles[0].date]) {
     await page.locator('#undo').click();
     await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
     await page.reload();
-    await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
+    await expectBoard(page, date === 'practice' ? emptyBoard : ['bakery', ...Array(8).fill(null)]);
   });
 }
 
@@ -369,9 +439,13 @@ test('reset clears solved hints, Undo restores them and unfinished replay hints 
 
 for (const puzzle of [bank.tutorial, bank.puzzles.find(item => item.date === '2026-09-16')]) {
   test(`reset starts a hint-free replay after completing ${puzzle.date}`, async ({ page }) => {
-    await seedProgress(page, { board: [...puzzle.solution.slice(0, 8), null], hints: 1, hintedPlaces: [puzzle.solution[0]], elapsedMs: 62_000 }, puzzle.date);
+    if (puzzle.date !== 'tutorial') await seedProgress(page, { board: [...puzzle.solution.slice(0, 8), null], hints: 1, hintedPlaces: [puzzle.solution[0]], elapsedMs: 62_000 }, puzzle.date);
     await openGame(page, `date=${puzzle.date === 'tutorial' ? 'practice' : puzzle.date}`);
-    await place(page, puzzle.solution[8], 8);
+    if (puzzle.date === 'tutorial') {
+      await page.locator('#hint').click();
+      await page.locator('#confirm-hint').click();
+      await solvePuzzle(page, puzzle.solution, 1);
+    } else await place(page, puzzle.solution[8], 8);
     await expect(page.locator('#completion')).toBeVisible();
     await choose(page.locator('#view-solved'));
     await page.locator('#clear').click();
@@ -379,7 +453,8 @@ for (const puzzle of [bank.tutorial, bank.puzzles.find(item => item.date === '20
     await page.reload();
     await expectBoard(page, emptyBoard);
     await expect(page.locator('#board .locked')).toHaveCount(0);
-    expect(await readProgress(page, puzzle.date)).toMatchObject({ hints: 0, hintedPlaces: [], reported: true, elapsedMs: 0 });
+    if (puzzle.date === 'tutorial') expect(await readProgress(page, puzzle.date)).toBeNull();
+    else expect(await readProgress(page, puzzle.date)).toMatchObject({ hints: 0, hintedPlaces: [], reported: true, elapsedMs: 0 });
   });
 }
 

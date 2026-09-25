@@ -156,6 +156,7 @@ function renderScreen() {
   $('home').hidden = screen !== 'home';
   $('game').hidden = screen === 'home';
   $('home-open').hidden = screen === 'home';
+  $('help-tutorial').hidden = mode === 'practice' && screen !== 'home';
   $('completion').hidden = screen !== 'result' || !solved;
   $('view-result').hidden = screen !== 'puzzle' || !solved;
   $('view-result').textContent = mode === 'daily' ? "View today's result" : 'View result';
@@ -239,6 +240,7 @@ function startPlay(action) {
 async function save(shouldRun = !document.hidden) {
   solveTimer = advanceSolveTimer(solveTimer,performance.now(),progress.board.some(Boolean),shouldRun && screen === 'puzzle' && !isSolved(puzzle,progress.board));
   progress.elapsedMs = solveTimer.elapsedMs;
+  if (mode === 'practice') return true;
   progress.reported ||= restoreProgress(read(`${progressPrefix}${puzzle.date}`),ids,puzzle.solution).reported;
   streakDays = [...new Set([...restoreStreakDays(read(streakKey)),...streakDays])].sort();
   try {
@@ -652,8 +654,8 @@ async function init() {
     today = puzzleDay();
     ({puzzle,mode} = selectPuzzle(bank,today,params.get('date')));
     updatePuzzleLinks(mode === 'practice' ? 'practice' : puzzle.date);
-    progress = restoreProgress(read(`${progressPrefix}${puzzle.date}`),ids,puzzle.solution);
-    if (native && !native.storage) $('save-warning').hidden = false;
+    progress = restoreProgress(mode === 'practice' ? null : read(`${progressPrefix}${puzzle.date}`),ids,puzzle.solution);
+    if (mode !== 'practice' && native && !native.storage) $('save-warning').hidden = false;
     const solved = isSolved(puzzle,progress.board);
     screen = mode !== 'practice' && (params.get('view') === 'home' || !params.has('date') && (!progress.board.some(Boolean) || solved)) ? 'home' : solved ? 'result' : 'puzzle';
     if (params.get('view') === 'home') {
@@ -676,7 +678,6 @@ async function init() {
     $('puzzle-date').textContent = mode === 'practice' ? '' : new Date(`${puzzle.date}T12:00:00Z`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
     $('puzzle-date').hidden = mode === 'practice';
     $('puzzle-date').previousElementSibling.hidden = mode === 'practice';
-    $('help-tutorial').hidden = mode === 'practice';
     if (mode === 'practice') {
       document.querySelector('.puzzle-instruction').setAttribute('role','status');
       document.querySelector('.puzzle-instruction').classList.add('sr-only');
@@ -702,7 +703,7 @@ async function init() {
     document.addEventListener('visibilitychange',updateReturnPrompt);
     document.addEventListener('visibilitychange',() => save());
     window.addEventListener('pagehide',() => save(false));
-    window.addEventListener('pageshow',() => save());
+    window.addEventListener('pageshow',event => event.persisted && mode === 'practice' && screen !== 'home' ? location.reload() : save());
     if (native) native.onStateChange(({isActive}) => { save(isActive); updateReturnPrompt(); }).catch(() => {});
   } catch {
     analytics.track('app_error',{action:'puzzle_load'});

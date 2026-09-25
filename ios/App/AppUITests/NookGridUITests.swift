@@ -338,9 +338,11 @@ final class NookGridUITests: XCTestCase {
         assertLot("C3", "Park")
         assertLot("A1", "empty")
         openTutorial()
-        assertLot("A1", "Bakery")
-        assertLot("A2", "Cafe")
-        assertLot("A3", "Books")
+        for address in lots { assertLot(address, "empty") }
+        XCTAssertTrue(button("Bakery, choose a lot").exists)
+        XCTAssertFalse(button("Park, choose a lot").exists)
+        XCTAssertTrue(button("Hint, 0 hints used").exists)
+        XCTAssertFalse(button("Undo").isEnabled)
     }
 
     func testTutorialCompletionAndBackgroundTimer() {
@@ -368,6 +370,11 @@ final class NookGridUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["0-day streak"].exists)
         tap(button("Close calendar"))
         XCTAssertTrue(app.staticTexts["Nice work!"].exists)
+        tap(button("Back to home"))
+        openTutorial()
+        for address in lots { assertLot(address, "empty") }
+        XCTAssertTrue(button("Hint, 0 hints used").exists)
+        XCTAssertFalse(button("Undo").isEnabled)
     }
 
     private func getCalendarMonthTitle() -> XCUIElement {

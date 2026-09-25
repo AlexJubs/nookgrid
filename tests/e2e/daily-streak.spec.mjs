@@ -57,9 +57,7 @@ test('a daily puzzle completed with a hint earns the same streak', async ({ page
 test('archive and Tutorial completions leave earned daily history unchanged', async ({ page }) => {
   const archive = bank.puzzles.find(puzzle => puzzle.date === '2026-09-16');
   await seedProgress(page, [today], 'streak');
-  for (const puzzle of [archive, bank.tutorial]) {
-    await seedProgress(page, { board: [...puzzle.solution.slice(0, 8), null], moves: 8 }, puzzle.date);
-  }
+  await seedProgress(page, { board: [...archive.solution.slice(0, 8), null], moves: 8 }, archive.date);
 
   await openGame(page, `date=${archive.date}`);
   await place(page, archive.solution[8], 8);
@@ -67,7 +65,7 @@ test('archive and Tutorial completions leave earned daily history unchanged', as
   expect(await readStreak(page)).toEqual([today]);
 
   await openGame(page, 'date=practice');
-  await place(page, bank.tutorial.solution[8], 8);
+  await solvePuzzle(page, bank.tutorial.solution);
   await expect(page.locator('#completion')).toBeVisible();
   await expect(page.locator('#daily-streak')).toBeHidden();
   expect(await readStreak(page)).toEqual([today]);

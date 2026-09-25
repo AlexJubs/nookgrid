@@ -1,4 +1,4 @@
-import { test, expect, bank, daily, today, emptyBoard, seedProgress, place, expectBoard, readProgress, choose } from './fixtures.mjs';
+import { test, expect, bank, daily, today, emptyBoard, seedProgress, place, expectBoard, readProgress, choose, solvePuzzle } from './fixtures.mjs';
 
 async function openHome(page) {
   await page.goto('/?test=1');
@@ -381,8 +381,12 @@ for (const [label, puzzle, date] of [
 ]) {
   test(`${label} completion ends with one group of three actions`, async ({ page }) => {
     if (page.viewportSize().width <= 927) await page.setViewportSize({ width: 393, height: 852 });
-    await seedProgress(page, { board: puzzle.solution, moves: 9, reported: true }, puzzle.date);
+    if (label !== 'Tutorial') await seedProgress(page, { board: puzzle.solution, moves: 9, reported: true }, puzzle.date);
     await page.goto(`/?test=1&date=${date}`);
+    if (label === 'Tutorial') {
+      await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
+      await solvePuzzle(page, puzzle.solution);
+    }
     await expect(page.locator('#completion')).toBeVisible();
     const labels = [label === 'Tutorial' ? "Play today's puzzle" : 'Share result', 'View solved puzzle', 'All puzzles'];
     await expect(page.locator('#completion button:visible, #completion a:visible')).toHaveText(labels);

@@ -8,7 +8,7 @@ A free daily brain game. Arrange nine places to match the neighborhood plan.
 
 Read the plan, then drag places onto the grid or tap a place and a square. Find the arrangement that fits every relationship.
 
-Play today's puzzle, continue a saved attempt, or explore past puzzles. The optional Tutorial explains the controls. Your progress saves automatically on this device. The home streak and expandable month calendar show daily progress and completed puzzles; replaying an older puzzle does not add daily streak credit.
+Play today's puzzle, continue a saved attempt, or explore past puzzles. Progress in dated puzzles saves automatically on this device. The optional Tutorial explains the controls and starts fresh each time you open it. The home streak and expandable month calendar show daily progress and completed puzzles; replaying an older puzzle does not add daily streak credit.
 
 ## Website
 

@@ -1,4 +1,4 @@
-import { test, expect, bank, openGame, place, seedProgress } from './fixtures.mjs';
+import { test, expect, bank, openGame, place, seedProgress, solvePuzzle } from './fixtures.mjs';
 
 const phones = [
   { width: 393, height: 852, top: 59, bottom: 34 },
@@ -145,7 +145,6 @@ test('native phone completions and the full tutorial plan stay within safe areas
       await page.locator('#solved-plan summary').click();
       await expectScreenFit(page, phone, puzzle.clues.length, 0);
     }
-    await page.evaluate(date => localStorage.removeItem(`nookgrid:test:v1:${date}`), bank.tutorial.date);
     await openGame(page, 'date=practice');
     await expect(page.locator('.puzzle-instruction')).toHaveText('Tap Bakery, then A1, the outlined square.');
     await expect(page.locator('.puzzle-instruction')).toHaveClass(/sr-only/);
@@ -155,9 +154,7 @@ test('native phone completions and the full tutorial plan stay within safe areas
     await place(page, 'cafe', 1);
     await place(page, 'books', 2);
     await expectScreenFit(page, phone, bank.tutorial.clues.length);
-    await seedProgress(page, { board: bank.tutorial.solution, moves: 9, elapsedMs: 90_000 }, bank.tutorial.date);
-    await page.evaluate(date => sessionStorage.removeItem(`nookgrid:e2e-seeded:${date}`), bank.tutorial.date);
-    await openGame(page, 'date=practice');
+    await solvePuzzle(page, bank.tutorial.solution, 3);
     await expect(page.locator('#completion-title')).toHaveText('Nice work!');
     await expectScreenFit(page, phone, bank.tutorial.clues.length, 0);
     const alignment = await page.locator('#play-today').evaluate(button => {

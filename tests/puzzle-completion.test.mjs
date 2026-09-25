@@ -6,18 +6,17 @@ const ids = ['bakery','cafe','books','florist','park','pond','homes','bikes','ma
 const empty = Array(9).fill(null);
 const serialize = progress => JSON.stringify(progress);
 
-test('completed Tutorial and dated saves retain completion after Reset, Undo and replay', () => {
-  for (const date of ['tutorial','2026-09-18']) {
-    const saves = new Map([[date,serialize({board:ids,reported:true,moves:12})]]);
+test('dated saves retain completion after Reset, Undo and replay', () => {
+  const date = '2026-09-18';
+  const saves = new Map([[date,serialize({board:ids,reported:true,moves:12})]]);
+  assert.equal(hasPuzzleCompletion(saves.get(date),ids,ids),true);
+  const progress = restoreProgress(saves.get(date),ids,ids);
+  for (const board of [empty,ids.slice().reverse(),movePlace(empty,'bakery',0),ids]) {
+    progress.board = [...board];
+    saves.set(date,serialize(progress));
     assert.equal(hasPuzzleCompletion(saves.get(date),ids,ids),true);
-    const progress = restoreProgress(saves.get(date),ids,ids);
-    for (const board of [empty,ids.slice().reverse(),movePlace(empty,'bakery',0),ids]) {
-      progress.board = [...board];
-      saves.set(date,serialize(progress));
-      assert.equal(hasPuzzleCompletion(saves.get(date),ids,ids),true);
-    }
-    assert.equal(saves.size,1);
   }
+  assert.equal(saves.size,1);
 });
 
 test('a legacy solved board counts without inventing completion for a partial or incorrect board', () => {
