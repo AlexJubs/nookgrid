@@ -53,6 +53,8 @@ Keep the outcome, streak, week strip and supporting countdown together above one
 
 ## Buttons and action labels
 
+Holding a button or button-style link must not select its label. Keep reading content and text fields selectable.
+
 Use regular 400 weight for action labels, including primary, secondary, quiet text, menu rows, Settings and disclosures. Primary emphasis comes from the forest fill, not bolder type. General actions use 14px text with 1.4 line height; menu rows retain 1.5. Keep the compact 12–13px gameplay toolbar and the separate place/date typography needed for puzzle content and earned-state markers.
 
 Reuse `.primary`, `.secondary` and `.text-button`; button-style links, including Play tutorial and Back, use the same classes. Filled primary and neutral secondary controls use 14px corners and at least 48px height. Quiet and icon controls use 8px corners and at least 44px targets. Home actions retain 52px height; menu rows retain their flat dividers and 48px height. Board, tray, toolbar and calendar geometry remain deliberate compact exceptions.

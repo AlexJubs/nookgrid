@@ -132,6 +132,14 @@ final class NookGridUITests: XCTestCase {
 
     }
 
+    func testHomePlayPressOpensPuzzle() {
+        tap(button("Back to home"))
+        let play = button("Play today's puzzle")
+        XCTAssertTrue(play.waitForExistence(timeout: 5))
+        play.press(forDuration: 1)
+        XCTAssertTrue(button("Lot A1, empty").waitForExistence(timeout: 5), app.debugDescription)
+    }
+
     func testHomeCalendarAndContinuePreserveNativeProgress() {
         tap(button("Back to home"))
         XCTAssertTrue(button("Play today's puzzle").waitForExistence(timeout: 5))
