@@ -79,7 +79,7 @@ test('a new player reaches today in one action and returns to the same unfinishe
   await expect(page.locator('#home-play')).toHaveAccessibleName("Play today's puzzle");
   for (const [id, hierarchy, icon] of [
     ['home-play', 'primary', 'play-circle'],
-    ['home-result', 'primary', 'eye'],
+    ['home-result', 'primary', 'grid-nine'],
     ['calendar-open', 'secondary', 'calendar-blank'],
     ['home-tutorial', 'secondary', 'play-circle']
   ]) {
@@ -172,7 +172,7 @@ test('completion has a dedicated recap and read-only solved plan without duplica
   await expect(page.locator('#calendar-open use')).toHaveAttribute('href', /#calendar-blank$/);
   await expect(page.locator('#home-result')).toHaveClass(/primary/);
   await expect(page.locator('#home-result')).toHaveAccessibleName("View today's result");
-  await expect(page.locator('#home-result use')).toHaveAttribute('href', /#eye$/);
+  await expect(page.locator('#home-result use')).toHaveAttribute('href', /#grid-nine$/);
   await expect(page.locator('#home-tutorial')).toHaveClass(/secondary/);
   await expect(page.locator('#home-tutorial use')).toHaveAttribute('href', /#play-circle$/);
   await expect(page.locator('#home-play-label')).toHaveText("Replay today's puzzle");

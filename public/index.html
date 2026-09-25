@@ -19,7 +19,7 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="NookGrid gameplay with three places on a nine-lot neighborhood board, a tray of places, and the neighborhood plan alongside.">
   <link rel="icon" href="./favicon.svg?v=20260918-logo1" type="image/svg+xml"><link rel="apple-touch-icon" href="./apple-touch-icon.png?v=20260918-logo1" sizes="180x180">
-  <link rel="stylesheet" href="./style.css?v=20260925-calendar-header">
+  <link rel="stylesheet" href="./style.css?v=20260925-home-icons">
   <script type="module" src="./entry.mjs?v=20260925-home-actions"></script>
 </head>
 <body class="download-page">
@@ -50,13 +50,13 @@
     <section class="home-screen" id="home" aria-label="NookGrid home" hidden>
       <div class="home-intro"><h2 class="home-title">Your daily brain game</h2><p id="home-date"></p></div>
       <div class="home-progress">
-        <div class="home-streak"><svg class="ui-icon" width="32" height="32" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-streak#lightning"/></svg><strong class="streak-number" id="home-streak-count">0</strong><span class="streak-label">day streak</span></div>
+        <div class="home-streak"><svg class="ui-icon" width="64" height="64" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-streak#lightning"/></svg><strong class="streak-number" id="home-streak-count">0</strong><span class="streak-label">day streak</span></div>
         <div class="week-heading"><span>This week</span></div>
         <div class="week-strip" id="home-week" aria-label="This week's puzzles"></div>
       </div>
       <div class="home-actions">
         <button id="home-play" class="primary"><svg class="ui-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-results#play-circle"/></svg><span id="home-play-label">Play today's puzzle</span></button>
-        <button id="home-result" class="primary" hidden><svg class="ui-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-results#eye"/></svg><span>View today's result</span></button>
+        <button id="home-result" class="primary" hidden><svg class="ui-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-home-icons#grid-nine"/></svg><span>View today's result</span></button>
         <button id="calendar-open" class="secondary calendar-button" aria-haspopup="dialog" aria-controls="calendar-dialog"><svg class="ui-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-results#calendar-blank"/></svg><span>All puzzles</span></button>
         <button id="home-tutorial" class="secondary" type="button"><svg class="ui-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-results#play-circle"/></svg><span>Play tutorial</span></button>
       </div>

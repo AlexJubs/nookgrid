@@ -168,11 +168,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .home-title{font-size:20px;line-height:1.35;letter-spacing:-.3px;font-weight:650;margin:0 0 8px}
 #home-date{font-size:14px;color:var(--muted);margin:0}
 .home-progress{margin-top:40px}
-.home-streak{display:flex;align-items:baseline;flex-wrap:wrap;gap:10px;margin:0 0 12px}
-.home-streak>.ui-icon{width:32px;height:32px;align-self:center;color:var(--blue)}
+.home-streak{display:flex;align-items:baseline;flex-wrap:wrap;gap:10px;margin:0 0 12px;font-size:64px}
+.home-streak>.ui-icon{width:.75em;height:.75em;align-self:center;color:var(--blue)}
 .streak-summary{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
 .streak-summary>.ui-icon{width:16px;height:16px}
-.streak-number{font-size:64px;line-height:1;font-weight:750;letter-spacing:-3px;font-variant-numeric:tabular-nums}
+.streak-number{font-size:1em;line-height:1;font-weight:750;letter-spacing:-3px;font-variant-numeric:tabular-nums}
 .streak-label{font-size:16px;font-weight:600}
 .week-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:var(--muted);margin-top:12px}
 .calendar-button{gap:8px}
@@ -242,8 +242,8 @@ a.calendar-day.is-streak:hover{background:var(--accent-hover)}
   .game-page.show-home main{display:flex;flex-direction:column;flex:1;width:100%;margin-block:0}
   .home-screen{display:flex;flex-direction:column;justify-content:space-between;flex:1;gap:32px;margin:0 auto;padding:24px 4px}
   .home-progress{margin:0}
-  .home-streak{margin-bottom:24px}
-  .streak-number{font-size:clamp(72px,11svh,96px);letter-spacing:-4px}
+  .home-streak{margin-bottom:24px;font-size:clamp(72px,11svh,96px)}
+  .streak-number{letter-spacing:-4px}
   .streak-label{font-size:18px}
   .home-actions{margin-top:0;gap:12px}
   .game-page{--board-size:300px}
@@ -340,8 +340,7 @@ a.calendar-day.is-streak:hover{background:var(--accent-hover)}
 }
 @media(max-width:927px) and (max-height:740px){
   .home-screen{gap:24px;padding-block:16px}
-  .home-streak{margin-bottom:16px}
-  .streak-number{font-size:64px}
+  .home-streak{margin-bottom:16px;font-size:64px}
 }
 @media(max-width:375px){
   .game-page.show-home main,.game-page.show-result main{padding-inline:6px}
