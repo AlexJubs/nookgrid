@@ -12,7 +12,7 @@ The same browser scenarios run on desktop Chromium at 1280 by 900 and WebKit wit
 | Placement | Select and deselect, Escape, occupied-lot swaps, removal, undo, reset, restored board, empty-state actions |
 | Drag | Tray placement, displacement, board swap, tray return, invalid drop, Escape cancellation, cleanup and the next tap |
 | Hints | Cancel and confirm, accessible locked status, rejected tap and drag into a locked lot, persistence, undo/reset preservation, nine-hint completion |
-| Results | Full incorrect board, clue status text, full correct board, focus transfer, no-hint and hinted wording, reset and undo, reduced-motion celebration |
+| Results | Full incorrect board remains playable; correct boards open the recap, transfer focus and show time/hints; solved views are read-only and return to results without duplicate credit; fresh Tutorial reentry and reduced-motion celebration |
 | Timer | Restored elapsed time, foreground advancement, simulated hidden interval exclusion, completion freeze, reset, undo and reload |
 | Sharing | Canonical public URL, date and attribution, no QA/hash values or solution spoilers, mocked clipboard success, mocked native-share success/cancellation/failure, selected read-only fallback |
 | Navigation | Home, Tutorial and monthly calendar; month navigation and restored focus; failed navigation exposes saved-progress recovery; future dates rejected; dated saves isolated; fresh Tutorial reentry; expired calendar fallback; UTC-midnight rollover preserves the active board |
@@ -27,6 +27,8 @@ The same browser scenarios run on desktop Chromium at 1280 by 900 and WebKit wit
 | Geometry | Desktop fit, stacked phone plan/board/tray/actions, separate result screen with bottom actions, 44px game controls, no horizontal overflow, narrow 320px solved state, saved screenshots |
 
 This suite covers representative transitions and unique UI states. It does not enumerate every ordering of actions, every puzzle solution path or every possible operating-system event. Engine and state unit tests cover the pure rules and data validity separately.
+
+For each feature or bug fix, record the changed behavior and named regression tests in the review or release record. Update existing tests when possible; use browser checks for shared behavior and native checks for platform boundaries such as touch, Preferences, sharing and lifecycle. Run focused checks during iteration, then the full exact-source CI release gate. The native `testNativeDragPlacesAndMoves` also checks that tray removal survives a process restart while another placed piece remains saved. Test counts and changed test files alone do not establish coverage.
 
 The following require complementary native or manual verification: cold launch with the network unavailable in the installed iOS app, native Preferences across process termination and upgrades, real share-sheet completion/cancellation, physical touch dragging and pointer cancellation, safe areas, rotation, text scaling, VoiceOver, contrast and the visual hierarchy in all states. Browser visibility is simulated for the timer check; it does not establish actual iOS suspension behavior. Analytics delivery is intentionally not exercised by this suite.
 

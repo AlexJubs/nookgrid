@@ -14,6 +14,8 @@ The web publisher enforces this gate before contacting here.now, including when 
 
 Passing checks reduces regression risk; it does not prove there are no bugs. Preserve supported behavior when changing UI: movable board pieces must still drag back to the tray, save that removal and support Undo. Hiding a separate Put back button does not remove that gesture or justify reversing its test expectations. Fixed hints remain fixed.
 
+Keep tests in the same change as each feature or bug fix. Identify the behavior covered, extend the existing shared/browser/native suite where needed, and update [the coverage record](TESTING-COVERAGE.md) when the contract changes. Use focused local checks while iterating, then one complete release check and exact-source CI for the reviewed candidate. Batch related small edits into that candidate; the uploader reuses its successful CI instead of running a second full native suite.
+
 ## Manual screen pass
 
 Before publishing a UI or gameplay release, record the source, browser/device and pass or blocker for each group below. Exercise the actual controls in an isolated preview; screenshots and automated results alone are not a manual pass.
@@ -41,7 +43,7 @@ npm run test:ios
 
 The last two commands require macOS and Xcode. Run local checks headlessly on one project-owned simulator, then shut down that device with `xcrun simctl shutdown <device-id>`. Leave unrelated devices alone; use CI for the full native suite. `build:ios` bundles the web game and synchronizes the Capacitor project. `test:ios` builds the unsigned simulator app and runs XCTest. Keep `package-lock.json` and the Xcode project in source control. Do not commit signing keys, provisioning profiles, generated bundles or build results.
 
-The `CI` workflow runs on main pushes and pull requests. Linux runs the shared Node checks and Chromium/WebKit QA. Simulator CI selects Xcode 26.4.1 on `macos-26` and an available iPhone 17 Pro running iOS 26.4, including patch releases. Review the [runner's installed Xcode and simulator versions](https://github.com/actions/runner-images/blob/main/images/macos/macos-26-arm64-Readme.md) before updating these pins. A missing selected Xcode or simulator fails the build. The separately gated signing workflow retains its own toolchain setting.
+The `CI` workflow runs on main pushes and pull requests. Linux runs the shared Node checks and Chromium/WebKit QA. Simulator CI selects Xcode 26.4.1 on `macos-26` and an available iPhone 17 Pro running iOS 26.4, including patch releases. Review the [runner's installed Xcode and simulator versions](https://github.com/actions/runner-images/blob/main/images/macos/macos-26-arm64-Readme.md) before updating these pins. A missing selected Xcode or simulator fails the build. Keep the signing workflow on the same macOS/Xcode pins.
 
 Browser QA serves the local game with `?test=1` and blocks external requests. Native QA uses the bundled game with collection disabled. Never point automated browser, load or capacity tests at the hosted site, aliases or itch embed. Test mode does not exclude hosted visits from here.now's native analytics.
 
@@ -121,11 +123,25 @@ Configure these values in `ios-testflight`:
 
 Use an API key with permission to upload builds. Keep the certificate, profile and API key in the same intended developer account. Generate base64 values without line breaks, for example `base64 -i Distribution.p12 | tr -d '\n' | pbcopy`, then paste into the secret field. Never paste private material into source, issues, logs or chat. Follow [GitHub's signing guidance](https://docs.github.com/en/actions/how-tos/deploy/deploy-to-third-party-platforms/sign-xcode-applications).
 
-Run **Release TestFlight** manually on `main`. Missing signing settings fail clearly. The release bundle uses `NOOKGRID_PRODUCTION=1`; simulator CI stays in development mode. The workflow validates the profile's team, bundle ID, expiration and distribution type, creates a temporary keychain, archives the app with manual signing and uploads through Xcode's App Store Connect export. It deletes its signing files afterwards. No signing files or signed archive are uploaded as GitHub artifacts.
+After the owner approves and configures release credentials, use **Release TestFlight** on `main`, either from Actions or the GitHub CLI. Check Apple's existing uploads first, then provide the intended marketing version, a new build number, the full reviewed source commit and the confirmed personal team ID. These are explicit inputs, not values inferred from the workflow run counter or a possibly older project version.
 
-The marketing version comes from the Xcode project. The build number is the workflow's run number plus attempt number, so a new dispatch or rerun has a distinct build number. Update the marketing version for each intended app version. If an existing app has higher build numbers, align this workflow's versioning before its first upload.
+```sh
+gh workflow run release-testflight.yml --repo AlexJubs/nookgrid --ref main \
+  -f version="$release_version" -f build_number="$release_build" \
+  -f expected_commit="$release_commit" -f expected_team_id="$release_team"
+```
+
+Set those four variables to the reviewed candidate before running the command. Use command-scoped personal GitHub access with permission to dispatch Actions, keeping the employer login unchanged. This command is not a setup step and must not run against an unconfigured environment. [GitHub CLI dispatch guidance](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
+
+The workflow rejects invalid version/build inputs, a different source commit or a team that differs from the reviewed input before using signing material. It verifies exact-source CI before building and again before upload. The release bundle uses `NOOKGRID_PRODUCTION=1`; simulator CI stays in development mode. The workflow validates the profile's team, bundle ID, expiration and distribution type, creates a temporary keychain, archives with the explicit version/build and uploads through Xcode's App Store Connect export. It deletes its signing files afterwards. No signing files or signed archive are uploaded as GitHub artifacts.
+
+Do not rerun an upload blindly after an error or timeout. Apple may already have received the build. Inspect the exact version/build in App Store Connect first; if it exists, continue processing/status verification without another upload. If a replacement is needed, choose a fresh unused build number.
 
 A successful upload is not a TestFlight-ready build. Wait for processing in [App Store Connect](https://appstoreconnect.apple.com/), resolve export compliance or other required information, then add the build to the intended testing group. External testing can require Beta App Review. Publishing to the App Store requires a separate submission and review; this workflow does not submit one. See [Apple's upload guidance](https://developer.apple.com/help/app-store-connect/manage-builds/upload-builds).
+
+For recurring internal delivery, Apple supports automatic distribution to an existing internal group. Verify the intended group and enable that setting only with the owner's authorization; do not create another group or add testers as part of uploader setup. [Apple's internal testing guidance](https://developer.apple.com/help/app-store-connect/test-a-beta-version/add-internal-testers/). The workflow currently confirms upload only. Before calling the automated path fully delivered, verify the exact build's processing, group availability and What to Test notes. Record that evidence separately from the workflow result; a processing timeout stays pending.
+
+The first unattended release must prove real authentication, signing, archive identity/assets, upload and TestFlight availability. Local input tests and normal CI cannot prove that a release key works. Credential creation/export/storage, GitHub environment setup and this first real upload require the owner's existing release and credential approvals; their configuration is not implied by this guide.
 
 Before distribution, reconcile the app's privacy answers and privacy manifest with its actual collection, complete required metadata/screenshots, and verify the bundled calendar covers the intended release period. Do not enable advertising or reminders as part of signing setup.
 
