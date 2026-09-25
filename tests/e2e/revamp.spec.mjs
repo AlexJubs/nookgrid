@@ -11,7 +11,7 @@ test('Home offers fresh Tutorial practice below its dated puzzle actions', async
   const tutorial = page.locator('#home').getByRole('button', { name: 'Play tutorial', exact: true });
   await expect(tutorial).toBeVisible();
   await expect(tutorial).toHaveClass(/secondary/);
-  await expect(tutorial.locator('use')).toHaveAttribute('href', /#play-circle$/);
+  await expect(tutorial.locator('use')).toHaveAttribute('href', /#video$/);
   const calendar = await page.locator('#calendar-open').boundingBox();
   const practice = await tutorial.boundingBox();
   expect(practice.y).toBeGreaterThanOrEqual(calendar.y + calendar.height);
@@ -79,9 +79,9 @@ test('a new player reaches today in one action and returns to the same unfinishe
   await expect(page.locator('#home-play')).toHaveAccessibleName("Play today's puzzle");
   for (const [id, hierarchy, icon] of [
     ['home-play', 'primary', 'play-circle'],
-    ['home-result', 'primary', 'grid-nine'],
+    ['home-result', 'primary', 'grid-four'],
     ['calendar-open', 'secondary', 'calendar-blank'],
-    ['home-tutorial', 'secondary', 'play-circle']
+    ['home-tutorial', 'secondary', 'video']
   ]) {
     const button = page.locator(`#${id}`);
     await expect(button).toHaveClass(new RegExp(hierarchy));
@@ -172,9 +172,9 @@ test('completion has a dedicated recap and read-only solved plan without duplica
   await expect(page.locator('#calendar-open use')).toHaveAttribute('href', /#calendar-blank$/);
   await expect(page.locator('#home-result')).toHaveClass(/primary/);
   await expect(page.locator('#home-result')).toHaveAccessibleName("View today's result");
-  await expect(page.locator('#home-result use')).toHaveAttribute('href', /#grid-nine$/);
+  await expect(page.locator('#home-result use')).toHaveAttribute('href', /#grid-four$/);
   await expect(page.locator('#home-tutorial')).toHaveClass(/secondary/);
-  await expect(page.locator('#home-tutorial use')).toHaveAttribute('href', /#play-circle$/);
+  await expect(page.locator('#home-tutorial use')).toHaveAttribute('href', /#video$/);
   await expect(page.locator('#home-play-label')).toHaveText("Replay today's puzzle");
   await expect(page.locator('#home-play use')).toHaveAttribute('href', /#play-circle$/);
   await expect(page.locator('#home-play')).toBeHidden();
