@@ -128,12 +128,10 @@ function renderHistory() {
   const isComplete = completed.has(today);
   const hasFinishedBoard = saved && isSolved(daily,saved.board);
   $('home-streak-count').textContent = streakLength(streakDays,today);
-  $('home-play').textContent = hasAttempt ? "Continue today's puzzle" : isComplete ? "Replay today's puzzle" : "Play today's puzzle";
+  $('home-play-label').textContent = hasAttempt ? "Continue today's puzzle" : isComplete ? "Replay today's puzzle" : "Play today's puzzle";
   $('home-play').hidden = Boolean(hasFinishedBoard);
   $('home-play').disabled = !daily;
   $('home-result').hidden = !hasFinishedBoard;
-  $('calendar-open').classList.toggle('primary',Boolean(hasFinishedBoard));
-  $('calendar-open').classList.toggle('secondary',!hasFinishedBoard);
   $('home-date').textContent = new Date(`${today}T12:00:00Z`).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'});
   for (const id of ['home-week','result-week']) {
     const focusedDate = $(id).contains(document.activeElement) ? document.activeElement.dataset.puzzleDate : null;

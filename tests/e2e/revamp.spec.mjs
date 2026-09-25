@@ -10,6 +10,8 @@ test('Home offers fresh Tutorial practice below its dated puzzle actions', async
   await openHome(page);
   const tutorial = page.locator('#home').getByRole('button', { name: 'Play tutorial', exact: true });
   await expect(tutorial).toBeVisible();
+  await expect(tutorial).toHaveClass(/secondary/);
+  await expect(tutorial.locator('use')).toHaveAttribute('href', /#play-circle$/);
   const calendar = await page.locator('#calendar-open').boundingBox();
   const practice = await tutorial.boundingBox();
   expect(practice.y).toBeGreaterThanOrEqual(calendar.y + calendar.height);
@@ -73,10 +75,26 @@ test('week rollover keeps keyboard focus on the new current puzzle', async ({ pa
 test('a new player reaches today in one action and returns to the same unfinished puzzle', async ({ page }) => {
   await openHome(page);
   await expect(page.locator('#home-streak-count')).toHaveText('0');
-  await expect(page.locator('#home-play')).toContainText(/play/i);
+  await expect(page.locator('#home-play-label')).toHaveText("Play today's puzzle");
+  await expect(page.locator('#home-play')).toHaveAccessibleName("Play today's puzzle");
+  for (const [id, hierarchy, icon] of [
+    ['home-play', 'primary', 'play-circle'],
+    ['home-result', 'primary', 'eye'],
+    ['calendar-open', 'secondary', 'calendar-blank'],
+    ['home-tutorial', 'secondary', 'play-circle']
+  ]) {
+    const button = page.locator(`#${id}`);
+    await expect(button).toHaveClass(new RegExp(hierarchy));
+    await expect(button).not.toHaveClass(new RegExp(hierarchy === 'primary' ? 'secondary' : 'primary'));
+    await expect(button.locator('svg')).toHaveAttribute('aria-hidden', 'true');
+    await expect(button.locator('svg')).toHaveAttribute('focusable', 'false');
+    await expect(button.locator('svg')).toHaveAttribute('width', '20');
+    await expect(button.locator('svg')).toHaveAttribute('height', '20');
+    await expect(button.locator('use')).toHaveAttribute('href', new RegExp(`#${icon}$`));
+  }
+  await expect(page.locator('.home-actions .primary:visible')).toHaveCount(1);
+  await expect(page.locator('.home-actions .secondary:visible')).toHaveCount(2);
   await expect(page.locator('#home').getByRole('button', { name: 'All puzzles', exact: true })).toBeVisible();
-  await expect(page.locator('#calendar-open svg')).toHaveAttribute('aria-hidden', 'true');
-  await expect(page.locator('#calendar-open use')).toHaveAttribute('href', /#calendar-blank$/);
   await expect(page.locator('#puzzles-dialog,#home-archive,#result-archive')).toHaveCount(0);
   await choose(page.locator('#home-play'));
   await expect(page.locator('#home')).toBeHidden();
@@ -85,7 +103,12 @@ test('a new player reaches today in one action and returns to the same unfinishe
   await place(page, 'bakery', 0);
   await choose(page.locator('#home-open'));
   await expect(page.locator('#home')).toBeVisible();
-  await expect(page.locator('#home-play')).toContainText(/continue/i);
+  await expect(page.locator('#home-play-label')).toHaveText("Continue today's puzzle");
+  await expect(page.locator('#home-play')).toHaveAccessibleName("Continue today's puzzle");
+  await expect(page.locator('#home-play')).toHaveClass(/primary/);
+  await expect(page.locator('#home-play use')).toHaveAttribute('href', /#play-circle$/);
+  await expect(page.locator('#calendar-open')).toHaveClass(/secondary/);
+  await expect(page.locator('.home-actions .primary:visible')).toHaveCount(1);
   await choose(page.locator('#home-play'));
   await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
   await page.evaluate(() => {
@@ -145,9 +168,18 @@ test('completion has a dedicated recap and read-only solved plan without duplica
   await choose(page.locator('#home-open'));
   await expect(page.locator('#home')).toBeVisible();
   await expect(page.locator('#home-streak-count')).toHaveText('1');
-  await expect(page.locator('#calendar-open')).toHaveClass(/primary/);
-  await expect(page.locator('#home-result')).toHaveClass(/secondary/);
+  await expect(page.locator('#calendar-open')).toHaveClass(/secondary/);
+  await expect(page.locator('#calendar-open use')).toHaveAttribute('href', /#calendar-blank$/);
+  await expect(page.locator('#home-result')).toHaveClass(/primary/);
+  await expect(page.locator('#home-result')).toHaveAccessibleName("View today's result");
+  await expect(page.locator('#home-result use')).toHaveAttribute('href', /#eye$/);
+  await expect(page.locator('#home-tutorial')).toHaveClass(/secondary/);
+  await expect(page.locator('#home-tutorial use')).toHaveAttribute('href', /#play-circle$/);
+  await expect(page.locator('#home-play-label')).toHaveText("Replay today's puzzle");
+  await expect(page.locator('#home-play use')).toHaveAttribute('href', /#play-circle$/);
   await expect(page.locator('#home-play')).toBeHidden();
+  await expect(page.locator('.home-actions .primary:visible')).toHaveCount(1);
+  await expect(page.locator('.home-actions .secondary:visible')).toHaveCount(2);
   expect(await page.locator('#home-week').ariaSnapshot()).toContain('September 17, today, completed');
   await choose(page.locator('#home-result'));
   await expect(page.locator('#completion')).toBeVisible();
