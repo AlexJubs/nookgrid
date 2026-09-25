@@ -5,7 +5,7 @@ if (globalThis.nookgridNative || isLocalPreview) {
   const game = document.getElementById('game-content');
   document.body.className = 'game-page';
   document.body.replaceChildren(game.content.cloneNode(true));
-  await import('./app.mjs?v=20260924-keyboard1');
+  await import('./app.mjs?v=20260924-utc1');
 } else if (window.self === window.top) {
   location.replace('https://apps.apple.com/app/id6813274587');
 }

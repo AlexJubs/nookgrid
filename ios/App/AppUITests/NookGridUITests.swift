@@ -143,6 +143,11 @@ final class NookGridUITests: XCTestCase {
     func testHomeCalendarAndContinuePreserveNativeProgress() {
         tap(button("Back to home"))
         XCTAssertTrue(button("Play today's puzzle").waitForExistence(timeout: 5))
+        let dateFormat = DateFormatter()
+        dateFormat.locale = Locale(identifier: "en_US_POSIX")
+        dateFormat.timeZone = TimeZone(secondsFromGMT: 0)
+        dateFormat.dateFormat = "EEEE, MMMM d"
+        XCTAssertTrue(app.staticTexts[dateFormat.string(from: Date())].exists, app.debugDescription)
         XCTAssertFalse(lot("A1").exists)
         tap(button("All puzzles"))
         XCTAssertTrue(button("Close calendar").waitForExistence(timeout: 5))

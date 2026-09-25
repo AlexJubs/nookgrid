@@ -47,7 +47,7 @@ Browser QA serves the local game with `?test=1` and blocks external requests. Na
 
 Download `browser-results` for browser reports, screenshots and traces. Download `ios-simulator-results` for `NookGrid.xcresult`, native logs and the zipped simulator app. Open the result bundle in Xcode. The simulator app cannot be installed on a physical iPhone. Artifacts expire after seven days. Passing simulator checks does not establish physical-device behavior or App Store acceptance.
 
-For a release, check a physical iPhone's touch controls, VoiceOver, large text, safe areas, background/resume, offline opening, saved progress after relaunch, sharing and the midnight puzzle change. Complete any applicable iPad checks for the supported device families. These checks need a signed development or TestFlight build.
+For a release, check a physical iPhone's touch controls, VoiceOver, large text, safe areas, background/resume, offline opening, saved progress after relaunch, sharing and the UTC-midnight puzzle change. Complete any applicable iPad checks for the supported device families. These checks need a signed development or TestFlight build.
 
 ## Restore access on a new machine
 

@@ -18,12 +18,12 @@ export function selectPuzzle(bank, today, requested) {
 }
 
 export function puzzleDay(now = new Date()) {
-  return [now.getFullYear(),now.getMonth() + 1,now.getDate()].map((value,index) => String(value).padStart(index ? 2 : 4,'0')).join('-');
+  return [now.getUTCFullYear(),now.getUTCMonth() + 1,now.getUTCDate()].map((value,index) => String(value).padStart(index ? 2 : 4,'0')).join('-');
 }
 
 export function nextPuzzleCountdown(now = new Date()) {
   const nextMidnight = new Date(now);
-  nextMidnight.setHours(24,0,0,0);
+  nextMidnight.setUTCHours(24,0,0,0);
   const remainingSeconds = Math.ceil((nextMidnight - now) / 1000);
   return [Math.floor(remainingSeconds / 3600),Math.floor(remainingSeconds / 60) % 60,remainingSeconds % 60].map(value => String(value).padStart(2,'0')).join(':');
 }

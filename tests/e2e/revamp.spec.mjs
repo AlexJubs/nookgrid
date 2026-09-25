@@ -251,10 +251,10 @@ test('earned calendar days remain readable on hover in both themes', async ({ pa
 });
 
 
-test('a completed archive follows the new local day from its recap after midnight', async ({ page }) => {
+test('a completed archive follows the new UTC day from its recap after midnight', async ({ page }) => {
   const archive = bank.puzzles.find(puzzle => puzzle.date === '2026-09-16');
   await seedProgress(page, { board: archive.solution, moves: 9, reported: true }, archive.date);
-  await page.clock.setSystemTime(new Date(`${today}T23:59:58-04:00`));
+  await page.clock.setSystemTime(new Date(`${today}T23:59:58Z`));
   await page.goto(`/?test=1&date=${archive.date}`);
   await expect(page.locator('#completion')).toBeVisible();
   await page.clock.fastForward(4_000);

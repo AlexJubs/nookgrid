@@ -22,28 +22,28 @@ assert.deepEqual(selectPuzzle(bank,'2027-01-01'),{puzzle:bank.tutorial,mode:'pra
 assert.deepEqual(selectPuzzle(bank,'2026-09-10','practice'),{puzzle:bank.tutorial,mode:'practice'});
 const originalTimezone = process.env.TZ;
 try {
-  process.env.TZ = 'America/New_York';
-  assert.equal(nextPuzzleCountdown(new Date('2026-09-19T16:00:00-04:00')),'08:00:00');
-  assert.equal(nextPuzzleCountdown(new Date('2026-09-19T23:59:59.999-04:00')),'00:00:01');
-  assert.equal(nextPuzzleCountdown(new Date('2026-09-20T00:00:00-04:00')),'24:00:00');
-  assert.equal(nextPuzzleCountdown(new Date('2026-03-08T00:00:00-05:00')),'23:00:00');
-  assert.equal(nextPuzzleCountdown(new Date('2026-11-01T00:00:00-04:00')),'25:00:00');
-  assert.equal(puzzleDay(new Date('2026-09-20T00:00:00Z')),'2026-09-19');
-  assert.equal(puzzleDay(new Date('2026-09-20T00:00:00-04:00')),'2026-09-20');
-  assert.equal(puzzleDay(new Date('2026-03-08T01:59:59-05:00')),'2026-03-08');
-  assert.equal(puzzleDay(new Date('2026-03-08T03:00:00-04:00')),'2026-03-08');
-  assert.equal(streakLength(['2026-03-07','2026-03-08','2026-03-09'],'2026-03-09'),3);
-  assert.equal(streakLength(['2026-10-31','2026-11-01','2026-11-02'],'2026-11-02'),3);
-  process.env.TZ = 'UTC';
-  assert.equal(nextPuzzleCountdown(new Date('2026-09-12T23:59:59.999Z')),'00:00:01');
-  assert.equal(nextPuzzleCountdown(new Date('2026-09-13T00:00:00Z')),'24:00:00');
-  assert.equal(nextPuzzleCountdown(new Date('2026-09-12T19:30:00-04:00')),'00:30:00');
-  assert.equal(nextPuzzleCountdown(new Date('2026-09-30T23:00:00Z')),'01:00:00');
-  assert.equal(nextPuzzleCountdown(new Date('2026-12-31T23:59:58.500Z')),'00:00:02');
-  assert.equal(puzzleDay(new Date('0001-01-01T12:00:00Z')),'0001-01-01');
-  process.env.TZ = 'Asia/Tokyo';
-  assert.equal(puzzleDay(new Date('2026-09-19T15:00:00Z')),'2026-09-20');
-  assert.equal(nextPuzzleCountdown(new Date('2026-09-19T23:59:59.999+09:00')),'00:00:01');
+  for (const timezone of ['America/New_York','Asia/Tokyo','Europe/London','Pacific/Kiritimati','Pacific/Honolulu','UTC']) {
+    process.env.TZ = timezone;
+    for (const [instant,date,countdown] of [
+      ['2026-09-19T23:59:59.999Z','2026-09-19','00:00:01'],
+      ['2026-09-20T00:00:00Z','2026-09-20','24:00:00'],
+      ['2026-09-19T23:59:59.999-04:00','2026-09-20','20:00:01'],
+      ['2026-09-20T00:00:00-04:00','2026-09-20','20:00:00'],
+      ['2026-09-20T00:00:00+09:00','2026-09-19','09:00:00'],
+      ['2026-07-01T00:00:00+01:00','2026-06-30','01:00:00'],
+      ['2026-03-08T00:00:00Z','2026-03-08','24:00:00'],
+      ['2026-11-01T00:00:00Z','2026-11-01','24:00:00'],
+      ['2028-02-29T23:59:59Z','2028-02-29','00:00:01'],
+      ['2026-12-31T23:59:58.500Z','2026-12-31','00:00:02'],
+      ['2027-01-01T00:00:00Z','2027-01-01','24:00:00']
+    ]) {
+      assert.equal(puzzleDay(new Date(instant)),date,`${timezone}: ${instant}`);
+      assert.equal(nextPuzzleCountdown(new Date(instant)),countdown,`${timezone}: ${instant}`);
+    }
+    assert.equal(puzzleDay(new Date('0001-01-01T12:00:00Z')),'0001-01-01');
+    assert.equal(streakLength(['2026-03-07','2026-03-08','2026-03-09'],'2026-03-09'),3);
+    assert.equal(streakLength(['2026-10-31','2026-11-01','2026-11-02'],'2026-11-02'),3);
+  }
 } finally {
   if (originalTimezone === undefined) delete process.env.TZ;
   else process.env.TZ = originalTimezone;
@@ -130,4 +130,4 @@ for (const elapsedMs of [null,0,undefined]) {
   assert.match(result, /\nCan you solve it\?\nhttps:\/\//);
   assert.doesNotMatch(result, /beat my time/);
 }
-console.log('State checks passed: placement, swaps, validation, local dates, daily streaks, persistence, spoiler-free sharing.');
+console.log('State checks passed: placement, swaps, validation, UTC dates, daily streaks, persistence, spoiler-free sharing.');

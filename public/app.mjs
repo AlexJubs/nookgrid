@@ -1,5 +1,5 @@
 import { PLACES, clueText, clueStatus, isSolved } from './engine.mjs?v=20260915-teaser1';
-import { movePlace, selectPuzzle, restoreProgress, hasPuzzleCompletion, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces, puzzleDay, restoreStreakDays, addDailyCompletion, streakLength } from './state.mjs?v=20260924-calendar2';
+import { movePlace, selectPuzzle, restoreProgress, hasPuzzleCompletion, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces, puzzleDay, restoreStreakDays, addDailyCompletion, streakLength } from './state.mjs?v=20260924-utc1';
 import { placeArt } from './art.mjs?v=20260915-teaser1';
 import { testMode, analytics } from './session.mjs?v=20260924-calendar2';
 import { native, savedValue, saveValue } from './platform.mjs';
@@ -445,7 +445,7 @@ function updateReturnPrompt() {
   const now = new Date();
   const currentDay = puzzleDay(now);
   const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
   const nextDay = puzzleDay(tomorrow);
   const hasToday = bank.puzzles.some(item => item.date === currentDay);
   const hasTomorrow = bank.puzzles.some(item => item.date === nextDay);

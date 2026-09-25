@@ -247,7 +247,7 @@ for (const [date, current, previous, lastDay] of [
 }
 
 test('browsing a month survives a saved completion and midnight without losing the puzzle', async ({ page }) => {
-  await page.clock.setSystemTime(new Date('2026-10-31T23:59:00-04:00'));
+  await page.clock.setSystemTime(new Date('2026-10-31T23:59:00Z'));
   await openGame(page);
   await place(page, 'cafe', 0);
   await page.locator('#menu-open').click();
@@ -592,8 +592,8 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
   });
 }
 
-test('local midnight announces the next puzzle without replacing the saved board', async ({ page }) => {
-  await page.clock.setSystemTime(new Date(`${today}T23:59:58-04:00`));
+test('UTC midnight announces the next puzzle without replacing the saved board', async ({ page }) => {
+  await page.clock.setSystemTime(new Date(`${today}T23:59:58Z`));
   await openGame(page);
   await place(page, 'bakery', 0);
   await page.clock.fastForward(4000);

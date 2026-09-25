@@ -73,9 +73,9 @@ The last two commands require macOS and Xcode. On Linux, use `npx playwright ins
 
 ## Shipping
 
-Daily puzzles unlock at midnight in the player's device time zone. An open board stays saved at midnight, with a link to the new puzzle. The countdown follows calendar midnight, including 23-hour and 25-hour daylight-saving days.
+Daily puzzles unlock worldwide at 00:00 UTC. An open board stays saved at that boundary, with a link to the new puzzle. Countdown, calendar availability and streak eligibility use the same UTC date. Device time zones and daylight-saving changes do not shift the 24-hour cycle. UTC is fixed year-round; London uses UTC+1 during summer.
 
-Solving today's puzzle earns one streak day, with or without hints. Tutorial and archived solves earn none. Reset and replay keep earned days. Yesterday's streak remains active until the next midnight; missing a day starts the next streak at one. Completion dates live in a separate versioned local save, using native Preferences on iOS. They are not uploaded or shared across devices. Older saves have no completion timestamp, so only a restored solved current-day board can start a streak; historical solves are not backfilled.
+Solving today's puzzle earns one streak day, with or without hints. Tutorial and archived solves earn none. Reset and replay keep earned days. Yesterday's streak remains active until the next UTC midnight; missing a day starts the next streak at one. Completion dates live in a separate versioned local save, using native Preferences on iOS. They are not uploaded or shared across devices. Existing earned puzzle dates and progress keys remain unchanged when moving from the former local-day schedule to UTC. A previously earned date ahead of UTC stays saved and becomes available at its UTC release, without duplicate credit. No dates are shifted or invented. Older saves have no completion timestamp, so only a restored solved current-day board can start a streak; historical solves are not backfilled.
 
 The Puzzles list separately shows completed daily, archived and Tutorial puzzles using their existing saved completion state. Reset and replay preserve those checkmarks. A play icon identifies the currently open puzzle, independently of completion. These markers stay on the device and do not award archive or Tutorial streak credit.
 

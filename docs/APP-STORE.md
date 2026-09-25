@@ -30,7 +30,7 @@ Apple guidance: [enrollment](https://developer.apple.com/help/account/membership
 
 ## Release checks
 
-Pass CI and the simulator suite on the current and minimum supported iOS versions. Then check a physical iPhone: tapping and dragging, large text/VoiceOver, safe areas, calls/backgrounding, offline cold start, saved progress after relaunch, native share sheet, privacy choice and local-midnight rollover. Check the supported iPad orientations too. Simulators cannot establish all physical-device behavior or guarantee App Review approval.
+Pass CI and the simulator suite on the current and minimum supported iOS versions. Then check a physical iPhone: tapping and dragging, large text/VoiceOver, safe areas, calls/backgrounding, offline cold start, saved progress after relaunch, native share sheet, privacy choice and UTC-midnight rollover. Check the supported iPad orientations too. Simulators cannot establish all physical-device behavior or guarantee App Review approval.
 
 Run the gated TestFlight workflow after configuring personal signing secrets. Wait for processing, install and verify that actual build before enabling automatic uploads. App Store submission remains a separate step.
 
