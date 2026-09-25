@@ -86,21 +86,41 @@ class AnalyticsMetadataPlugin: CAPPlugin, CAPBridgedPlugin {
         var metadata = [
             "app_version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "",
             "app_build": Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "",
-            "distribution_channel": "unknown"
+            "distribution_channel": "unknown",
+            "distribution_reason": "metadata_unavailable"
         ]
         #if DEBUG
         metadata["distribution_channel"] = "development"
+        metadata["distribution_reason"] = "debug"
         call.resolve(metadata)
         #else
         Task {
-            if case .verified(let transaction) = try? await AppTransaction.shared,
-               transaction.bundleID == Bundle.main.bundleIdentifier {
-                switch transaction.environment {
-                case .production: metadata["distribution_channel"] = "app_store"
-                case .sandbox: metadata["distribution_channel"] = "sandbox"
-                case .xcode: metadata["distribution_channel"] = "development"
-                default: break
+            do {
+                switch try await AppTransaction.shared {
+                case .verified(let transaction):
+                    if transaction.bundleID == Bundle.main.bundleIdentifier {
+                        metadata["distribution_reason"] = "unsupported_environment"
+                        switch transaction.environment {
+                        case .production:
+                            metadata["distribution_channel"] = "app_store"
+                            metadata["distribution_reason"] = "verified_production"
+                        case .sandbox:
+                            metadata["distribution_channel"] = "sandbox"
+                            metadata["distribution_reason"] = "verified_sandbox"
+                        case .xcode:
+                            metadata["distribution_channel"] = "development"
+                            metadata["distribution_reason"] = "verified_xcode"
+                        default: break
+                        }
+                    } else { metadata["distribution_reason"] = "bundle_mismatch" }
+                case .unverified: metadata["distribution_reason"] = "unverified"
                 }
+            } catch StoreKitError.networkError(_) {
+                metadata["distribution_reason"] = "storekit_network_error"
+            } catch StoreKitError.systemError(_) {
+                metadata["distribution_reason"] = "storekit_system_error"
+            } catch {
+                metadata["distribution_reason"] = "storekit_error"
             }
             call.resolve(metadata)
         }

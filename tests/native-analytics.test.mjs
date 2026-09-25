@@ -49,3 +49,23 @@ test('native analytics preserves only valid distribution and version metadata', 
   const {properties} = sanitizeEvent({event:'board_move',properties:{distribution_channel:'production',app_version:'private@example.com',app_build:'<script>'}});
   for (const key of ['distribution_channel','app_version','app_build']) assert.equal(key in properties,false);
 });
+
+test('distribution diagnostics allow known reasons without leaking StoreKit details', () => {
+  for (const distribution_reason of ['verified_production','verified_sandbox','verified_xcode','debug','unverified','bundle_mismatch','unsupported_environment','storekit_network_error','storekit_system_error','storekit_error','metadata_timeout','metadata_unavailable','bridge_error']) {
+    assert.deepEqual(sanitizeEvent({event:'app_entry',properties:{distribution_reason,storekit_error:'private@example.com',receipt:'private',transaction_id:'private'}}).properties,{distribution_reason,$geoip_disable:true});
+  }
+  assert.deepEqual(sanitizeEvent({event:'app_entry',properties:{distribution_reason:'private@example.com'}}).properties,{$geoip_disable:true});
+});
+
+test('ad outcomes and paid events preserve bounded opportunity data without ad identifiers', () => {
+  const opportunity = {ad_opportunity_id:'a13b1b56-4be8-4e72-b0ef-a19c72e0cafa',placement:'completion',ad_mode:'demo'};
+  for (const outcome of ['consent_unavailable','request','load','no_fill','load_failed','not_ready','expired','presentation_failed','impression','dismissal','result_visible']) {
+    assert.deepEqual(sanitizeEvent({event:'ad_outcome',properties:{...opportunity,outcome,response_id:'private',advertising_id:'private'}}).properties,{...opportunity,outcome,$geoip_disable:true});
+  }
+  for (const precision of ['unknown','estimated','publisher_provided','precise']) {
+    assert.deepEqual(sanitizeEvent({event:'ad_revenue',properties:{...opportunity,ad_mode:'live',revenue_micros:12500,currency:'USD',precision}}).properties,{...opportunity,ad_mode:'live',revenue_micros:12500,currency:'USD',precision,$geoip_disable:true});
+  }
+  for (const revenue_micros of [0,1e12]) assert.equal(sanitizeEvent({event:'ad_revenue',properties:{revenue_micros}}).properties.revenue_micros,revenue_micros);
+  for (const revenue_micros of [-1,0.1,1e12 + 1,Infinity,'12500']) assert.deepEqual(sanitizeEvent({event:'ad_revenue',properties:{revenue_micros}}).properties,{$geoip_disable:true});
+  assert.deepEqual(sanitizeEvent({event:'ad_outcome',properties:{ad_opportunity_id:'private',placement:'private',ad_mode:'private',outcome:'private',currency:'usd',precision:'private'}}).properties,{$geoip_disable:true});
+});

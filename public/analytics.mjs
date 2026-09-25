@@ -1,7 +1,8 @@
 import { native, savedValue, saveValue } from './platform.mjs';
 
-const EVENTS = new Set(['app_entry','$pageview','engagement','puzzle_view','puzzle_start','puzzle_complete','hint_used','board_move','board_undo','board_reset','share_result','feedback_result','app_error','ui_click','control_change','drag_result']);
+const EVENTS = new Set(['app_entry','$pageview','engagement','puzzle_view','puzzle_start','puzzle_complete','hint_used','board_move','board_undo','board_reset','share_result','feedback_result','app_error','ui_click','control_change','drag_result','ad_outcome','ad_revenue']);
 const LABELS = new Set(['action','control','result']);
+const DISTRIBUTION_REASONS = new Set(['verified_production','verified_sandbox','verified_xcode','debug','unverified','bundle_mismatch','unsupported_environment','storekit_network_error','storekit_system_error','storekit_error','metadata_timeout','metadata_unavailable','bridge_error']);
 const CAMPAIGNS = {utm_source:['listdle','playlin','itch','share','playtest','dlelist','goldles','slowden','reddit','twitter','dledirectory','dailydles','dailydle','puzzled','twelvegames','wordfinder','dles','puzzlerzone','bontegames','puzzleprime','freegameplanet'],utm_medium:['directory','community','result','usability','paid_social','editorial'],utm_campaign:['launch14','daily','paid_test1'],utm_content:['clarity','puzzles','playmygame','aigamedev','devlog','park_hook','game_page','get_feedback','jam_request','embed_feedback','wpg_trial','result_card','listing']};
 const COUNTS = new Set(['moves','hints','puzzle_version','active_ms','visible_ms','active_ms_this_page','elapsed_active_ms','analytics_version']);
 const SDK_STRINGS = new Set(['token','distinct_id','$device_id','$session_id','$window_id','$pageview_id','$lib','$lib_version']);
@@ -31,7 +32,7 @@ function safeProperties(properties = {}) {
     else if (Object.hasOwn(CAMPAIGNS,campaignKey) && CAMPAIGNS[campaignKey].includes(value)) clean[key] = value;
     else if (COUNTS.has(key) && Number.isFinite(value) && value >= 0 && value <= 2678400000) clean[key] = Math.round(value);
     else if (SDK_STRINGS.has(key) && typeof value === 'string' && /^[a-zA-Z0-9_.:-]{1,256}$/.test(value)) clean[key] = value;
-    else if (['entry_id','event_id'].includes(key) && uuid(value)) clean[key] = value;
+    else if (['entry_id','event_id','ad_opportunity_id'].includes(key) && uuid(value)) clean[key] = value;
     else if (key === 'event_index' && Number.isSafeInteger(value) && value >= 1) clean[key] = value;
     else if (key === 'occurred_at' && typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(value) && Number.isFinite(Date.parse(value))) clean[key] = value;
     else if (key === 'entry_source' && ['direct','deep_link','unknown'].includes(value)) clean[key] = value;
@@ -41,6 +42,13 @@ function safeProperties(properties = {}) {
     else if (key === 'measurement_mode' && ['cookieless','installation'].includes(value)) clean[key] = value;
     else if (key === 'platform' && value === 'ios') clean[key] = value;
     else if (key === 'distribution_channel' && ['app_store','sandbox','development','unknown'].includes(value)) clean[key] = value;
+    else if (key === 'distribution_reason' && DISTRIBUTION_REASONS.has(value)) clean[key] = value;
+    else if (key === 'outcome' && ['consent_unavailable','request','load','no_fill','load_failed','not_ready','expired','presentation_failed','impression','dismissal','result_visible'].includes(value)) clean[key] = value;
+    else if (key === 'placement' && value === 'completion') clean[key] = value;
+    else if (key === 'ad_mode' && ['demo','live'].includes(value)) clean[key] = value;
+    else if (key === 'revenue_micros' && Number.isSafeInteger(value) && value >= 0 && value <= 1e12) clean[key] = value;
+    else if (key === 'currency' && typeof value === 'string' && /^[A-Z]{3}$/.test(value)) clean[key] = value;
+    else if (key === 'precision' && ['unknown','estimated','publisher_provided','precise'].includes(value)) clean[key] = value;
     else if (['app_version','app_build'].includes(key) && typeof value === 'string' && /^\d+(?:\.\d+){0,3}$/.test(value) && value.length <= 40) clean[key] = value;
     else if (key === 'puzzle_date' && typeof value === 'string' && /^(\d{4}-\d{2}-\d{2}|tutorial)$/.test(value)) clean[key] = value;
     else if (key === 'puzzle_mode' && ['daily','archive','practice'].includes(value)) clean[key] = value;
@@ -257,20 +265,19 @@ export function createAnalytics({testMode = false} = {}) {
       const installationId = native ? await native.installationId() : null;
       if (!permitted() || currentEpoch !== epoch) return;
       if (native) {
-        let timeout, metadata;
+        let timeout, metadata = {distribution_reason:'metadata_timeout'}, launchSource;
+        const sourceEntry = entry.entry_id;
         try {
-          const sourceEntry = entry.entry_id;
-          const launchSource = shouldReportEntry && entry.entry_kind === 'cold' ? native.launchSource?.() : null;
-          const resolved = await Promise.race([
-            Promise.all([Promise.resolve(native.getAnalyticsMetadata?.()).catch(() => null),Promise.resolve(launchSource).catch(() => null)]),
+          const lookup = Promise.resolve().then(() => native.getAnalyticsMetadata?.()).then(value => { metadata = value; },() => { metadata = {distribution_reason:'bridge_error'}; });
+          const attribution = Promise.resolve().then(() => shouldReportEntry && entry.entry_kind === 'cold' ? native.launchSource?.() : null).then(value => { launchSource = value; },() => {});
+          await Promise.race([
+            Promise.all([lookup,attribution]),
             new Promise(resolve => { timeout = setTimeout(resolve,1500); })
           ]);
-          metadata = resolved?.[0];
-          if (permitted() && currentEpoch === epoch && entry.entry_id === sourceEntry && ['direct','deep_link'].includes(resolved?.[1])) { entry.entry_source = resolved[1]; storeEntry(); }
-        } catch {}
-        finally { clearTimeout(timeout); }
+        } finally { clearTimeout(timeout); }
         if (!permitted() || currentEpoch !== epoch) return;
-        appMetadata = {distribution_channel:'unknown',...safeProperties(metadata)};
+        if (entry.entry_id === sourceEntry && ['direct','deep_link'].includes(launchSource)) { entry.entry_source = launchSource; storeEntry(); }
+        appMetadata = {distribution_channel:'unknown',distribution_reason:'metadata_unavailable',...safeProperties(metadata)};
       }
       if (!permitted() || currentEpoch !== epoch) return;
       function onReady(instance) {

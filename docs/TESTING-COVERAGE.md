@@ -22,7 +22,7 @@ The same browser scenarios run on desktop Chromium at 1280 by 900 and WebKit wit
 | Recovery | Loading/inert state, failed or malformed puzzle request, retry, malformed/duplicate/unknown/short saved boards, repaired saved hints, unknown legacy solve time |
 | Persistence failure | Denied browser storage still allows moves, hints and undo with a visible warning |
 | Network isolation | Local resources, play while offline after load, optional settings failure, feedback validation and dry-run retention |
-| Native analytics | Visible-board funnel order, internal-page and brief-resume continuity, 30-minute/24-hour entry expiry, UTC mode changes, modal-only returns, saved-completion retry/read-only review, consent changes and resolved/unknown launch sources. SDK capture is mocked; actual delivery is a separate check. |
+| Native analytics | Visible-board funnel order, internal-page and brief-resume continuity, 30-minute/24-hour entry expiry, UTC mode changes, modal-only returns, saved-completion retry/read-only review, consent changes and resolved/unknown launch sources. Stalled source preserves verified metadata; stalled/failed metadata keeps unknown with a bounded reason, preserves resolved source and ignores late classification. SDK capture is mocked; actual delivery is a separate check. |
 | Accessibility basics | Accessible control names, pressed/disabled states, keyboard selection and placement, visible focus, dialog focus containment, clue text alongside icons, move announcements preserved when the selection row collapses |
 | Geometry | Desktop fit, stacked phone plan/board/tray/actions, separate result screen with bottom actions, 44px game controls, no horizontal overflow, narrow 320px solved state, saved screenshots |
 

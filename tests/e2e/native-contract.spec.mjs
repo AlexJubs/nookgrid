@@ -20,7 +20,7 @@ test.beforeEach(async ({page}) => {
     window.metadataCalls = 0;
     window.nookgridNative.getAnalyticsMetadata = async () => {
       window.metadataCalls++;
-      return {distribution_channel:'sandbox',app_version:'1.0',app_build:'19'};
+      return {distribution_channel:'sandbox',distribution_reason:'verified_sandbox',app_version:'1.0',app_build:'19'};
     };
     window.posthog = {
       init(token,options) { window.analyticsOptions = options; options.loaded(this); },
@@ -318,8 +318,8 @@ test('native production measures installations, preserves opt-out, and keeps sav
   expect(await page.evaluate(() => window.metadataCalls)).toBe(0);
 });
 
-test('unknown native distribution never becomes public when metadata fails or stalls',async ({page}) => {
-  await page.addInitScript(() => { window.nookgridNative.getAnalyticsMetadata = () => new Promise(() => {}); });
+test('unknown native distribution diagnoses stalled and failed metadata without accepting a late result',async ({page}) => {
+  await page.addInitScript(() => { window.nookgridNative.getAnalyticsMetadata = () => new Promise(resolve => { window.resolveMetadata = resolve; }); });
   await page.goto('/');
   await expect(page.locator('#game')).toHaveAttribute('aria-busy','false');
   await enterGame(page);
@@ -327,10 +327,29 @@ test('unknown native distribution never becomes public when metadata fails or st
   await page.locator('#board [data-lot="0"]').click();
   await expect.poll(() => page.evaluate(() => window.captured.some(item => item.event === 'board_move'))).toBe(true);
   expect(await page.evaluate(() => window.captured.every(item => item.properties.distribution_channel === 'unknown'))).toBe(true);
+  expect(await page.evaluate(() => window.captured.every(item => item.properties.distribution_reason === 'metadata_timeout'))).toBe(true);
+  expect(await page.evaluate(() => window.captured.find(item => item.event === 'app_entry').properties.entry_source)).toBe('direct');
+  await page.evaluate(() => window.resolveMetadata({distribution_channel:'app_store',distribution_reason:'verified_production'}));
+  await place(page,daily.solution[1],1);
+  expect(await page.evaluate(() => window.captured.filter(item => item.event === 'board_move').at(-1).properties)).toMatchObject({distribution_channel:'unknown',distribution_reason:'metadata_timeout'});
   await page.addInitScript(() => { window.nookgridNative.getAnalyticsMetadata = async () => { throw new Error('Unavailable'); }; });
   await page.reload();
   await expect.poll(() => page.evaluate(() => window.captured.length)).toBeGreaterThan(0);
-  expect(await page.evaluate(() => window.captured.every(item => item.properties.distribution_channel === 'unknown'))).toBe(true);
+  expect(await page.evaluate(() => window.captured.every(item => item.properties.distribution_channel === 'unknown' && item.properties.distribution_reason === 'bridge_error'))).toBe(true);
+  await page.addInitScript(() => { delete window.nookgridNative.getAnalyticsMetadata; });
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => window.captured.length)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.captured.every(item => item.properties.distribution_channel === 'unknown' && item.properties.distribution_reason === 'metadata_unavailable'))).toBe(true);
+});
+
+test('a stalled launch source preserves verified native distribution metadata',async ({page}) => {
+  await page.addInitScript(() => {
+    window.nookgridNative.launchSource = () => new Promise(() => {});
+    window.nookgridNative.getAnalyticsMetadata = async () => ({distribution_channel:'app_store',distribution_reason:'verified_production',app_version:'1.1.1',app_build:'29'});
+  });
+  await page.goto('/');
+  await expect.poll(() => page.evaluate(() => window.captured.some(item => item.event === 'app_entry'))).toBe(true);
+  expect(await page.evaluate(() => window.captured.find(item => item.event === 'app_entry').properties)).toMatchObject({entry_source:'unknown',distribution_channel:'app_store',distribution_reason:'verified_production',app_build:'29'});
 });
 
 test('native debug never requests analytics metadata or sends events',async ({page}) => {
