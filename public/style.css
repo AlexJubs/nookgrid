@@ -210,6 +210,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #solved-plan[open] summary::after{content:"−"}
 #solved-plan summary:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
 .game-page #calendar-dialog{width:min(400px,calc(100% - 16px));max-width:calc(100% - 16px);padding:16px}
+.calendar-heading{display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;margin-bottom:16px;padding-right:48px}
+.game-page .calendar-heading h2,.game-page .calendar-heading p{margin:0;padding:0}
 #calendar-streak{color:var(--blue);font-weight:600}
 #calendar-months{padding:4px 2px}
 .calendar-navigation{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}

@@ -291,6 +291,15 @@ test('home and calendar retain keyboard focus, touch targets and narrow-screen a
   const calendar = page.locator('#calendar-dialog');
   await expect(calendar).toBeVisible();
   await expect(calendar.locator('[data-close]')).toBeInViewport();
+  for (const width of [393, 320]) {
+    await page.setViewportSize({ width, height: 568 });
+    const titleBounds = await calendar.locator('#calendar-title').boundingBox();
+    const streakBounds = await calendar.locator('#calendar-streak').boundingBox();
+    const closeBounds = await calendar.locator('[data-close]').boundingBox();
+    expect(Math.abs(titleBounds.y + titleBounds.height / 2 - streakBounds.y - streakBounds.height / 2)).toBeLessThan(1);
+    expect(streakBounds.x).toBeGreaterThanOrEqual(titleBounds.x + titleBounds.width + 8);
+    expect(streakBounds.x + streakBounds.width).toBeLessThanOrEqual(closeBounds.x);
+  }
   const firstDay = calendar.locator('a[data-puzzle-date]').first();
   await firstDay.scrollIntoViewIfNeeded();
   await expect(firstDay).toBeInViewport();
