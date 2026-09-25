@@ -28,7 +28,7 @@ test('loading remains inert until the puzzle resource arrives', async ({ page })
   await expect(page.locator('#calendar-months')).toBeVisible();
   await expect(page.locator('#calendar-status')).toBeHidden();
   await expect(page.locator('#calendar-months a[data-puzzle-date]')).toHaveCount(8);
-  await expect(page.locator('#calendar-streak')).toHaveText('1-day streak');
+  await expect(page.locator('#calendar-streak')).toHaveText('1 day streak');
   expect(errors).toEqual([]);
   await page.getByRole('button', { name: 'Close calendar', exact: true }).click();
   await expectBoard(page, emptyBoard);

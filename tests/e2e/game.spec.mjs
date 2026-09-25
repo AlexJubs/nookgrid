@@ -32,7 +32,7 @@ test('Tutorial completion lasts for the current visit and Play tutorial starts a
   expect(await readProgress(page, bank.tutorial.date)).toBeNull();
   expect(await readProgress(page, 'streak')).toEqual(['2026-09-16']);
   await page.locator('#result-calendar-open').click();
-  await expect(page.locator('#calendar-dialog .is-completed')).toHaveCount(0);
+  await expect(page.locator('#calendar-dialog .calendar-day.is-completed')).toHaveCount(0);
   await expect(page.locator('#calendar-dialog a[data-puzzle-date="practice"]')).toHaveCount(0);
   await page.locator('#calendar-dialog [data-close]').click();
   await page.locator('#home-open').click();
@@ -521,7 +521,7 @@ test('share uses the canonical daily URL and handles copy, native cancellation a
   const result = await page.evaluate(() => window.copiedResult);
   expect(result).toContain('Solved in 1:01 with 2 hints.');
   expect(result).toContain('Your daily brain game.');
-  expect(result).toContain('\n3-day streak\n');
+  expect(result).toContain('\n3 day streak\n');
   expect(result).toContain('\nCan you beat my time?\n');
   const link = new URL(result.split('\n').at(-1));
   expect(link.origin).toBe('https://nookgrid.com');

@@ -379,7 +379,7 @@ test('cancelling the native share sheet leaves the result visible',async ({page}
   await page.evaluate(() => { window.nookgridNative.share = async text => { window.sharedResult = text; throw new Error('Share canceled'); }; });
   await page.locator('#share').click();
   expect(await page.evaluate(() => window.sharedResult)).toContain(`${solveTime} with 9 hints.`);
-  expect(await page.evaluate(() => window.sharedResult)).toContain('\n1-day streak\n');
+  expect(await page.evaluate(() => window.sharedResult)).toContain('\n1 day streak\n');
   const result = await page.evaluate(() => window.sharedResult);
   expect(result).toContain('\nCan you beat my time?\n');
   expect(Object.fromEntries(new URL(result.split('\n').at(-1)).searchParams)).toEqual({date:'2026-09-17',utm_source:'share'});

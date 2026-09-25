@@ -19,8 +19,8 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="NookGrid gameplay with three places on a nine-lot neighborhood board, a tray of places, and the neighborhood plan alongside.">
   <link rel="icon" href="./favicon.svg?v=20260918-logo1" type="image/svg+xml"><link rel="apple-touch-icon" href="./apple-touch-icon.png?v=20260918-logo1" sizes="180x180">
-  <link rel="stylesheet" href="./style.css?v=20260925-home1">
-  <script type="module" src="./entry.mjs?v=20260925-home1"></script>
+  <link rel="stylesheet" href="./style.css?v=20260925-streak">
+  <script type="module" src="./entry.mjs?v=20260925-streak"></script>
 </head>
 <body class="download-page">
   <main id="download-main" class="download-main">
@@ -50,7 +50,7 @@
     <section class="home-screen" id="home" aria-label="NookGrid home" hidden>
       <div class="home-intro"><h2 class="home-title">Your daily brain game</h2><p id="home-date"></p></div>
       <div class="home-progress">
-        <div class="home-streak"><strong class="streak-number" id="home-streak-count">0</strong><span class="streak-label">day streak</span></div>
+        <div class="home-streak"><svg class="ui-icon" width="32" height="32" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-streak#lightning"/></svg><strong class="streak-number" id="home-streak-count">0</strong><span class="streak-label">day streak</span></div>
         <div class="week-heading"><span>This week</span></div>
         <div class="week-strip" id="home-week" aria-label="This week's puzzles"></div>
       </div>
@@ -73,7 +73,7 @@
         <section class="completion" id="completion" hidden aria-labelledby="completion-title" tabindex="-1">
           <div class="completion-board" id="completion-board" aria-hidden="true"></div>
           <div class="completion-summary">
-            <div><h2 id="completion-title">Neighborhood complete</h2><div class="completion-meta"><p id="daily-streak" hidden></p><p id="completion-time" hidden></p><p id="completion-detail">Plan complete.</p></div></div>
+            <div><h2 id="completion-title">Neighborhood complete</h2><div class="completion-meta"><p id="daily-streak" class="streak-summary" hidden><svg class="ui-icon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-streak#lightning"/></svg><span id="daily-streak-label"></span></p><p id="completion-time" hidden></p><p id="completion-detail">Plan complete.</p></div></div>
             <div class="result-history"><div class="week-heading"><span>This week</span></div><div class="week-strip" id="result-week" aria-label="This week's puzzles"></div></div>
             <div id="next-puzzle" hidden><span>Next puzzle in</span><strong id="next-puzzle-time" role="timer" aria-live="off">00:00:00</strong></div>
             <div class="completion-actions">
@@ -118,7 +118,7 @@
   </dialog>
   <dialog id="calendar-dialog" aria-labelledby="calendar-title">
     <button class="close-dialog" data-close aria-label="Close calendar"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-calendar2#x"/></svg></button>
-    <h2 id="calendar-title">All puzzles</h2><p id="calendar-streak"></p><p class="calendar-note">Current puzzle underlined. Completed days checked; streak days highlighted.</p>
+    <h2 id="calendar-title">All puzzles</h2><p id="calendar-streak" class="streak-summary"><svg class="ui-icon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-streak#lightning"/></svg><span id="calendar-streak-label"></span></p>
     <p id="calendar-status" role="status">Loading puzzles…</p>
     <div id="calendar-navigation" class="calendar-navigation" hidden>
       <button id="calendar-previous" class="icon-button" aria-label="Previous month"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-calendar3#caret-right"/></svg></button>
@@ -126,6 +126,7 @@
       <button id="calendar-next" class="icon-button" aria-label="Next month"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-calendar3#caret-right"/></svg></button>
     </div>
     <div id="calendar-months" aria-label="Puzzle completion history" hidden></div>
+    <ul class="calendar-legend" aria-label="Calendar legend"><li><span class="calendar-swatch is-streak" aria-hidden="true"></span>Streak</li><li><span class="calendar-swatch is-completed" aria-hidden="true"></span>Completed</li><li><span class="calendar-swatch is-uncompleted" aria-hidden="true"></span>Uncompleted</li></ul>
   </dialog>
   <dialog id="share-dialog" aria-labelledby="share-title"><button class="close-dialog" data-close aria-label="Close share result" data-track="share-close"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-calendar2#x"/></svg></button><h2 id="share-title">Share your result</h2><p>Copy this result and send it to a friend.</p><label class="sr-only" for="share-text">Result text</label><textarea id="share-text" rows="7" readonly></textarea></dialog>
   <dialog id="hint-dialog" aria-labelledby="hint-title" aria-describedby="hint-description">

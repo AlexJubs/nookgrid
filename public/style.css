@@ -169,6 +169,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #home-date{font-size:14px;color:var(--muted);margin:0}
 .home-progress{margin-top:40px}
 .home-streak{display:flex;align-items:baseline;flex-wrap:wrap;gap:10px;margin:0 0 12px}
+.home-streak>.ui-icon{width:32px;height:32px;align-self:center;color:var(--blue)}
+.streak-summary{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.streak-summary>.ui-icon{width:16px;height:16px}
 .streak-number{font-size:64px;line-height:1;font-weight:750;letter-spacing:-3px;font-variant-numeric:tabular-nums}
 .streak-label{font-size:16px;font-weight:600}
 .week-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:var(--muted);margin-top:12px}
@@ -224,7 +227,13 @@ a.calendar-day.is-streak:hover{background:var(--accent-hover)}
 .calendar-day.is-unavailable{color:var(--muted);opacity:.6}
 .calendar-day.is-empty{visibility:hidden}
 .calendar-check{position:absolute;right:3px;bottom:3px;width:10px;height:10px}
-.game-page .calendar-note{font-size:12px;color:var(--muted)}
+.calendar-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 12px;padding:0;margin:16px 0 0;list-style:none;color:var(--muted)}
+.game-page .calendar-legend li{display:flex;align-items:center;gap:5px;font-size:12px;line-height:1.5}
+.calendar-swatch{width:12px;height:12px;border-radius:3px;flex:none}
+.calendar-swatch.is-streak{background:var(--blue)}
+.calendar-swatch.is-completed{background:var(--surface)}
+.calendar-swatch.is-uncompleted{background:transparent;border:1px solid var(--control-border)}
+#calendar-months[hidden]+.calendar-legend{display:none}
 @media(max-width:927px){
   .game-page.show-home{display:flex;flex-direction:column;min-height:100svh}
   .game-page.show-home .site-header{width:100%;flex:none;margin-block:0}

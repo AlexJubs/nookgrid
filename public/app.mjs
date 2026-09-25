@@ -1,5 +1,5 @@
 import { PLACES, clueText, clueStatus, isSolved } from './engine.mjs?v=20260915-teaser1';
-import { movePlace, selectPuzzle, restoreProgress, hasPuzzleCompletion, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces, puzzleDay, restoreStreakDays, addDailyCompletion, streakLength } from './state.mjs?v=20260924-utc1';
+import { movePlace, selectPuzzle, restoreProgress, hasPuzzleCompletion, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces, puzzleDay, restoreStreakDays, addDailyCompletion, streakLength } from './state.mjs?v=20260925-streak';
 import { placeArt } from './art.mjs?v=20260915-teaser1';
 import { testMode, analytics } from './session.mjs?v=20260924-calendar2';
 import { native, savedValue, saveValue } from './platform.mjs';
@@ -84,7 +84,7 @@ function prepareCalendar(shouldResetMonth = true) {
   calendarMonths = getCalendarMonths(dates.filter(date => date <= today).sort()[0],today);
   if (shouldResetMonth) calendarMonth = (screen === 'home' || mode === 'practice' ? today : puzzle.date).slice(0,7);
   const month = calendarMonths.find(item => item.month === calendarMonth) || calendarMonths[0];
-  $('calendar-streak').textContent = `${streakLength(streakDays,today)}-day streak`;
+  $('calendar-streak-label').textContent = `${streakLength(streakDays,today)} day streak`;
   if (!month) {
     $('calendar-status').textContent = 'No puzzles released yet.';
     $('calendar-status').hidden = false;
@@ -497,7 +497,7 @@ function updateReturnPrompt() {
   $('next-puzzle').hidden = !isToday || !hasTomorrow;
   if (isToday && hasTomorrow) $('next-puzzle-time').textContent = nextPuzzleCountdown(now);
   const streak = streakLength(streakDays,currentDay);
-  $('daily-streak').textContent = `${streak}-day streak`;
+  $('daily-streak-label').textContent = `${streak} day streak`;
   $('daily-streak').hidden = streak === 0 || !isToday;
   $('clues-title').textContent = mode === 'practice' ? 'Tutorial plan' : new Date(`${puzzle.date}T12:00:00Z`).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
 }

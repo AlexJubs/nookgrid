@@ -150,7 +150,7 @@ final class NookGridUITests: XCTestCase {
         XCTAssertFalse(lot("A1").exists)
         tap(button("All puzzles"))
         XCTAssertTrue(button("Close calendar").waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["0-day streak"].exists)
+        XCTAssertTrue(app.staticTexts["0 day streak"].exists)
         XCTAssertTrue(getCalendarMonthTitle().exists, app.debugDescription)
         let currentMonth = getCalendarMonthTitle().label
         for label in ["Previous month", "Next month"] {
@@ -258,13 +258,13 @@ final class NookGridUITests: XCTestCase {
         let remainingLot = try XCTUnwrap(lots.first { button("Lot \($0), empty").exists })
         place(remainingPlace, at: remainingLot)
         XCTAssertTrue(app.staticTexts["Neighborhood complete"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["1-day streak"].exists)
+        XCTAssertTrue(app.staticTexts["1 day streak"].exists)
         tap(button("View solved puzzle"))
         let solvedLabels = lots.map { lot($0).label }
         for address in lots { XCTAssertFalse(lot(address).isEnabled) }
         for label in ["Undo", "Reset", "Hint, 8 hints used"] { XCTAssertFalse(button(label).exists) }
         openCalendar()
-        XCTAssertTrue(app.staticTexts["1-day streak"].exists)
+        XCTAssertTrue(app.staticTexts["1 day streak"].exists)
         XCTAssertTrue(app.webViews.links.matching(NSPredicate(format: "label CONTAINS ', Today, completed, daily streak day'")).firstMatch.exists, app.debugDescription)
         tap(button("Close calendar"))
 
@@ -274,18 +274,18 @@ final class NookGridUITests: XCTestCase {
         XCTAssertTrue(button("View today's result").waitForExistence(timeout: 15))
         tap(button("View today's result"))
         XCTAssertTrue(app.staticTexts["Neighborhood complete"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["1-day streak"].exists)
+        XCTAssertTrue(app.staticTexts["1 day streak"].exists)
         tap(button("View solved puzzle"))
         XCTAssertEqual(lots.map { lot($0).label }, solvedLabels)
         for address in lots { XCTAssertFalse(lot(address).isEnabled) }
         for label in ["Undo", "Reset", "Hint, 8 hints used"] { XCTAssertFalse(button(label).exists) }
         openCalendar()
-        XCTAssertTrue(app.staticTexts["1-day streak"].exists)
+        XCTAssertTrue(app.staticTexts["1 day streak"].exists)
         XCTAssertTrue(app.webViews.links.matching(NSPredicate(format: "label CONTAINS ', Today, completed, daily streak day'")).firstMatch.exists, app.debugDescription)
         tap(button("Close calendar"))
         viewResult()
-        XCTAssertTrue(app.staticTexts["1-day streak"].exists)
-        XCTAssertFalse(app.staticTexts["2-day streak"].exists)
+        XCTAssertTrue(app.staticTexts["1 day streak"].exists)
+        XCTAssertFalse(app.staticTexts["2 day streak"].exists)
     }
 
     func testTutorialSolvedReviewAndFreshReplayAfterRestart() {
@@ -319,7 +319,7 @@ final class NookGridUITests: XCTestCase {
         XCTAssertTrue(button("Menu").waitForExistence(timeout: 15))
         openCalendar()
         XCTAssertFalse(app.webViews.links.matching(NSPredicate(format: "label CONTAINS 'Tutorial'")).firstMatch.exists)
-        XCTAssertTrue(app.staticTexts["0-day streak"].exists)
+        XCTAssertTrue(app.staticTexts["0 day streak"].exists)
         tap(button("Close calendar"))
         openTutorial()
         for address in lots { assertLot(address, "empty") }
@@ -378,7 +378,7 @@ final class NookGridUITests: XCTestCase {
         tap(button("All puzzles"))
         XCTAssertTrue(button("Close calendar").waitForExistence(timeout: 5))
         XCTAssertFalse(app.webViews.links.matching(NSPredicate(format: "label CONTAINS 'Tutorial'")).firstMatch.exists)
-        XCTAssertTrue(app.staticTexts["0-day streak"].exists)
+        XCTAssertTrue(app.staticTexts["0 day streak"].exists)
         tap(button("Close calendar"))
         XCTAssertTrue(app.staticTexts["Nice work!"].exists)
         tap(button("Back to home"))

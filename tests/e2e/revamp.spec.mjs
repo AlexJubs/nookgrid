@@ -122,7 +122,7 @@ test('completion has a dedicated recap and read-only solved plan without duplica
   await expect(page.locator('#completion-board')).toBeVisible();
   await expect(page.locator('#board')).toBeHidden();
   await expect(page.locator('#tray')).toBeHidden();
-  await expect(page.locator('#daily-streak')).toContainText('1-day streak');
+  await expect(page.locator('#daily-streak')).toContainText('1 day streak');
   const resultCalendar = page.locator('#result-calendar-open');
   await expect(resultCalendar).toHaveAccessibleName('All puzzles');
   await expect(resultCalendar.locator('use')).toHaveAttribute('href', /#calendar-blank$/);
@@ -231,6 +231,24 @@ for (const native of [false, true]) {
     const previous = calendar.locator(`[data-puzzle-date="${archive.date}"]`);
     await expect(previous).toHaveAccessibleName(/completed/);
     await expect(previous).not.toHaveAccessibleName(/daily streak day/);
+    const legend = calendar.locator('.calendar-legend');
+    await expect(legend).toHaveText(/^\s*Streak\s*Completed\s*Uncompleted\s*$/);
+    const gridBounds = await calendar.locator('#calendar-months').boundingBox();
+    const legendBounds = await legend.boundingBox();
+    expect(legendBounds.y).toBeGreaterThanOrEqual(gridBounds.y + gridBounds.height);
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.mouse.move(0, 0);
+    const dayFills = await calendar.locator('[data-puzzle-date="2026-09-15"], [data-puzzle-date="2026-09-16"], [data-puzzle-date="2026-09-17"]').evaluateAll(days => days.map(day => getComputedStyle(day).backgroundColor));
+    const legendFills = await legend.locator('.is-streak, .is-completed, .is-uncompleted').evaluateAll(swatches => swatches.map(swatch => getComputedStyle(swatch).backgroundColor));
+    expect(dayFills).toEqual(legendFills);
+    expect(dayFills[2]).toBe('rgba(0, 0, 0, 0)');
+    expect(dayFills[0]).not.toBe(dayFills[2]);
+    expect(dayFills[1]).not.toBe(dayFills[2]);
+    const getBrightness = color => color.match(/\d+/g).slice(0, 3).map(Number).reduce((total, channel) => total + channel, 0);
+    expect(getBrightness(dayFills[0])).toBeLessThan(getBrightness(dayFills[1]));
+    for (const date of ['2026-09-15', archive.date]) {
+      await expect(calendar.locator(`[data-puzzle-date="${date}"] .calendar-check use`)).toHaveAttribute('href', /#check$/);
+    }
     for (const date of ['2026-09-09', '2026-09-18']) {
       const unavailable = calendar.locator(`[data-puzzle-date="${date}"]`);
       await expect(unavailable).toHaveClass(/is-unavailable/);
@@ -411,9 +429,9 @@ for (const native of [false, true]) {
     await page.locator('#calendar-open').press('Enter');
     await expect(page.locator('#calendar-month-title')).toHaveText('November 2026');
     await expect(page.locator('#calendar-dialog [data-puzzle-date]')).toHaveCount(30);
-    await expect(page.locator('#calendar-streak')).toHaveText('2-day streak');
-    await expect(page.locator('#calendar-dialog .is-completed')).toHaveCount(3);
-    await expect(page.locator('#calendar-dialog .is-streak')).toHaveCount(2);
+    await expect(page.locator('#calendar-streak')).toHaveText('2 day streak');
+    await expect(page.locator('#calendar-dialog .calendar-day.is-completed')).toHaveCount(3);
+    await expect(page.locator('#calendar-dialog .calendar-day.is-streak')).toHaveCount(2);
     const geometry = await page.locator('#calendar-dialog').evaluate(dialog => ({
       width:innerWidth,height:innerHeight,scrolls:dialog.scrollHeight > dialog.clientHeight,
       targets:[...dialog.querySelectorAll('button,a')].map(element => {

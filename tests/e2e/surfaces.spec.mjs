@@ -78,7 +78,7 @@ test('calendar navigation preserves progress and exposes only released dates', a
   ]);
   await expect(calendar.locator('[aria-current="date"]')).toHaveAccessibleName('Thursday, September 17, 2026, Today, not completed, current puzzle');
   await expect(calendar.locator('.is-current')).toHaveCount(1);
-  await expect(calendar.locator('.is-completed')).toHaveCount(0);
+  await expect(calendar.locator('.calendar-day.is-completed')).toHaveCount(0);
   await expect(calendar.getByRole('link', { name: /Tutorial/ })).toHaveCount(0);
   expect(await links.evaluateAll(items => items.every(item => new URL(item.href).searchParams.get('test') === '1'))).toBe(true);
   await calendar.locator('[data-puzzle-date="2026-09-11"]').click();
@@ -152,7 +152,7 @@ test('dated completions stay read-only while Tutorial starts fresh after reload'
   await openGame(page, 'date=2026-09-16');
   await page.locator('#menu-open').click();
   await page.locator('#menu-calendar-open').click();
-  await expect(page.locator('#calendar-dialog .is-completed')).toHaveCount(2);
+  await expect(page.locator('#calendar-dialog .calendar-day.is-completed')).toHaveCount(2);
   await expect(page.locator('#calendar-dialog [aria-current="page"]')).not.toHaveClass(/is-completed/);
   await expect(page.locator('#calendar-dialog .is-current')).toHaveCount(1);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('nookgrid:test:v1:streak')))).toEqual([today]);

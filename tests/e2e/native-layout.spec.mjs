@@ -109,7 +109,7 @@ for (const [hints, elapsedMs] of [[0, 59_000], [1, 90_000], [9, 3_661_000]]) {
     await seedProgress(page, ['2026-09-12', '2026-09-13', '2026-09-14', '2026-09-15', '2026-09-16'], 'streak');
     await seedProgress(page, { board: bank.puzzles.find(puzzle => puzzle.date === '2026-09-17').solution, moves: 9, hints, elapsedMs });
     await openGame(page);
-    await expect(page.locator('#daily-streak')).toHaveText('6-day streak');
+    await expect(page.locator('#daily-streak')).toHaveText('6 day streak');
     const metrics = page.locator('.completion-meta p:visible');
     await expect(metrics).toHaveCount(3);
     for (const theme of ['light', 'dark']) {

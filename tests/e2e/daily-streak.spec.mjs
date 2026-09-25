@@ -20,12 +20,12 @@ test('a daily completion stays read-only across review and reload without earnin
   await seedProgress(page, almostSolved);
   await openGame(page);
   await openCalendar(page);
-  await expect(page.locator('#calendar-streak')).toHaveText('0-day streak');
+  await expect(page.locator('#calendar-streak')).toHaveText('0 day streak');
   await page.getByRole('button', { name: 'Close calendar', exact: true }).click();
 
   await place(page, daily.solution[8], 8);
   await expect(page.locator('#completion')).toBeVisible();
-  await expect(page.locator('#daily-streak')).toHaveText('1-day streak');
+  await expect(page.locator('#daily-streak')).toHaveText('1 day streak');
   await expect.poll(() => readStreak(page)).toEqual([today]);
 
   await choose(page.locator('#view-solved'));
@@ -33,14 +33,14 @@ test('a daily completion stays read-only across review and reload without earnin
   for (const control of ['#clear', '#undo', '#hint']) await expect(page.locator(control)).toBeHidden();
   await expect(page.locator('#completion')).toBeHidden();
   await openCalendar(page);
-  await expect(page.locator('#calendar-streak')).toHaveText('1-day streak');
+  await expect(page.locator('#calendar-streak')).toHaveText('1 day streak');
   await page.getByRole('button', { name: 'Close calendar', exact: true }).click();
   await page.locator('#view-result').click();
-  await expect(page.locator('#daily-streak')).toHaveText('1-day streak');
+  await expect(page.locator('#daily-streak')).toHaveText('1 day streak');
   await page.reload();
   await enterGame(page);
   await expect(page.locator('#completion')).toBeVisible();
-  await expect(page.locator('#daily-streak')).toHaveText('1-day streak');
+  await expect(page.locator('#daily-streak')).toHaveText('1 day streak');
   expect(await readStreak(page)).toEqual([today]);
 });
 
@@ -50,7 +50,7 @@ test('a daily puzzle completed with a hint earns the same streak', async ({ page
   await page.locator('#hint').click();
   await page.locator('#confirm-hint').click();
   await expectBoard(page, daily.solution);
-  await expect(page.locator('#daily-streak')).toHaveText('1-day streak');
+  await expect(page.locator('#daily-streak')).toHaveText('1 day streak');
   await expect.poll(() => readStreak(page)).toEqual([today]);
   expect((await readProgress(page)).hints).toBe(1);
 });
@@ -77,15 +77,15 @@ test('yesterday keeps a streak active until a UTC day is missed', async ({ page 
   await seedProgress(page, earned, 'streak');
   await openGame(page);
   await openCalendar(page);
-  await expect(page.locator('#calendar-streak')).toHaveText('2-day streak');
+  await expect(page.locator('#calendar-streak')).toHaveText('2 day streak');
 
   await page.clock.setSystemTime(new Date('2026-09-18T12:00:00-04:00'));
   await page.clock.fastForward(1_200);
-  await expect(page.locator('#calendar-streak')).toHaveText('2-day streak');
+  await expect(page.locator('#calendar-streak')).toHaveText('2 day streak');
 
   await page.clock.setSystemTime(new Date('2026-09-19T00:00:00Z'));
   await page.clock.fastForward(1_200);
-  await expect(page.locator('#calendar-streak')).toHaveText('0-day streak');
+  await expect(page.locator('#calendar-streak')).toHaveText('0 day streak');
   expect(await readStreak(page)).toEqual(earned);
 });
 
@@ -100,7 +100,7 @@ test('archive sharing uses the current streak without earning a day and expires 
   });
   await openGame(page, `date=${archive.date}`);
   await page.locator('#share').click();
-  expect(await page.evaluate(() => window.copiedResult)).toContain('\n2-day streak\n');
+  expect(await page.evaluate(() => window.copiedResult)).toContain('\n2 day streak\n');
   expect(await readStreak(page)).toEqual(earned);
 
   await page.clock.setSystemTime(new Date('2026-09-18T00:00:00Z'));
@@ -187,7 +187,7 @@ for (const timezone of ['America/New_York', 'Asia/Tokyo', 'Europe/London']) {
       await expect(page.locator('#puzzle-date')).toHaveText('Sep 17, 2026');
       await place(page, daily.solution[8], 8);
       await expect(page.locator('#next-puzzle-time')).toHaveText('00:00:02');
-      await expect(page.locator('#daily-streak')).toHaveText('2-day streak');
+      await expect(page.locator('#daily-streak')).toHaveText('2 day streak');
       await page.clock.fastForward(4_000);
       await expect(page.locator('#next-puzzle')).toBeHidden();
       await expect(page.locator('#daily-streak')).toBeHidden();
@@ -218,14 +218,14 @@ test.describe('saved history from the previous local-day schedule', () => {
     await openGame(page, `date=${next.date}`);
     await expect(page.locator('#puzzle-date')).toHaveText('Sep 17, 2026');
     await openCalendar(page);
-    await expect(page.locator('#calendar-streak')).toHaveText('2-day streak');
+    await expect(page.locator('#calendar-streak')).toHaveText('2 day streak');
     await expect(page.locator(`#calendar-dialog [data-puzzle-date="${next.date}"]`)).not.toHaveAttribute('href');
     expect(await readStreak(page)).toEqual(earned);
     await page.clock.fastForward(4_000);
-    await expect(page.locator('#calendar-streak')).toHaveText('3-day streak');
+    await expect(page.locator('#calendar-streak')).toHaveText('3 day streak');
     await page.locator(`#calendar-dialog [data-puzzle-date="${next.date}"]`).click();
     await expect(page.locator('#completion')).toBeVisible();
-    await expect(page.locator('#daily-streak')).toHaveText('3-day streak');
+    await expect(page.locator('#daily-streak')).toHaveText('3 day streak');
     await expect(page.locator('#completion-time')).toHaveText('Solved in 1:30');
     await expect(page.locator('#completion-detail')).toHaveText('1 hint');
     expect(await readStreak(page)).toEqual(earned);
@@ -278,6 +278,6 @@ test('a failed native streak write stays visible and Retry saves the earned day'
   await page.reload();
   await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
   await openCalendar(page);
-  await expect(page.locator('#calendar-streak')).toHaveText('1-day streak');
+  await expect(page.locator('#calendar-streak')).toHaveText('1 day streak');
   expect(await readStreak(page)).toEqual([today]);
 });
