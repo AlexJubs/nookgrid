@@ -142,6 +142,7 @@
   <dialog id="feedback-dialog" aria-labelledby="feedback-title">
     <button class="close-dialog" data-close aria-label="Close feedback" data-track="index-button-7"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-calendar2#x"/></svg></button><h2 id="feedback-title">Feedback</h2>
     <p id="feedback-unavailable" class="notice">Feedback collection is temporarily unavailable. No feedback is being sent.</p>
+    <a id="report-ad" class="secondary inline-button" href="mailto:alexjabbour7@outlook.com?subject=NookGrid%20ad%20report" hidden>Report an ad</a>
     <form id="feedback-form" hidden><label class="sr-only" for="feedback-message">Your feedback</label><textarea id="feedback-message" name="message" maxlength="1000" rows="4" placeholder="Share your thoughts…" required autofocus></textarea><button type="submit" class="primary" id="feedback-send">Send</button></form>
     <p id="feedback-status" role="status"></p>
   </dialog>
@@ -152,6 +153,8 @@
       <p id="analytics-description">Help improve the puzzles by measuring visits, moves and results without saving a tracking ID.</p>
       <p id="privacy-signal" role="status"></p>
     </div>
+    <button id="ad-privacy-open" class="secondary" hidden>Ad privacy choices</button>
+    <p id="ad-privacy-status" role="status" hidden></p>
     <p class="settings-note">Your progress and streak stay in this browser. Clearing browser data removes them.</p>
   </dialog>
   </template>

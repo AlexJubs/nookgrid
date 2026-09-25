@@ -6,6 +6,7 @@ import posthog from 'posthog-js/dist/module.no-external';
 import { createNativeStorage } from './storage.mjs';
 
 const AnalyticsMetadata = registerPlugin('AnalyticsMetadata');
+const CompletionAds = registerPlugin('CompletionAds');
 
 window.nookgridReady = (async () => {
   if (!Capacitor.isNativePlatform()) return;
@@ -21,6 +22,14 @@ window.nookgridReady = (async () => {
     share:text => Share.share({title:'NookGrid',text,dialogTitle:'Share your result'}),
     onStateChange:listener => App.addListener('appStateChange',listener),
     getAnalyticsMetadata:() => AnalyticsMetadata.getMetadata(),
+    ads:__NOOKGRID_ADS__ === 'off' ? null : {
+      mode:__NOOKGRID_ADS__,
+      initialize:() => CompletionAds.initialize({isTest:new URLSearchParams(location.search).get('test') === '1'}),
+      present:options => CompletionAds.present(options),
+      cancel:options => CompletionAds.cancel(options),
+      privacyOptions:() => CompletionAds.privacyOptions(),
+      onEvent:listener => CompletionAds.addListener('adEvent',listener)
+    },
     async installationId() {
       if (!storage) throw new Error('Analytics storage unavailable');
       const saved = storage.getItem('nookgrid:installation');

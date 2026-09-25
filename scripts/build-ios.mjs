@@ -3,7 +3,9 @@ import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-export async function buildIos({directory = 'dist/ios',production = false} = {}) {
+export async function buildIos({directory = 'dist/ios',production = false,ads = 'off'} = {}) {
+  if (!['off','demo','live'].includes(ads)) throw new Error('Unknown ad mode.');
+  if (ads === 'live' && !production) throw new Error('Live ads require a production build.');
   if (production && process.env.NOOKGRID_DEV_URL) throw new Error('Release builds cannot use a development server.');
   if (!resolve(directory).startsWith(resolve('dist') + '/')) throw new Error('iOS output must be inside dist.');
   await rm(directory,{recursive:true,force:true});
@@ -27,11 +29,12 @@ export async function buildIos({directory = 'dist/ios',production = false} = {})
   }
   const config = JSON.parse(await readFile(`${directory}/site-config.json`,'utf8'));
   config.feedbackEnabled = false;
-  if (!production) config.analytics.enabled = false;
+  if (!production || ads === 'demo') config.analytics.enabled = false;
   await writeFile(`${directory}/site-config.json`,JSON.stringify(config));
-  await build({entryPoints:['native/main.mjs'],outfile:`${directory}/native.js`,bundle:true,format:'iife',target:'safari16',minify:production,define:{__NOOKGRID_PRODUCTION__:JSON.stringify(production)}});
+  await writeFile(`${directory}/ad-config.json`,JSON.stringify({mode:ads}));
+  await build({entryPoints:['native/main.mjs'],outfile:`${directory}/native.js`,bundle:true,format:'iife',target:'safari16',minify:production,define:{__NOOKGRID_PRODUCTION__:JSON.stringify(production),__NOOKGRID_ADS__:JSON.stringify(ads)}});
 }
 
 if (import.meta.url === pathToFileURL(resolve(process.argv[1] || '')).href) {
-  await buildIos({production:process.env.NOOKGRID_PRODUCTION === '1'});
+  await buildIos({production:process.env.NOOKGRID_PRODUCTION === '1',ads:process.env.NOOKGRID_ADS || 'off'});
 }

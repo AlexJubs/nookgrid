@@ -8,6 +8,7 @@ test('iOS bundle is offline, isolated in development, and declares native privac
   const config = JSON.parse(await readFile('dist/ios-test/site-config.json','utf8'));
   assert.equal(config.analytics.enabled,false);
   assert.equal(config.feedbackEnabled,false);
+  assert.deepEqual(JSON.parse(await readFile('dist/ios-test/ad-config.json','utf8')),{mode:'off'});
   const html = await readFile('dist/ios-test/index.html','utf8');
   assert.match(html,/native\.js/);
   assert.match(html,/viewport-fit=cover/);
@@ -20,6 +21,14 @@ test('iOS bundle is offline, isolated in development, and declares native privac
   for (const file of ['icons.svg','phosphor-LICENSE.txt']) {
     assert.equal(await readFile(`dist/ios-test/${file}`,'utf8'),await readFile(`public/${file}`,'utf8'));
   }
+});
+
+test('ads require an explicit build mode and demo builds never collect analytics',async () => {
+  await assert.rejects(buildIos({ads:'live'}),/production/);
+  await assert.rejects(buildIos({ads:'invalid'}),/ad mode/);
+  await buildIos({directory:'dist/ios-ad-test',production:true,ads:'demo'});
+  assert.deepEqual(JSON.parse(await readFile('dist/ios-ad-test/ad-config.json','utf8')),{mode:'demo'});
+  assert.equal(JSON.parse(await readFile('dist/ios-ad-test/site-config.json','utf8')).analytics.enabled,false);
 });
 
 test('production rejects live reload instead of shipping a development URL',async () => {

@@ -5,6 +5,7 @@ import { testMode, analytics } from './session.mjs?v=20260924-calendar2';
 import { native, savedValue, saveValue } from './platform.mjs';
 import { updatePuzzleLinks } from './navigation.mjs?v=20260924-calendar2';
 import { getWeekDates, getCalendarMonths, renderCalendar } from './calendar.mjs?v=20260924-calendar3';
+import { createCompletionAds } from './completion-ads.mjs';
 
 const $ = id => document.getElementById(id);
 const renderIcon = (name, className = '') => `<svg class="ui-icon ${className}" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-calendar2#${name}"/></svg>`;
@@ -24,6 +25,53 @@ let solveTimer = {elapsedMs:0,startedAt:null};
 let screen = 'puzzle';
 let calendarMonths = [], calendarMonth;
 let viewedEntry = null, puzzleState = 'fresh', completionEvent = null;
+const completionAds = native?.ads ? createCompletionAds(native.ads) : null;
+const adSnapshots = new Map();
+let hasAds = false, pendingAd = null, resultOpportunity = null, isNativeActive = true;
+
+function cancelCompletionAd() {
+  if (!pendingAd) return;
+  const opportunity = pendingAd;
+  completionAds.cancel().then(state => {
+    if (state?.presenting || pendingAd !== opportunity) return;
+    pendingAd = null;
+    renderScreen();
+  });
+}
+
+function recordAdEvent({event,...properties}) {
+  if (!['ad_outcome','ad_revenue'].includes(event)) return;
+  const snapshot = adSnapshots.get(properties.ad_opportunity_id);
+  if (properties.ad_opportunity_id && (!snapshot?.properties || snapshot.epoch !== analytics.epoch())) return;
+  analytics.track(event,{...snapshot?.properties,...properties});
+}
+
+function updateAdPrivacy(state) {
+  hasAds = state?.enabled === true;
+  $('ad-privacy-open').hidden = !state?.privacyOptionsRequired;
+  $('report-ad').hidden = !hasAds;
+}
+
+async function initializeAds() {
+  if (!native?.ads) return;
+  try {
+    await native.ads.onEvent(recordAdEvent);
+    updateAdPrivacy(await native.ads.initialize());
+  } catch { updateAdPrivacy(null); }
+}
+
+$('ad-privacy-open').addEventListener('click',async () => {
+  cancelCompletionAd();
+  $('ad-privacy-open').disabled = true;
+  $('ad-privacy-status').textContent = '';
+  $('ad-privacy-status').hidden = true;
+  try { updateAdPrivacy(await native.ads.privacyOptions()); }
+  catch {
+    $('ad-privacy-status').hidden = false;
+    $('ad-privacy-status').textContent = 'Ad privacy choices could not open. Please try again.';
+  }
+  finally { $('ad-privacy-open').disabled = false; }
+});
 
 function read(key) {
   return savedValue(key);
@@ -44,6 +92,7 @@ function showAppStoreLink(identifier) {
 $('retry-save').addEventListener('click', () => save());
 
 async function navigateTo(url) {
+  cancelCompletionAd();
   if (native && progress) {
     try {
       if (!await save(false)) throw new Error('Progress was not saved');
@@ -60,6 +109,7 @@ async function navigateTo(url) {
 }
 
 function openDialog(id, opener) {
+  cancelCompletionAd();
   const isFromMenu = $('menu-dialog').open;
   if (isFromMenu) $('menu-dialog').close();
   if (id === 'calendar-dialog' && bank && puzzle) prepareCalendar();
@@ -162,6 +212,12 @@ function renderScreen() {
   $('home-open').hidden = screen === 'home';
   $('help-tutorial').hidden = mode === 'practice' && screen !== 'home';
   $('completion').hidden = screen !== 'result' || !solved;
+  document.querySelector('.completion-actions').hidden = Boolean(pendingAd);
+  $('result-week').inert = Boolean(pendingAd);
+  if (resultOpportunity && screen === 'result' && !pendingAd && !document.hidden && isNativeActive && !document.querySelector('dialog[open]')) {
+    recordAdEvent({event:'ad_outcome',outcome:'result_visible',placement:'completion',ad_mode:native.ads.mode,ad_opportunity_id:resultOpportunity});
+    resultOpportunity = null;
+  }
   $('view-result').hidden = screen !== 'puzzle' || !solved;
   document.querySelector('.skip-link').href = screen === 'home' ? '#home' : screen === 'result' ? '#completion' : '#game';
   recordPuzzleView();
@@ -177,10 +233,11 @@ function recordPuzzleView() {
 }
 document.addEventListener('nookgrid:entry',recordPuzzleView);
 document.addEventListener('visibilitychange',recordPuzzleView);
-document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('close',recordPuzzleView));
+document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('close',() => { if (puzzle) renderScreen(); }));
 
 function showScreen(next) {
   if (!puzzle) return;
+  cancelCompletionAd();
   save(false);
   screen = next;
   selected = null;
@@ -312,6 +369,7 @@ function applyBoard(board, message, action = 'place') {
   if (progress.hintedPlaces.some(id => board[puzzle.solution.indexOf(id)] !== id)) return false;
   const hasChanged = board.some((id,index) => id !== progress.board[index]);
   if (!hasChanged && action !== 'reset') return false;
+  const shouldOfferAd = hasAds && mode !== 'practice' && !progress.reported && ['place','hint'].includes(action) && isSolved(puzzle,board);
   if (hasChanged) {
     const previous = {board:[...progress.board],moves:progress.moves};
     if (action === 'reset') {
@@ -329,8 +387,22 @@ function applyBoard(board, message, action = 'place') {
   selected = null;
   startPlay(action);
   track(action === 'reset' ? 'board_reset' : 'board_move',{action});
+  if (shouldOfferAd) pendingAd = resultOpportunity = crypto.randomUUID();
   save();
-  render();
+  const saved = render();
+  if (shouldOfferAd) {
+    const opportunity = pendingAd;
+    const snapshot = analytics.snapshot();
+    if (snapshot) {
+      const {event_id,event_index,occurred_at,...properties} = snapshot;
+      adSnapshots.set(opportunity,{properties:{...properties,puzzle_date:puzzle.date,puzzle_mode:mode,puzzle_version:bank.version,puzzle_state:puzzleState},epoch:analytics.epoch()});
+    }
+    completionAds.complete({key:puzzle.date,opportunity,saved,isCurrent:() => pendingAd === opportunity && isNativeActive && !document.hidden && screen === 'result' && !document.querySelector('dialog[open]')}).finally(() => {
+      if (pendingAd !== opportunity) return;
+      pendingAd = null;
+      renderScreen();
+    });
+  }
   if (message && !wasSolved) {
     $('selection-status').textContent = message;
   }
@@ -510,6 +582,7 @@ window.addEventListener('storage',event => {
 
 function render() {
   if (!puzzle) return;
+  let saved;
   const board = progress.board;
   const solved = isSolved(puzzle, board);
   // ponytail: this lesson follows the fixed tutorial's first four rules; update it if that puzzle changes.
@@ -585,7 +658,7 @@ function render() {
       if (snapshot) completionEvent = {properties:{...snapshot,puzzle_date:puzzle.date,puzzle_mode:mode,puzzle_version:bank.version,puzzle_state:puzzleState,moves:progress.moves,hints:progress.hints,active_ms_this_page:analytics.activeMilliseconds()},epoch:analytics.epoch(),sent:false};
       progress.reported = true;
     }
-    if (shouldReport || hasEarnedDay) save();
+    if (shouldReport || hasEarnedDay) saved = save();
     renderScreen();
     if (shouldFocusCompletion && screen === 'result') {
       window.scrollTo({top:0,behavior:'instant'});
@@ -597,6 +670,7 @@ function render() {
   renderScreen();
   updateReturnPrompt();
   renderHistory();
+  return saved;
 }
 
 $('undo').addEventListener('click', () => {
@@ -729,6 +803,7 @@ async function init() {
       navigateTo(url.href);
     });
     makeBoard(); render();
+    initializeAds();
     if ($('calendar-dialog').open) prepareCalendar();
     $('game').setAttribute('aria-busy','false');
     $('game').inert = false;
@@ -736,9 +811,18 @@ async function init() {
     setInterval(updateReturnPrompt,1000);
     document.addEventListener('visibilitychange',updateReturnPrompt);
     document.addEventListener('visibilitychange',() => save());
-    window.addEventListener('pagehide',() => save(false));
+    window.addEventListener('pagehide',() => { cancelCompletionAd(); save(false); });
     window.addEventListener('pageshow',event => event.persisted && mode === 'practice' && screen !== 'home' ? location.reload() : save());
-    if (native) native.onStateChange(({isActive}) => { save(isActive); updateReturnPrompt(); }).catch(() => {});
+    document.addEventListener('visibilitychange',() => { if (document.hidden) cancelCompletionAd(); });
+    if (native) native.onStateChange(({isActive}) => {
+      isNativeActive = isActive;
+      if (!isActive) cancelCompletionAd();
+      save(isActive); updateReturnPrompt();
+      if (isActive) {
+        renderScreen();
+        native.ads?.initialize().then(updateAdPrivacy).catch(() => {});
+      }
+    }).catch(() => {});
   } catch {
     analytics.track('app_error',{action:'puzzle_load'});
     $('load-error').hidden = false;

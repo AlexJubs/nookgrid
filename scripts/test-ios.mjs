@@ -11,7 +11,11 @@ function command(name, args) {
 }
 const config = JSON.parse(await readFile('ios/App/App/capacitor.config.json', 'utf8'));
 const analytics = JSON.parse(await readFile('ios/App/App/public/site-config.json', 'utf8'));
-if (config.server?.url || analytics.analytics?.enabled !== false) throw new Error('Run npm run build:ios with no production or live-reload variables before native QA.');
+const ads = JSON.parse(await readFile('ios/App/App/public/ad-config.json', 'utf8'));
+if (config.server?.url || analytics.analytics?.enabled !== false || ads.mode !== 'off') throw new Error('Run npm run build:ios with no production, ads or live-reload variables before native QA.');
+await mkdir('artifacts/ios', {recursive: true});
+command('xcrun', ['swiftc', '-Onone', 'ios/App/App/CompletionAdState.swift', 'tests/CompletionAdStateCheck.swift', '-o', 'artifacts/ios/AdStateCheck']);
+console.log(command('artifacts/ios/AdStateCheck', []));
 const available = JSON.parse(command('xcrun', ['simctl', 'list', 'devices', 'available', '--json'])).devices;
 const candidates = Object.entries(available).filter(([runtime]) => runtime.includes('.iOS-'))
   .flatMap(([runtime, devices]) => devices.filter(device => device.deviceTypeIdentifier?.includes('.iPhone')).map(device => ({...device, runtime})))
@@ -34,7 +38,6 @@ if (process.env.NOOKGRID_SIMULATOR_ID) {
     return existing || {...profile, name, udid: command('xcrun', ['simctl', 'create', name, profile.deviceTypeIdentifier, profile.runtime])};
   });
 }
-await mkdir('artifacts/ios', {recursive: true});
 for (const [index, device] of devices.entries()) {
   const result = index === 0 ? 'artifacts/ios/NookGrid.xcresult' : `artifacts/ios/NookGrid-${index + 1}.xcresult`;
   await rm(result, {recursive: true, force: true});

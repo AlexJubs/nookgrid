@@ -88,6 +88,8 @@ Refactoring UI provides design principles, not a conformance certificate. Name t
 
 ## iOS surfaces
 
+Native ad privacy choices use the existing secondary button in Settings when required, with a live failure status. Feedback includes a matching Report an ad link. During an eligible completion ad transition, keep the completed neighborhood and result visible while withholding the action group and week navigation until the opportunity ends. Missing ads or a failed save reveal those actions promptly. Never cover resumed play with a late ad.
+
 The native app keeps the shared compact game. CSS owns top and bottom safe-area padding so the title and controls never overlap the status bar or home indicator; a fixed background keeps scrolled content clear of the status bar. Dialog height also respects those insets. Use the existing game icon and a quiet light launch surface. The optional website App Store suggestion is a small dismissible row, shown only on Apple touch devices after a real listing ID is configured. It must never cover or block the puzzle.
 
 ## Phone layout

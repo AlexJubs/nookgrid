@@ -16,7 +16,7 @@ Read `DESIGN.md` before every design change. Apply Adam Wathan and Steve Schoger
 
 ## iOS
 
-Read `docs/RELEASING.md`. Keep web and iOS gameplay shared. Use native Preferences for app saves and preserve hint locks, elapsed time and privacy choices. Debug, live-reload and simulator tests must never send production analytics. Release bundles cannot contain a development server URL. Use personal Apple signing only; leave team selection and secrets out of source. No ads, notifications, accounts, Android target or streak interface is in the initial scope.
+Read `docs/RELEASING.md`. Keep web and iOS gameplay shared. Use native Preferences for app saves and preserve hint locks, elapsed time and privacy choices. Debug, live-reload and simulator tests must never send production analytics. Release bundles cannot contain a development server URL. Use personal Apple signing only; leave team selection and secrets out of source. Native completion ads require an explicit build mode; ordinary QA leaves them off and never initializes the advertising SDK. Notifications, accounts, purchases and an Android target remain outside scope.
 
 ## CI verification
 

@@ -406,3 +406,57 @@ test('cancelling the native share sheet leaves the result visible',async ({page}
   await expect(page.locator('#completion')).toBeVisible();
   expect(await page.evaluate(() => window.captured.filter(item => item.event === 'share_result').at(-1).properties.result)).toBe('cancelled');
 });
+
+test('ad callbacks keep completion context and cannot cross an analytics opt-out',async ({page}) => {
+  await page.clock.install({time:new Date('2026-09-17T23:59:58Z')});
+  await page.addInitScript(solution => {
+    localStorage.setItem('nookgrid:v1:2026-09-17',JSON.stringify({board:[...solution.slice(0,8),null],moves:8}));
+    window.nookgridNative.ads = {
+      mode:'demo',initialize:async () => ({enabled:true}),onEvent:async listener => { window.adEvent = listener; },
+      cancel:async () => ({presenting:true}),
+      present:async ({opportunity}) => { window.adOpportunity = opportunity; await new Promise(resolve => { window.dismissAd = resolve; }); }
+    };
+  },daily.solution);
+  await page.goto('/');
+  await enterGame(page);
+  await place(page,daily.solution[8],8);
+  await expect.poll(() => page.evaluate(() => typeof window.adOpportunity)).toBe('string');
+  await page.clock.setSystemTime(new Date('2026-09-18T00:00:01Z'));
+  await page.evaluate(() => {
+    const properties = {ad_opportunity_id:window.adOpportunity,ad_mode:'demo',placement:'completion'};
+    window.adEvent({event:'ad_outcome',outcome:'impression',...properties});
+    window.adEvent({event:'ad_revenue',revenue_micros:125,currency:'USD',precision:'estimated',...properties});
+    window.dismissAd();
+  });
+  await expect(page.locator('#share')).toBeVisible();
+  const ads = await page.evaluate(() => window.captured.filter(item => ['ad_outcome','ad_revenue'].includes(item.event)));
+  expect(ads).toHaveLength(3);
+  expect(new Set(ads.map(item => item.properties.event_id)).size).toBe(3);
+  expect(ads.every(item => item.properties.puzzle_date === '2026-09-17' && item.properties.puzzle_mode === 'daily')).toBe(true);
+  expect(ads[1].properties).toMatchObject({revenue_micros:125,currency:'USD',precision:'estimated'});
+  await setAnalytics(page,false);
+  await setAnalytics(page,true);
+  await page.evaluate(() => window.adEvent({event:'ad_revenue',revenue_micros:999,currency:'USD',precision:'precise',placement:'completion',ad_mode:'demo',ad_opportunity_id:window.adOpportunity}));
+  expect(await page.evaluate(() => window.captured.filter(item => item.event === 'ad_revenue').length)).toBe(1);
+});
+
+test('a cancelled opportunity records visible results only after the covering dialog closes',async ({page}) => {
+  await page.clock.install({time:new Date('2026-09-17T12:00:00Z')});
+  await page.addInitScript(solution => {
+    localStorage.setItem('nookgrid:v1:2026-09-17',JSON.stringify({board:[...solution.slice(0,8),null],moves:8}));
+    window.nookgridNative.ads = {mode:'demo',initialize:async () => ({enabled:true}),onEvent:async () => {},cancel:async () => ({presenting:false}),present:async () => { throw new Error('Must not present'); }};
+    const save = window.nookgridNative.storage.setItem;
+    window.nookgridNative.storage.setItem = async (key,value) => {
+      if (key.endsWith('2026-09-17') && JSON.parse(value).reported) await new Promise(resolve => { window.releaseAdSave = resolve; });
+      return save(key,value);
+    };
+  },daily.solution);
+  await page.goto('/');
+  await enterGame(page);
+  await place(page,daily.solution[8],8);
+  await page.locator('#menu-open').click();
+  await page.evaluate(() => window.releaseAdSave());
+  expect(await page.evaluate(() => window.captured.some(item => item.properties.outcome === 'result_visible'))).toBe(false);
+  await page.getByRole('button',{name:'Close menu',exact:true}).click();
+  await expect.poll(() => page.evaluate(() => window.captured.filter(item => item.properties.outcome === 'result_visible').length)).toBe(1);
+});

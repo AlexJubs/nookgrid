@@ -16,6 +16,20 @@ Passing checks reduces regression risk; it does not prove there are no bugs. Pre
 
 Keep tests in the same change as each feature or bug fix. Identify the behavior covered, extend the existing shared/browser/native suite where needed, and update [the coverage record](TESTING-COVERAGE.md) when the contract changes. Use focused local checks while iterating, then one complete release check and exact-source CI for the reviewed candidate. Batch related small edits into that candidate; the uploader reuses its successful CI instead of running a second full native suite.
 
+## Completion ads
+
+Ads are native-only and off in every default build, including production. The Xcode project pins the official Google Mobile Ads package; its UMP dependency and privacy manifests ship with it. No mediation SDK is installed. The existing application and completion unit are used. [Google setup](https://developers.google.com/admob/ios/quick-start).
+
+For a separate authorized network smoke check, build with `NOOKGRID_PRODUCTION=1 NOOKGRID_ADS=demo npm run build:ios` and use a signed Release build. This uses Google's demo interstitial unit and disables gameplay analytics. `?test=1`, the offline launch argument and live-reload servers prevent native SDK initialization. Debug rejects live mode. TestFlight is never a live-ad channel. Never click real ads. Restore `npm run build:ios` afterward. [Test ads](https://developers.google.com/admob/ios/test-ads).
+
+Live requests require both `NOOKGRID_PRODUCTION=1 NOOKGRID_ADS=live` and a verified production App Store transaction for this bundle. Do not build or distribute that mode until Google app readiness, published consent messages, privacy declarations, device checks and actual optional analytics capture have been reviewed. Existing release automation intentionally leaves ads off.
+
+UMP updates at launch, presents required consent and exposes Ad privacy choices in Settings when required. Requests require `canRequestAds`, with personalization and publisher first-party ID disabled, general-rated content and unspecified age treatment for the general audience. No ATT request or advertising identifier access is implemented by the app. The vendor manifest includes identifier collection and potential tracking; review the aggregate archive privacy report and actual SDK behavior before claiming a no-tracking configuration or submitting Apple's answers. [Consent](https://developers.google.com/admob/ios/privacy), [targeting](https://developers.google.com/admob/ios/targeting), [data disclosure](https://developers.google.com/admob/ios/privacy/data-disclosure).
+
+New dated completions save progress and streak before one preloaded ad opportunity. Tutorial, saved results and previously completed history are excluded. A slow or failed save, missing/expired ad, stale navigation or failed presentation reveals results without a later interruption. The result acknowledges completion before exposing its actions; native dismissal returns to those actions. Feedback includes Report an ad. Optional analytics records callback-derived impressions and paid values in integer micros with currency and precision; absent revenue stays unavailable. Changing Play analytics invalidates pending optional ad telemetry; advertising eligibility stays separate.
+
+Before live delivery, verify consent accepted/declined/changed/unavailable, no fill/offline/late load, save failure, dismissal, background/resume, duplicate callbacks, privacy-choice recovery, physical close controls, safe areas, VoiceOver and larger text using demo ads. Automated QA covers the game and bridge with SDK traffic disabled; it does not prove a real creative's behavior. Purchases and reminders remain separate work.
+
 ## Manual screen pass
 
 Before publishing a UI or gameplay release, record the source, browser/device and pass or blocker for each group below. Exercise the actual controls in an isolated preview; screenshots and automated results alone are not a manual pass.
