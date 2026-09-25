@@ -91,7 +91,7 @@ button,.inline-button{-webkit-user-select:none;user-select:none}
 #share-status{grid-column:1/-1}
 #next-puzzle{width:100%;margin:0;padding:0}
 #next-puzzle span{display:block;font-size:12px;color:var(--muted)}
-#next-puzzle-time{display:block;font-size:16px;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:.5px;margin-top:4px}
+#next-puzzle-time{display:block;font-size:40px;line-height:1.1;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:.5px;margin-top:4px}
 .game-page dialog{border:0;border-radius:16px;padding:20px;max-height:calc(100svh - 24px);overflow:auto;box-shadow:0 16px 60px #14251d33}
 .game-page dialog::backdrop{background:#25302966}
 .game-page dialog h2{font-size:var(--font-title);font-weight:700;letter-spacing:-.4px;line-height:1.2;margin:0 0 16px;padding-right:32px}
