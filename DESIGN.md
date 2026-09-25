@@ -14,7 +14,7 @@ Calendar is the only puzzle-history destination. Use a surfaced button with the 
 
 Gameplay has one heading, Today’s plan, or a dated archive/Tutorial equivalent. Use 14px plan text at 1.5 line height, 6px between rows and semibold place names. Preserve the full relational wording and order. Pending marks stay visually hidden in a reserved status gutter; matching/conflict shapes and accessible descriptions remain. No repeated date/title stack, plan cards, tray bubbles or Put back control. Dragging a movable place back to the tray removes it; Delete or Backspace removes a selected place by keyboard, and Undo restores it. Preserve visible keyboard focus when Tutorial guidance hides a removed tray place. Fixed hints stay locked. Moving, swapping, Undo, Reset and Hint remain.
 
-Completion has its own result screen with a borderless 128px neighborhood illustration, result, earned streak, time/hints, Share and next-puzzle timing. View solved puzzle returns to the full board with a Plan complete disclosure; it does not erase the result. Keep the UTC-midnight schedule and saved history through replay.
+Completion has its own result screen with a borderless 141px neighborhood illustration, result, earned streak, time/hints, Share and next-puzzle timing. View solved puzzle returns to the full board with a Plan complete disclosure; it does not erase the result. Keep the UTC-midnight schedule and saved history through replay.
 
 The board and neighborhood plan are the main task. Puzzle number, date, coordinates, help and countdown support that task. Reduce competing weight and contrast before making important content larger. Use correct semantic headings without letting their HTML level dictate visual size. Reference: pages 36–47 and 54–62.
 

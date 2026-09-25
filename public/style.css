@@ -191,7 +191,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .game-page.show-result #game .puzzle-instruction,.game-page.show-result #game .clue-panel,.game-page.show-result #game .board-wrap,.game-page.show-result #game .play-controls{display:none}
 .game-page.show-result .play-area{display:flex;flex-direction:column;flex:1;width:100%;max-width:none;align-items:stretch}
 .game-page.show-result .completion{display:flex;flex-direction:column;flex:1;align-items:stretch}
-.completion-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;width:128px;margin:0 0 8px}
+.completion-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;width:141px;margin:0 0 8px}
 .completion-place{display:grid;place-items:center;aspect-ratio:1;min-width:0;background:transparent;border:0}
 .completion-place svg{width:92%;height:auto}
 .completion-place .place-name{display:none}
