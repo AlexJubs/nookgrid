@@ -178,7 +178,7 @@ final class NookGridUITests: XCTestCase {
         tap(button("Continue today's puzzle"))
         assertLot("A1", "Bakery")
         tap(button("Back to home"))
-        let tutorial = app.webViews.links["Play tutorial"].firstMatch
+        let tutorial = button("Play tutorial")
         XCTAssertTrue(tutorial.waitForExistence(timeout: 5), app.debugDescription)
         XCTAssertGreaterThanOrEqual(tutorial.frame.width, 44)
         XCTAssertGreaterThanOrEqual(tutorial.frame.height, 44)

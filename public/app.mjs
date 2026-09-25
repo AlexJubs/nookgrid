@@ -69,7 +69,7 @@ function openDialog(id, opener) {
 for (const [button, dialog] of [['help-open','help-dialog'],['menu-open','menu-dialog'],['menu-calendar-open','calendar-dialog'],['calendar-open','calendar-dialog'],['result-calendar-open','calendar-dialog'],['feedback-open','feedback-dialog'],['settings-open','settings-dialog'],['hint','hint-dialog']]) {
   $(button).addEventListener('click', () => openDialog(dialog, $(button)));
 }
-for (const id of ['help-tutorial','home-tutorial']) $(id).href = `?date=practice${testMode ? '&test=1' : ''}`;
+$('help-tutorial').href = `?date=practice${testMode ? '&test=1' : ''}`;
 
 function getCompletedDates() {
   return bank.puzzles.filter(item => item.date <= today && (
@@ -200,6 +200,7 @@ document.querySelector('.brand').addEventListener('click',event => {
   showScreen('home');
 });
 $('home-play').addEventListener('click',() => puzzle.date === today ? showScreen('puzzle') : navigateTo(`?date=${today}${testMode ? '&test=1' : ''}`));
+$('home-tutorial').addEventListener('click',() => navigateTo($('help-tutorial').href));
 $('home-result').addEventListener('click',() => puzzle.date === today && isSolved(puzzle,progress.board) ? showScreen('result') : navigateTo(`?date=${today}${testMode ? '&test=1' : ''}`));
 $('view-solved').addEventListener('click',() => showScreen('puzzle'));
 $('view-result').addEventListener('click',() => showScreen('result'));

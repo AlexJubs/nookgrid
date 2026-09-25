@@ -8,7 +8,7 @@ async function openHome(page) {
 
 test('Home offers fresh Tutorial practice below its dated puzzle actions', async ({ page }) => {
   await openHome(page);
-  const tutorial = page.locator('#home').getByRole('link', { name: 'Play tutorial', exact: true });
+  const tutorial = page.locator('#home').getByRole('button', { name: 'Play tutorial', exact: true });
   await expect(tutorial).toBeVisible();
   const calendar = await page.locator('#calendar-open').boundingBox();
   const practice = await tutorial.boundingBox();

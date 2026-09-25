@@ -185,8 +185,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .week-day.is-unreleased .week-tile{background:transparent;color:var(--muted)}
 .week-tile .ui-icon{width:14px;height:14px}
 .home-actions{display:flex;flex-direction:column;gap:8px;margin-top:28px}
-.home-actions>button,.home-actions>a{width:100%;min-height:52px}
-.home-actions>a{display:flex;align-items:center;justify-content:center}
+.home-actions button{width:100%;min-height:52px}
 .game-page.show-home #game{display:none}
 .game-page.show-result{display:flex;flex-direction:column;min-height:100svh}
 .game-page.show-result .site-header{flex:none;width:100%;margin-block:0}
