@@ -1,7 +1,8 @@
 await globalThis.nookgridReady;
 
 const isLocalPreview = ['http:', 'https:'].includes(location.protocol) && ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
-if (globalThis.nookgridNative || isLocalPreview) {
+const isDesktopScreen = Math.min(screen.width, screen.height) >= 600;
+if (globalThis.nookgridNative || isLocalPreview || (window.self === window.top && isDesktopScreen)) {
   const game = document.getElementById('game-content');
   document.body.className = 'game-page';
   document.body.replaceChildren(game.content.cloneNode(true));

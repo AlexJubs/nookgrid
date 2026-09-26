@@ -1,6 +1,6 @@
 # Release NookGrid
 
-The website and iOS app share source in `public/`. Public game links redirect to the App Store; the native bundle and local preview retain gameplay. CI checks both paths. Releases are manual; a GitHub push never publishes either surface. Apple enrollment, signing credentials and the first TestFlight upload are separate prerequisites; this repository does not establish that they exist.
+The website and iOS app share source in `public/`. Public game links are playable on desktop-sized screens and redirect phone-sized screens to the App Store. Native bundles and local previews retain gameplay. CI checks each path. Releases are manual; a GitHub push never publishes either surface. Apple enrollment, signing credentials and the first TestFlight upload are separate prerequisites; this repository does not establish that they exist.
 
 ## Required release gate
 

@@ -108,6 +108,6 @@ Use compact section gaps and place tiles of at least 44px. Art remains separate 
 
 Verify seven- and ten-statement plans, selection, hints, daily/archive completion and every Tutorial stage at 393×852, 402×874 and 375×667, including safe-area insets. Assert 44px targets, no horizontal overflow and access to all content. Regular portrait gameplay should fit; verify vertical scrolling when a short or enlarged layout needs it.
 
-## Public download entry
+## Public website entry
 
-Public game and shared-result links lead to the App Store. The fallback uses the existing palette and primary button, one short brain-game description, and quiet How to play, Support and Privacy links. It contains no active gameplay. Native startup waits for its bridge before showing the existing home screen. Keep native gameplay and loopback QA available; never use a public test query as a bypass.
+Public game and shared-result links open the existing game when the screen's shorter dimension is at least 600 CSS pixels. Phone-sized screens lead to the App Store in either orientation; narrowing a laptop window does not redirect it. Preserve dated links, Tutorial, browser saves and analytics preferences. Public embeds and browsers without JavaScript retain the download fallback, using the existing palette, primary button, short brain-game description, and quiet How to play, Support and Privacy links. Native startup waits for its bridge before showing the existing home screen. Native gameplay and loopback QA remain available regardless of screen size; a public test query never bypasses phone routing.

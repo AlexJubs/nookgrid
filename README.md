@@ -12,7 +12,7 @@ Play today's puzzle, continue a saved attempt, or explore past puzzles. Progress
 
 ## Website
 
-Public game links send visitors to the App Store. Embedded pages and browsers without JavaScript show a download link. How to play, support and privacy stay accessible. Existing browser saves remain on the device; they do not transfer into the app.
+Play at [nookgrid.com](https://nookgrid.com/) on desktop. Phone-sized screens open the App Store; larger screens retain playable daily, archive and Tutorial links. Embedded pages and browsers without JavaScript show a download link. How to play, support and privacy stay accessible. Browser saves remain on the device; they do not transfer into the app.
 
 ## iPhone
 
