@@ -14,6 +14,14 @@ test('TestFlight inputs accept explicit release identity and reject another sour
   assert.throws(() => checkTestFlightInputs({...candidate, teamId: ''}), /reviewed team/);
 });
 
+test('TestFlight ad mode defaults off and accepts only explicit supported modes', () => {
+  assert.doesNotThrow(() => checkTestFlightInputs(candidate));
+  for (const adsMode of ['off', 'demo', 'live']) assert.doesNotThrow(() => checkTestFlightInputs({...candidate, adsMode}));
+  for (const adsMode of ['', 'LIVE', 'demo\n', '$(id)', null]) {
+    assert.throws(() => checkTestFlightInputs({...candidate, adsMode}), /ad_mode/);
+  }
+});
+
 test('TestFlight inputs reject missing, ambiguous and executable release values', () => {
   const invalid = {
     expectedCommit: ['', 'main', 'a'.repeat(39), `${candidate.expectedCommit}\n`, '$(id)'],

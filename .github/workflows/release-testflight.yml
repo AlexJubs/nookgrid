@@ -19,6 +19,15 @@ on:
         description: Reviewed personal Apple team ID
         required: true
         type: string
+      ad_mode:
+        description: Reviewed ad mode. Demo is internal TestFlight only; live requires completed launch gates.
+        required: true
+        default: 'off'
+        type: choice
+        options:
+          - 'off'
+          - demo
+          - live
 
 permissions:
   contents: read
@@ -42,6 +51,7 @@ jobs:
       MARKETING_VERSION: ${{ inputs.version }}
       BUILD_NUMBER: ${{ inputs.build_number }}
       EXPECTED_APPLE_TEAM_ID: ${{ inputs.expected_team_id }}
+      NOOKGRID_ADS: ${{ inputs.ad_mode }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -115,7 +125,8 @@ jobs:
               environment.write(f'IOS_PROFILE_UUID={identifier}\n')
           options = {'method': 'app-store-connect', 'destination': 'upload', 'signingStyle': 'manual',
               'signingCertificate': 'Apple Distribution', 'teamID': team, 'provisioningProfiles': {bundle: identifier},
-              'manageAppVersionAndBuildNumber': False, 'uploadSymbols': True}
+              'manageAppVersionAndBuildNumber': False, 'uploadSymbols': True,
+              'testFlightInternalTestingOnly': os.environ['NOOKGRID_ADS'] == 'demo'}
           (temporary / 'ExportOptions.plist').write_bytes(plistlib.dumps(options))
           PY
           profile_id=$(/usr/libexec/PlistBuddy -c 'Print UUID' "$RUNNER_TEMP/profile.plist")
@@ -141,7 +152,9 @@ jobs:
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" \
             -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
-          printf 'Upload completed. Check App Store Connect processing and TestFlight availability.\n' >> "$GITHUB_STEP_SUMMARY"
+          printf 'Uploaded %s (%s), source %s, ad mode %s. Demo builds are internal TestFlight only.\n' \
+            "$MARKETING_VERSION" "$BUILD_NUMBER" "$EXPECTED_COMMIT" "$NOOKGRID_ADS" >> "$GITHUB_STEP_SUMMARY"
+          printf 'Check App Store Connect processing and TestFlight availability. Public review is separate.\n' >> "$GITHUB_STEP_SUMMARY"
       - name: Delete signing material
         if: always()
         run: |

@@ -46,8 +46,48 @@ test('TestFlight check is read-only and upload passes the reviewed identity once
   assert.equal(upload.status, 0, upload.stderr);
   assert.deepEqual(upload.requests.filter(args => args[0] === 'workflow'), [[
     'workflow', 'run', 'release-testflight.yml', '--repo', 'AlexJubs/nookgrid', '--ref', 'main',
-    '-f', 'version=1.1.2', '-f', 'build_number=31', '-f', `expected_commit=${commit}`, '-f', 'expected_team_id=ABC1234567',
+    '-f', 'version=1.1.2', '-f', 'build_number=31', '-f', `expected_commit=${commit}`, '-f', 'expected_team_id=ABC1234567', '-f', 'ad_mode=off',
   ]]);
+});
+
+test('TestFlight dispatch uses the explicit ad mode and ignores ambient ad settings', () => {
+  for (const mode of ['off', 'demo', 'live']) {
+    const result = runLauncher('upload', {}, [...args, mode]);
+    assert.equal(result.status, 0, result.stderr);
+    const dispatches = result.requests.filter(args => args[0] === 'workflow');
+    assert.equal(dispatches.length, 1);
+    assert.deepEqual(dispatches[0].slice(-2), ['-f', `ad_mode=${mode}`]);
+    assert.match(result.stdout, new RegExp(`Ad mode: ${mode}`));
+  }
+  const result = runLauncher('upload', {NOOKGRID_ADS: 'live'});
+  assert.deepEqual(result.requests.at(-1).slice(-2), ['-f', 'ad_mode=off']);
+  for (const mode of ['', 'LIVE', 'demo\n', '$(id)']) {
+    const rejected = runLauncher('upload', {}, [...args, mode]);
+    assert.notEqual(rejected.status, 0);
+    assert.equal(rejected.requests.length, 0);
+  }
+});
+
+test('demo export options restrict the uploaded build to internal TestFlight', () => {
+  const workflow = readFileSync(join(scripts, '../.github/workflows/release-testflight.yml'), 'utf8');
+  const block = [...workflow.matchAll(/          python3 - <<'PY'\n([\s\S]*?)\n          PY/g)]
+    .map(match => match[1].replace(/^          /gm, '')).find(script => script.includes('ExportOptions.plist'));
+  assert.ok(block);
+  const directory = mkdtempSync(join(tmpdir(), 'nookgrid-export-'));
+  try {
+    const profile = `import datetime, os, plistlib\nfrom pathlib import Path\nprofile = {'UUID':'12345678-1234-1234-1234-123456789abc','TeamIdentifier':['ABC1234567'],'Entitlements':{'application-identifier':'ABC1234567.com.nookgrid.app','get-task-allow':False},'ExpirationDate':datetime.datetime(2999,1,1)}\nPath(os.environ['RUNNER_TEMP'],'profile.plist').write_bytes(plistlib.dumps(profile))\n`;
+    for (const mode of ['off', 'demo', 'live']) {
+      const result = spawnSync('python3', ['-c', `${profile}\n${block}\nimport json\nprint(json.dumps(plistlib.loads((temporary / 'ExportOptions.plist').read_bytes())))`], {
+        env: {...process.env, RUNNER_TEMP: directory, APPLE_TEAM_ID: 'ABC1234567', IOS_BUNDLE_ID: 'com.nookgrid.app', GITHUB_ENV: join(directory, 'environment'), NOOKGRID_ADS: mode},
+        encoding: 'utf8',
+      });
+      assert.equal(result.status, 0, result.stderr);
+      const options = JSON.parse(result.stdout);
+      assert.equal(options.testFlightInternalTestingOnly, mode === 'demo');
+      assert.equal(options.destination, 'upload');
+      assert.equal(options.method, 'app-store-connect');
+    }
+  } finally { rmSync(directory, {recursive: true, force: true}); }
 });
 
 test('TestFlight upload stops at invalid input, missing access, failed CI or missing signing settings', () => {

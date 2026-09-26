@@ -1,12 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 
-if [[ $# != 5 || ( "$1" != check && "$1" != upload ) ]]; then
-  printf 'Usage: bash scripts/release-testflight.sh check|upload VERSION BUILD COMMIT TEAM\n' >&2
+if [[ ( $# != 5 && $# != 6 ) || ( "$1" != check && "$1" != upload ) ]]; then
+  printf 'Usage: bash scripts/release-testflight.sh check|upload VERSION BUILD COMMIT TEAM [off|demo|live]\n' >&2
   exit 1
 fi
 action=$1
 export MARKETING_VERSION=$2 BUILD_NUMBER=$3 EXPECTED_COMMIT=$4 EXPECTED_APPLE_TEAM_ID=$5
+export NOOKGRID_ADS=${6-off}
 export APPLE_TEAM_ID=$EXPECTED_APPLE_TEAM_ID
 export GH_TOKEN="${GH_TOKEN:-${GITHUB_TOKEN:-}}" GH_HOST=github.com GH_PROMPT_DISABLED=1
 if [[ -z "$GH_TOKEN" ]]; then
@@ -37,6 +38,6 @@ if [[ "$action" == check ]]; then exit 0; fi
 
 gh workflow run release-testflight.yml --repo "$repository" --ref main \
   -f "version=$MARKETING_VERSION" -f "build_number=$BUILD_NUMBER" \
-  -f "expected_commit=$EXPECTED_COMMIT" -f "expected_team_id=$EXPECTED_APPLE_TEAM_ID"
+  -f "expected_commit=$EXPECTED_COMMIT" -f "expected_team_id=$EXPECTED_APPLE_TEAM_ID" -f "ad_mode=$NOOKGRID_ADS"
 printf 'Upload workflow requested: https://github.com/%s/actions/workflows/release-testflight.yml\n' "$repository"
 printf 'Verify its result, Apple processing and TestFlight availability. App Review is a separate step.\n'
