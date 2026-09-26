@@ -51,6 +51,29 @@ test('week dates open saved completed, unfinished and current puzzles from Home 
   expect((await readProgress(page, '2026-09-15')).board).toEqual(['park', ...Array(8).fill(null)]);
 });
 
+test('archive completion keeps its own week while Home and availability use today', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-10-02T12:00:00Z'));
+  const archive = bank.puzzles.find(item => item.date === '2026-09-11');
+  await seedProgress(page, { board: [...archive.solution.slice(0, 8), null], moves: 8 }, archive.date);
+  await page.goto('/?test=1&date=2026-09-11');
+  await place(page, archive.solution[8], 8);
+  const week = page.locator('#result-week');
+  await expect(week.locator('[data-puzzle-date]')).toHaveCount(7);
+  expect(await week.locator('[data-puzzle-date]').evaluateAll(days => days.map(day => day.dataset.puzzleDate))).toEqual([
+    '2026-09-07', '2026-09-08', '2026-09-09', '2026-09-10', '2026-09-11', '2026-09-12', '2026-09-13'
+  ]);
+  await expect(week.locator('[data-puzzle-date="2026-09-11"]')).toHaveAccessibleName('September 11, completed');
+  await expect(week.locator('[data-puzzle-date="2026-09-09"]')).not.toHaveAttribute('href');
+  await expect(week.locator('[data-puzzle-date="2026-09-13"]')).toHaveAttribute('href', '?date=2026-09-13&test=1');
+  await expect(page.locator('.result-history .week-heading')).toHaveText('Week of Sep 7, 2026');
+  await choose(page.locator('#home-open'));
+  await expect(page.locator('#home-week [data-puzzle-date="2026-10-02"]')).toHaveAttribute('aria-current', 'date');
+  await expect(page.locator('#home-week [data-puzzle-date="2026-10-03"]')).not.toHaveAttribute('href');
+  await page.goto('/?test=1&date=2026-09-11');
+  await choose(week.locator('[data-puzzle-date="2026-09-13"]'));
+  await expect(page.locator('#clues-title')).toHaveText('Sun, Sep 13, 2026');
+});
+
 test('week strip leaves prelaunch, missing and future puzzles unavailable', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-09-11T12:00:00Z'));
   await page.route('**/puzzles.json', route => route.fulfill({ json: { ...bank, puzzles: bank.puzzles.filter(puzzle => puzzle.date !== '2026-09-10') } }));
@@ -534,6 +557,31 @@ for (const [label, puzzle, date] of [
         document.documentElement.style.setProperty('--safe-top', '59px');
         document.documentElement.style.setProperty('--safe-bottom', '34px');
       });
+      const resultButtons = await page.locator('.completion-actions > :visible').evaluateAll(buttons => buttons.map(button => {
+        const { x, y, width, height } = button.getBoundingClientRect();
+        return { x, y, width, height };
+      }));
+      await choose(page.locator('#home-open'));
+      const homeButtons = await page.locator('.home-actions > :visible').evaluateAll(buttons => buttons.map(button => {
+        const { x, y, width, height } = button.getBoundingClientRect();
+        return { x, y, width, height };
+      }));
+      for (let index = 0; index < 3; index++) {
+        for (const dimension of ['x', 'y', 'width', 'height']) {
+          expect(resultButtons[index][dimension], `Action ${index + 1} ${dimension} matches Home`).toBeCloseTo(homeButtons[index][dimension], 0);
+        }
+      }
+      if (label === 'daily') await choose(page.locator('#home-result'));
+      else {
+        await page.goto(`/?test=1&date=${date}`);
+        if (label === 'Tutorial') await solvePuzzle(page, puzzle.solution);
+        if (native) await page.evaluate(() => {
+          document.documentElement.classList.add('native-app');
+          document.documentElement.style.setProperty('--safe-top', '59px');
+          document.documentElement.style.setProperty('--safe-bottom', '34px');
+        });
+      }
+      await expect(page.locator('#completion')).toBeVisible();
       const layout = await page.evaluate(() => ({
         bottom: document.querySelector('.completion-actions').getBoundingClientRect().bottom,
         width: document.querySelector('.completion-actions').getBoundingClientRect().width,

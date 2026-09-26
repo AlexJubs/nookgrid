@@ -185,7 +185,11 @@ function renderHistory() {
   $('home-date').textContent = new Date(`${today}T12:00:00Z`).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'});
   for (const id of ['home-week','result-week']) {
     const focusedDate = $(id).contains(document.activeElement) ? document.activeElement.dataset.puzzleDate : null;
-    $(id).replaceChildren(...getWeekDates(today).map(date => {
+    const dates = getWeekDates(id === 'result-week' && mode !== 'practice' ? puzzle.date : today);
+    const label = dates[0] === getWeekDates(today)[0] ? 'This week' : `Week of ${new Date(`${dates[0]}T12:00:00Z`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'})}`;
+    $(id).previousElementSibling.textContent = label;
+    $(id).setAttribute('aria-label',`Puzzles, ${label.toLowerCase()}`);
+    $(id).replaceChildren(...dates.map(date => {
       const value = new Date(`${date}T12:00:00Z`);
       const isAvailable = date <= today && bank.puzzles.some(item => item.date === date);
       const day = document.createElement(isAvailable ? 'a' : 'span');

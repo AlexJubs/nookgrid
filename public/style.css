@@ -86,7 +86,7 @@ button,.inline-button{-webkit-user-select:none;user-select:none}
 .confetti i{position:absolute;top:0;left:0;width:8px;height:12px;border-radius:2px}
 @media(prefers-reduced-motion:reduce){.confetti{display:none}}
 .game-page .completion .primary{margin:0;width:100%;font-size:14px;padding:12px 16px}
-.game-page .completion-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;width:100%;margin-top:auto;padding-top:12px}
+.game-page .completion-actions{margin-top:auto;padding-top:12px}
 #share-status:empty{display:none}
 #share-status{grid-column:1/-1}
 #next-puzzle{width:100%;margin:0;padding:0}
@@ -150,13 +150,8 @@ textarea{background:var(--white)}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline-color:var(--focus)}
 .game-page #menu-dialog{width:min(360px,calc(100% - 32px))}
 
-.game-page .menu-links{display:grid;grid-template-columns:1fr;gap:0;background:transparent}
-.game-page .menu-links a,.game-page .menu-links .text-button{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;margin:0;padding:12px 0;font-size:var(--font-body);line-height:1.5;font-weight:400;color:var(--ink);text-align:left;text-decoration:none;border-radius:0}
-.menu-chevron{flex:none;width:16px;height:16px;color:var(--muted)}
-.game-page .menu-links>:not(:last-child){border-bottom:1px solid var(--line)}
-.game-page .menu-links a:hover,.game-page .menu-links button:hover:not(:disabled){background:var(--surface)}
-.game-page .menu-links>:first-child{border-radius:8px 8px 0 0}
-.game-page .menu-links>:last-child{border-radius:0 0 8px 8px}
+.game-page .menu-links{display:grid;gap:12px}
+.game-page .menu-links>.secondary{min-height:52px}
 .game-page .notice{padding:12px;margin-bottom:12px;line-height:1.5;background:var(--surface);border:0;color:var(--ink)}
 .game-page #save-warning{background:#fff7e8;color:#6d532a}
 .game-page #retry-save{color:inherit;text-decoration:underline;text-underline-offset:3px;padding:0;min-height:44px}
@@ -165,7 +160,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .game-page .empty-state p{font-size:14px;margin-bottom:20px}
 .game-page .site-header:has(#home-open[hidden]){grid-template-columns:minmax(0,1fr) 44px 44px}
 #home-open .ui-icon{transform:rotate(180deg)}
-.home-screen{width:100%;max-width:380px;margin:32px auto 0;padding:0 4px 24px}
+.home-screen{display:flex;flex-direction:column;justify-content:space-between;flex:1;gap:32px;width:100%;max-width:380px;margin:24px auto 0;padding:0}
 .home-title{font-size:20px;line-height:1.35;letter-spacing:-.3px;font-weight:650;margin:0 0 8px}
 #home-date{font-size:14px;color:var(--muted);margin:0}
 .home-progress{margin-top:40px}
@@ -189,12 +184,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .week-day.is-today .week-tile{box-shadow:inset 0 0 0 2px var(--control-border)}
 .week-day.is-unreleased .week-tile{background:transparent;color:var(--muted)}
 .week-tile .ui-icon{width:14px;height:14px}
-.home-actions{display:flex;flex-direction:column;gap:8px;margin-top:28px}
-.home-actions button{width:100%;min-height:52px}
+.screen-actions{display:flex;flex-direction:column;gap:12px;width:100%}
+.screen-actions>button,.screen-actions>a{width:100%;min-height:52px}
 .game-page.show-home #game{display:none}
-.game-page.show-result{display:flex;flex-direction:column;min-height:100svh}
-.game-page.show-result .site-header{flex:none;width:100%;margin-block:0}
-.game-page.show-result main{display:flex;flex-direction:column;flex:1;width:100%;margin-block:0;padding-bottom:24px}
+.game-page.show-home,.game-page.show-result{display:flex;flex-direction:column;min-height:100svh}
+.game-page.show-home .site-header,.game-page.show-result .site-header{flex:none;width:100%;margin-block:0}
+.game-page.show-home main,.game-page.show-result main{display:flex;flex-direction:column;flex:1;width:100%;margin-block:0;padding-bottom:24px}
 .game-page.show-result #game{display:flex;flex-direction:column;flex:1;width:100%;max-width:380px;margin:24px auto 0}
 .game-page.show-result #game .puzzle-instruction,.game-page.show-result #game .clue-panel,.game-page.show-result #game .board-wrap,.game-page.show-result #game .play-controls{display:none}
 .game-page.show-result .play-area{display:flex;flex-direction:column;flex:1;width:100%;max-width:none;align-items:stretch}
@@ -238,15 +233,10 @@ a.calendar-day.is-streak:hover{background:var(--accent-hover)}
 .calendar-swatch.is-uncompleted{background:transparent;border:1px solid var(--control-border)}
 #calendar-months[hidden]+.calendar-legend{display:none}
 @media(max-width:927px){
-  .game-page.show-home{display:flex;flex-direction:column;min-height:100svh}
-  .game-page.show-home .site-header{width:100%;flex:none;margin-block:0}
-  .game-page.show-home main{display:flex;flex-direction:column;flex:1;width:100%;margin-block:0}
-  .home-screen{display:flex;flex-direction:column;justify-content:space-between;flex:1;gap:32px;margin:0 auto;padding:24px 4px}
   .home-progress{margin:0}
   .home-streak{margin-bottom:24px;font-size:clamp(72px,11svh,96px)}
   .streak-number{letter-spacing:-4px}
   .streak-label{font-size:18px}
-  .home-actions{margin-top:0;gap:12px}
   .game-page{--board-size:300px}
   .game-page main{max-width:480px;padding:0 16px 8px}
   .game-page .site-header{max-width:480px;height:64px;padding:6px 16px}
@@ -340,12 +330,11 @@ a.calendar-day.is-streak:hover{background:var(--accent-hover)}
   .native-app .game-page .game-layout,.native-app .game-page .play-area{gap:6px}
 }
 @media(max-width:927px) and (max-height:740px){
-  .home-screen{gap:24px;padding-block:16px}
+  .home-screen{gap:24px}
   .home-streak{margin-bottom:16px;font-size:64px}
 }
 @media(max-width:375px){
   .game-page.show-home main,.game-page.show-result main{padding-inline:6px}
-  .home-screen{padding-inline:0}
   .week-strip{gap:0}
   .week-tile{width:calc(100% - 4px)}
 }

@@ -19,8 +19,8 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="NookGrid gameplay with three places on a nine-lot neighborhood board, a tray of places, and the neighborhood plan alongside.">
   <link rel="icon" href="./favicon.svg?v=20260918-logo1" type="image/svg+xml"><link rel="apple-touch-icon" href="./apple-touch-icon.png?v=20260918-logo1" sizes="180x180">
-  <link rel="stylesheet" href="./style.css?v=20260925-home-icons">
-  <script type="module" src="./entry.mjs?v=20260925-home-actions"></script>
+  <link rel="stylesheet" href="./style.css?v=20260926-screen-actions">
+  <script type="module" src="./entry.mjs?v=20260926-result-week"></script>
 </head>
 <body class="download-page">
   <main id="download-main" class="download-main">
@@ -54,7 +54,7 @@
         <div class="week-heading"><span>This week</span></div>
         <div class="week-strip" id="home-week" aria-label="This week's puzzles"></div>
       </div>
-      <div class="home-actions">
+      <div class="home-actions screen-actions">
         <button id="home-play" class="primary"><svg class="ui-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-results#play-circle"/></svg><span id="home-play-label">Play today's puzzle</span></button>
         <button id="home-result" class="primary" hidden><svg class="ui-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-home-final#grid-four"/></svg><span>View today's result</span></button>
         <button id="calendar-open" class="secondary calendar-button" aria-haspopup="dialog" aria-controls="calendar-dialog"><svg class="ui-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-results#calendar-blank"/></svg><span>All puzzles</span></button>
@@ -81,7 +81,7 @@
             <div><h2 id="completion-title">Neighborhood complete</h2><div class="completion-meta"><p id="daily-streak" class="streak-summary" hidden><svg class="ui-icon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-streak#lightning"/></svg><span id="daily-streak-label"></span></p><p id="completion-time" hidden></p><p id="completion-detail">Plan complete.</p></div></div>
             <div class="result-history"><div class="week-heading"><span>This week</span></div><div class="week-strip" id="result-week" aria-label="This week's puzzles"></div></div>
             <div id="next-puzzle" hidden><span>Next puzzle in</span><strong id="next-puzzle-time" role="timer" aria-live="off">00:00:00</strong></div>
-            <div class="completion-actions">
+            <div class="completion-actions screen-actions">
               <button class="primary" id="share"><svg class="ui-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-results#share"/></svg><span>Share result</span></button>
               <a class="primary inline-button" id="play-today" href="./" hidden><svg class="ui-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-results#play-circle"/></svg><span>Play today's puzzle</span></a>
               <button class="secondary" id="view-solved"><svg class="ui-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-results#eye"/></svg><span>View solved puzzle</span></button>
@@ -115,10 +115,10 @@
     <button class="close-dialog" data-close aria-label="Close menu" data-track="menu-close"><svg class="ui-icon" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-calendar2#x"/></svg></button>
     <h2 id="menu-title">Menu</h2>
     <nav class="menu-links" aria-label="Game navigation">
-      <button class="text-button" id="menu-calendar-open" aria-haspopup="dialog" aria-controls="calendar-dialog"><span>All puzzles</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-calendar2#caret-right"/></svg></button>
-      <button class="text-button" id="settings-open" aria-haspopup="dialog"><span>Settings</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-calendar2#caret-right"/></svg></button>
-      <button class="text-button" id="feedback-open" aria-haspopup="dialog"><span>Feedback</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-calendar2#caret-right"/></svg></button>
-      <a href="./privacy.html" data-track="index-a-9"><span>Privacy</span><svg class="ui-icon menu-chevron" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-calendar2#caret-right"/></svg></a>
+      <button class="secondary" id="menu-calendar-open" aria-haspopup="dialog" aria-controls="calendar-dialog"><span>All puzzles</span></button>
+      <button class="secondary" id="settings-open" aria-haspopup="dialog"><span>Settings</span></button>
+      <button class="secondary" id="feedback-open" aria-haspopup="dialog"><span>Feedback</span></button>
+      <a class="secondary inline-button" href="./privacy.html" data-track="index-a-9"><span>Privacy</span></a>
     </nav>
   </dialog>
   <dialog id="calendar-dialog" aria-labelledby="calendar-title">

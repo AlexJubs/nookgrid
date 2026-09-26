@@ -528,7 +528,8 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
         label: element.textContent.trim(), width: bounds.width, height: bounds.height,
         left: bounds.left, top: bounds.top, bottom: bounds.bottom,
         fontSize: style.fontSize, fontWeight: style.fontWeight,
-        background: getComputedStyle(element.parentElement).backgroundColor,
+        background: style.backgroundColor,
+        radius: style.borderRadius,
         dividerWidth: parseFloat(style.borderBottomWidth),
         hasChevron: Boolean(chevron?.checkVisibility() && chevron.getAttribute('aria-hidden') === 'true')
       };
@@ -541,14 +542,15 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
       expect(row.fontSize, row.label).toBe('14px');
       expect(row.fontWeight, row.label).toBe('400');
       expect(row.background, row.label).toBe(rows[0].background);
-      expect(row.background, row.label).toBe('rgba(0, 0, 0, 0)');
-      expect(row.hasChevron, row.label).toBe(true);
+      expect(row.background, row.label).not.toBe('rgba(0, 0, 0, 0)');
+      expect(row.radius, row.label).toBe('14px');
+      expect(row.hasChevron, row.label).toBe(false);
     }
     for (let index = 1; index < rows.length; index++) {
       expect(rows[index].left).toBe(rows[0].left);
       expect(rows[index].width).toBe(rows[0].width);
-      expect(rows[index].top).toBe(rows[index - 1].bottom);
-      expect(rows[index - 1].dividerWidth).toBe(1);
+      expect(rows[index].top).toBeGreaterThan(rows[index - 1].bottom);
+      expect(rows[index - 1].dividerWidth).toBe(0);
     }
     for (const control of [page.locator('#feedback-open'), page.locator('#menu-dialog').getByRole('link', { name: 'Privacy', exact: true })]) {
       await expect(control).toBeInViewport();

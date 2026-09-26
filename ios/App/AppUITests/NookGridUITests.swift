@@ -269,6 +269,17 @@ final class NookGridUITests: XCTestCase {
         place(remainingPlace, at: remainingLot)
         XCTAssertTrue(app.staticTexts["Neighborhood complete"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["1 day streak"].exists)
+        let resultFrames = ["Share result", "View solved puzzle", "All puzzles"].map { button($0).frame }
+        tap(button("Back to home"))
+        XCTAssertTrue(button("View today's result").waitForExistence(timeout: 5))
+        let homeFrames = ["View today's result", "All puzzles", "Play tutorial"].map { button($0).frame }
+        for (result, home) in zip(resultFrames, homeFrames) {
+            XCTAssertEqual(result.minX, home.minX, accuracy: 1)
+            XCTAssertEqual(result.minY, home.minY, accuracy: 1)
+            XCTAssertEqual(result.width, home.width, accuracy: 1)
+            XCTAssertEqual(result.height, home.height, accuracy: 1)
+        }
+        tap(button("View today's result"))
         tap(button("View solved puzzle"))
         let solvedLabels = lots.map { lot($0).label }
         for address in lots { XCTAssertFalse(lot(address).isEnabled) }
