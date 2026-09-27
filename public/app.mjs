@@ -8,7 +8,7 @@ import { getWeekDates, getCalendarMonths, renderCalendar } from './calendar.mjs?
 import { createCompletionAds } from './completion-ads.mjs';
 
 const $ = id => document.getElementById(id);
-const renderIcon = (name, className = '') => `<svg class="ui-icon ${className}" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-calendar2#${name}"/></svg>`;
+const renderIcon = (name, className = '') => `<svg class="ui-icon ${className}" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260927-clues#${name}"/></svg>`;
 const ids = PLACES.map(place => place.id);
 const nameOf = id => PLACES.find(place => place.id === id)?.name || '';
 const openedDay = puzzleDay();
@@ -628,7 +628,7 @@ function render() {
     const status = clueStatus(puzzle.clues[index],board);
     const isStartingClue = shouldShowGuidance && item.dataset.teaser === 'true';
     item.className = `clue ${status}`;
-    item.querySelector('.clue-icon').innerHTML = renderIcon(isStartingClue ? 'star' : {met:'check-square',conflict:'x-square',pending:'minus'}[status]);
+    item.querySelector('.clue-icon').innerHTML = renderIcon(isStartingClue ? 'star' : {met:'check-square',conflict:'x-square',pending:'square'}[status]);
     item.querySelector('.clue-state').textContent = (isStartingClue ? ' Start here.' : '') + {met:' Matches the plan.',conflict:' Needs a move.',pending:' Required places are not placed yet.'}[status];
   });
   $('selection-status').classList.add('sr-only');

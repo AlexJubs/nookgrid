@@ -34,7 +34,6 @@ button,.inline-button{-webkit-user-select:none;user-select:none}
 .game-page .clues{gap:6px;padding:0}
 .game-page .clue{padding:0;gap:8px;font-size:14px;line-height:1.5;min-height:0;border:0;border-radius:0;background:none;text-wrap:pretty}
 .game-page .clue-text strong{font-weight:600}
-.game-page .clue.pending .clue-icon{visibility:hidden}
 .game-page .clue.met,.game-page .clue.conflict{background:none}
 .game-page .board-wrap{grid-column:2;grid-row:1;width:min(100%,var(--board-size));margin-inline:auto;padding:0;background:none;border-radius:0}
 .game-page .board{gap:4px}

@@ -449,7 +449,9 @@ for (const puzzle of [bank.tutorial, bank.puzzles.find(item => item.date === '20
 
 test('a full incorrect board remains playable and a correct board completes', async ({ page }) => {
   await openGame(page);
-  await expect(page.locator('#clues .pending .clue-icon use').first()).toHaveAttribute('href', /#minus$/);
+  await expect(page.locator('#clues .pending .clue-icon').first()).toBeVisible();
+  await expect(page.locator('#clues .pending .clue-icon use').first()).toHaveAttribute('href', /#square$/);
+  await expect(page.locator('#clues .pending .clue-state').first()).toHaveText(' Required places are not placed yet.');
   expect(await page.locator('#clues .pending .clue-icon').first().evaluate(icon => getComputedStyle(icon).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
   const wrong = [...daily.solution.slice(1), daily.solution[0]];
   for (let index = 0; index < 9; index++) await place(page, wrong[index], index);
