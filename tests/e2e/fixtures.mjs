@@ -26,6 +26,23 @@ export const test = base.extend({
 
 export { expect };
 
+export async function mockNative(page) {
+  await page.addInitScript(() => {
+    window.nookgridNative = {
+      isDevelopment: true,
+      storage: {
+        getItem: key => localStorage.getItem(key),
+        setItem: async (key, value) => localStorage.setItem(key, value),
+        removeItem: async key => localStorage.removeItem(key),
+        flush: async () => {}
+      },
+      onStateChange: async () => {},
+      share: async text => { window.nativeSharedText = text; }
+    };
+    document.addEventListener('DOMContentLoaded', () => document.documentElement.classList.add('native-app'), { once: true });
+  });
+}
+
 export async function openGame(page, query = '') {
   await page.goto(`/?test=1${query ? `&${query}` : ''}`);
   await enterGame(page);

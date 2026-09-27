@@ -1,4 +1,6 @@
-import { test, expect, bank, daily, today, emptyBoard, seedProgress, place, expectBoard, readProgress, choose, solvePuzzle, dragPlace } from './fixtures.mjs';
+import { test, expect, bank, daily, today, emptyBoard, seedProgress, place, expectBoard, readProgress, choose, solvePuzzle, dragPlace, mockNative } from './fixtures.mjs';
+
+test.beforeEach(async ({ page }) => { await mockNative(page); });
 
 async function openHome(page) {
   await page.goto('/?test=1');
@@ -6,7 +8,7 @@ async function openHome(page) {
   await expect(page.locator('#home')).toBeVisible();
 }
 
-test('Home offers fresh Tutorial practice below its dated puzzle actions', async ({ page }) => {
+test('native Home offers fresh Tutorial practice below its dated puzzle actions', async ({ page }) => {
   await openHome(page);
   const tutorial = page.locator('#home').getByRole('button', { name: 'Play tutorial', exact: true });
   await expect(tutorial).toBeVisible();
@@ -21,7 +23,7 @@ test('Home offers fresh Tutorial practice below its dated puzzle actions', async
   await expectBoard(page, emptyBoard);
 });
 
-test('week dates open saved completed, unfinished and current puzzles from Home and results', async ({ page }) => {
+test('native week dates open saved completed, unfinished and current puzzles from Home and results', async ({ page }) => {
   const monday = bank.puzzles.find(puzzle => puzzle.date === '2026-09-14');
   await seedProgress(page, { board: monday.solution, reported: true }, monday.date);
   await seedProgress(page, { board: ['park', ...Array(8).fill(null)], moves: 1 }, '2026-09-15');
@@ -51,7 +53,7 @@ test('week dates open saved completed, unfinished and current puzzles from Home 
   expect((await readProgress(page, '2026-09-15')).board).toEqual(['park', ...Array(8).fill(null)]);
 });
 
-test('archive completion keeps its own week while Home and availability use today', async ({ page }) => {
+test('native archive completion keeps its own week while Home and availability use today', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-10-02T12:00:00Z'));
   const archive = bank.puzzles.find(item => item.date === '2026-09-11');
   await seedProgress(page, { board: [...archive.solution.slice(0, 8), null], moves: 8 }, archive.date);
@@ -74,7 +76,7 @@ test('archive completion keeps its own week while Home and availability use toda
   await expect(page.locator('#clues-title')).toHaveText('Sun, Sep 13, 2026');
 });
 
-test('week strip leaves prelaunch, missing and future puzzles unavailable', async ({ page }) => {
+test('native week strip leaves prelaunch, missing and future puzzles unavailable', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-09-11T12:00:00Z'));
   await page.route('**/puzzles.json', route => route.fulfill({ json: { ...bank, puzzles: bank.puzzles.filter(puzzle => puzzle.date !== '2026-09-10') } }));
   await openHome(page);
@@ -84,7 +86,7 @@ test('week strip leaves prelaunch, missing and future puzzles unavailable', asyn
   await expect(page.locator('#home-week [data-puzzle-date="2026-09-10"]')).toHaveAccessibleName(/unavailable/);
 });
 
-test('week rollover keeps keyboard focus on the new current puzzle', async ({ page }) => {
+test('native week rollover keeps keyboard focus on the new current puzzle', async ({ page }) => {
   await page.clock.setSystemTime(new Date('2026-09-20T23:59:58Z'));
   await openHome(page);
   await page.locator('#home-week a[data-puzzle-date="2026-09-20"]').focus();
@@ -95,7 +97,7 @@ test('week rollover keeps keyboard focus on the new current puzzle', async ({ pa
   await expect(page.locator('#clues-title')).toHaveText('Mon, Sep 21, 2026');
 });
 
-test('a new player reaches today in one action and returns to the same unfinished puzzle', async ({ page }) => {
+test('native new player reaches today in one action and returns to the same unfinished puzzle', async ({ page }) => {
   await openHome(page);
   await expect(page.locator('#home-streak-count')).toHaveText('0');
   await expect(page.locator('#home-play-label')).toHaveText("Play today's puzzle");
@@ -148,7 +150,7 @@ test('a new player reaches today in one action and returns to the same unfinishe
   await expectBoard(page, ['bakery', ...Array(8).fill(null)]);
 });
 
-test('explicit puzzle links bypass home for today, archives and the Tutorial', async ({ page }) => {
+test('native explicit puzzle links bypass home for today, archives and the Tutorial', async ({ page }) => {
   for (const date of [today, '2026-09-11', 'practice']) {
     await page.goto(`/?test=1&date=${date}`);
     await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
@@ -158,7 +160,7 @@ test('explicit puzzle links bypass home for today, archives and the Tutorial', a
   }
 });
 
-test('completion has a dedicated recap and read-only solved plan without duplicate credit', async ({ page }) => {
+test('native completion has a dedicated recap and read-only solved plan without duplicate credit', async ({ page }) => {
   await seedProgress(page, { board: [...daily.solution.slice(0, 8), null], moves: 8, elapsedMs: 62_000 });
   await page.goto('/?test=1');
   await expect(page.locator('#board')).toBeVisible();
@@ -216,7 +218,7 @@ test('completion has a dedicated recap and read-only solved plan without duplica
 });
 
 for (const native of [false, true]) {
-  test(`${native ? 'native' : 'web'} home uses phone height and keeps its actions inside safe areas`, async ({ page }) => {
+  test(`native ${native ? 'with safe areas' : 'without safe areas'} home uses phone height and keeps its actions inside safe areas`, async ({ page }) => {
     const safeTop = native ? 47 : 0, safeBottom = native ? 34 : 0;
     if (native) await page.addInitScript(({ safeTop, safeBottom }) => {
       document.addEventListener('DOMContentLoaded', () => {
@@ -259,18 +261,12 @@ for (const native of [false, true]) {
     await expect(page.locator('#calendar-dialog')).toBeVisible();
   });
 
-  test(`${native ? 'native' : 'web'} calendar preserves completed history after a missed streak and replay`, async ({ page }) => {
+  test(`native ${native ? 'with safe areas' : 'without safe areas'} calendar preserves completed history after a missed streak and replay`, async ({ page }) => {
     if (native) await page.addInitScript(() => {
-      window.nookgridNative = {
-        isDevelopment: true,
-        storage: {
-          getItem: key => localStorage.getItem(key),
-          setItem: async (key, value) => localStorage.setItem(key, value),
-          removeItem: async key => localStorage.removeItem(key),
-          flush: async () => {}
-        },
-        onStateChange: async () => {}, share: async () => {}
-      };
+      document.addEventListener('DOMContentLoaded', () => {
+        document.documentElement.style.setProperty('--safe-top', '47px');
+        document.documentElement.style.setProperty('--safe-bottom', '34px');
+      }, { once: true });
     });
     const archive = bank.puzzles.find(puzzle => puzzle.date === '2026-09-16');
     await seedProgress(page, ['2026-09-15'], 'streak');
@@ -328,7 +324,7 @@ for (const native of [false, true]) {
   });
 }
 
-test('home and calendar retain keyboard focus, touch targets and narrow-screen access', async ({ page }) => {
+test('native home and calendar retain keyboard focus, touch targets and narrow-screen access', async ({ page }) => {
   await openHome(page);
   for (const width of [375, 361, 320]) {
     await page.setViewportSize({ width, height: 568 });
@@ -367,7 +363,7 @@ test('home and calendar retain keyboard focus, touch targets and narrow-screen a
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 });
 
-test('earned calendar days remain readable on hover in both themes', async ({ page }) => {
+test('native earned calendar days remain readable on hover in both themes', async ({ page }) => {
   await seedProgress(page, ['2026-09-16'], 'streak');
   await seedProgress(page, { board: emptyBoard, moves: 0, reported: true }, '2026-09-16');
   await openHome(page);
@@ -401,7 +397,7 @@ test('earned calendar days remain readable on hover in both themes', async ({ pa
 });
 
 
-test('a completed archive follows the new UTC day from its recap after midnight', async ({ page }) => {
+test('native completed archive follows the new UTC day from its recap after midnight', async ({ page }) => {
   const archive = bank.puzzles.find(puzzle => puzzle.date === '2026-09-16');
   await seedProgress(page, { board: archive.solution, moves: 9, reported: true }, archive.date);
   await page.clock.setSystemTime(new Date(`${today}T23:59:58Z`));
@@ -416,7 +412,7 @@ test('a completed archive follows the new UTC day from its recap after midnight'
 });
 
 
-test('solving a scrollable native plan presents the recap from its top', async ({ page }) => {
+test('native scrollable plan completion presents the recap from its top', async ({ page }) => {
   const puzzle = bank.puzzles.find(item => item.date === '2027-05-14');
   await page.setViewportSize({ width: 375, height: 667 });
   await page.clock.setSystemTime(new Date(`${puzzle.date}T12:00:00Z`));
@@ -426,16 +422,6 @@ test('solving a scrollable native plan presents the recap from its top', async (
       document.documentElement.style.setProperty('--safe-top', '20px');
       document.documentElement.style.setProperty('--safe-bottom', '0px');
     }, { once: true });
-    window.nookgridNative = {
-      isDevelopment: true,
-      storage: {
-        getItem: key => localStorage.getItem(key),
-        setItem: async (key, value) => localStorage.setItem(key, value),
-        removeItem: async key => localStorage.removeItem(key),
-        flush: async () => {}
-      },
-      onStateChange: async () => {}, share: async () => {}
-    };
   });
   await seedProgress(page, { board: [...puzzle.solution.slice(0, 8), null], moves: 8 }, puzzle.date);
   await page.goto(`/?test=1&date=${puzzle.date}`);
@@ -449,7 +435,7 @@ test('solving a scrollable native plan presents the recap from its top', async (
 });
 
 
-test('reading Privacy from home returns home without losing an unfinished puzzle', async ({ page }) => {
+test('native reading Privacy from home returns home without losing an unfinished puzzle', async ({ page }) => {
   await openHome(page);
   await choose(page.locator('#home-play'));
   await place(page, 'bakery', 0);
@@ -474,11 +460,10 @@ test('reading Privacy from home returns home without losing an unfinished puzzle
 });
 
 for (const native of [false, true]) {
-  test(`${native ? 'native' : 'web'} six-week calendar fits a small phone without a scroll list`, async ({ page }, testInfo) => {
+  test(`native ${native ? 'with safe areas' : 'without safe areas'} six-week calendar fits a small phone without a scroll list`, async ({ page }, testInfo) => {
     await page.setViewportSize({width:320,height:568});
     await page.clock.setSystemTime(new Date('2026-11-30T12:00:00Z'));
     if (native) await page.addInitScript(() => {
-      window.nookgridNative = {isDevelopment:true,onStateChange:async () => {}};
       document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.classList.add('native-app');
         document.documentElement.style.setProperty('--safe-top','20px');
@@ -529,7 +514,7 @@ for (const [label, puzzle, date] of [
   ['archive', bank.puzzles.find(item => item.date === '2026-09-11'), '2026-09-11'],
   ['Tutorial', bank.tutorial, 'practice']
 ]) {
-  test(`${label} completion ends with one group of three actions`, async ({ page }) => {
+  test(`native ${label} completion ends with one group of three actions`, async ({ page }) => {
     if (page.viewportSize().width <= 927) await page.setViewportSize({ width: 393, height: 852 });
     if (label !== 'Tutorial') await seedProgress(page, { board: puzzle.solution, moves: 9, reported: true }, puzzle.date);
     await page.goto(`/?test=1&date=${date}`);

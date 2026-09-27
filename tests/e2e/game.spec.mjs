@@ -1,4 +1,4 @@
-import { test, expect, bank, daily, emptyBoard, today, openGame, enterGame, choose, place, expectBoard, solvePuzzle, readProgress, seedProgress, dragPlace } from './fixtures.mjs';
+import { test, expect, bank, daily, emptyBoard, today, openGame, enterGame, choose, place, expectBoard, solvePuzzle, readProgress, seedProgress, dragPlace, mockNative } from './fixtures.mjs';
 
 test('Tutorial ignores a legacy saved completion and starts fresh', async ({ page }) => {
   await seedProgress(page, { board: bank.tutorial.solution, hints: 9, hintedPlaces: bank.tutorial.solution, reported: true, elapsedMs: 62_000 }, bank.tutorial.date);
@@ -11,7 +11,8 @@ test('Tutorial ignores a legacy saved completion and starts fresh', async ({ pag
   await expect(page.locator('#tray .place:visible')).toHaveCount(1);
 });
 
-test('Tutorial completion lasts for the current visit and Play tutorial starts a new attempt', async ({ page }) => {
+test('native Tutorial completion lasts for the current visit and Play tutorial starts a new attempt', async ({ page }) => {
+  await mockNative(page);
   await seedProgress(page, { board: ['park', ...Array(8).fill(null)], moves: 1 }, today);
   await seedProgress(page, ['2026-09-16'], 'streak');
   await openGame(page, 'date=practice');
@@ -59,8 +60,10 @@ test('restoring a cached Tutorial visit restarts practice without affecting ordi
   await expectBoard(page, emptyBoard);
   await expect(page.locator('#tray .place:visible')).toHaveCount(1);
   await page.locator('#home-open').click();
+  await expect(page.locator('#puzzle-date')).toHaveText('Sep 17, 2026');
   await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
-  await expect(page.locator('#home')).toBeVisible();
+  await expect(page.locator('#home')).toBeHidden();
+  await expectBoard(page, emptyBoard);
   await page.locator('#help-open').click();
   await expect(page.locator('#help-tutorial')).toBeVisible();
 });
@@ -400,16 +403,16 @@ test('a fully hinted completion stays read-only and saved across reload', async 
   }
   await expectBoard(page, daily.solution);
   await expect(page.locator('#completion-detail')).toHaveText('9 hints');
-  await choose(page.locator('#view-solved'));
+  await expect(page.locator('#board')).toBeVisible();
   for (const control of ['#clear', '#undo', '#hint']) await expect(page.locator(control)).toBeHidden();
   await expect(page.locator('#board .locked')).toHaveCount(9);
   const saved = await readProgress(page);
   expect(saved).toMatchObject({ board: daily.solution, hints: 9, hintedPlaces: daily.solution, reported: true });
-  await page.locator('#view-result').click();
+  await expect(page.locator('#view-result')).toBeHidden();
   await expect(page.locator('#completion-detail')).toHaveText('9 hints');
   await page.reload();
   await enterGame(page);
-  await choose(page.locator('#view-solved'));
+  await expect(page.locator('#board')).toBeVisible();
   await expectBoard(page, daily.solution);
   await expect(page.locator('#board .locked')).toHaveCount(9);
   expect(await readProgress(page)).toEqual(saved);
@@ -428,7 +431,7 @@ for (const puzzle of [bank.tutorial, bank.puzzles.find(item => item.date === '20
     await page.locator('#undo').click();
     await expectBoard(page, [...puzzle.solution.slice(0, 2), ...Array(7).fill(null)]);
     await solvePuzzle(page, puzzle.solution, 2);
-    await choose(page.locator('#view-solved'));
+    await expect(page.locator('#board')).toBeVisible();
     await expectBoard(page, puzzle.solution);
     for (const control of ['#clear', '#undo', '#hint']) await expect(page.locator(control)).toBeHidden();
     await page.reload();
@@ -439,7 +442,7 @@ for (const puzzle of [bank.tutorial, bank.puzzles.find(item => item.date === '20
       expect(await readProgress(page, puzzle.date)).toBeNull();
     } else {
       await expect(page.locator('#completion')).toBeVisible();
-      await choose(page.locator('#view-solved'));
+      await expect(page.locator('#board')).toBeVisible();
       await expectBoard(page, puzzle.solution);
       await expect(page.locator('#board .locked')).toHaveCount(1);
       expect(await readProgress(page, puzzle.date)).toMatchObject({ board: puzzle.solution, hints: 1, hintedPlaces: [puzzle.solution[0]], reported: true });
@@ -468,21 +471,22 @@ test('a full incorrect board remains playable and a correct board completes', as
   expect(await page.locator('#clues .clue-icon').evaluateAll(icons => icons.every(icon => getComputedStyle(icon).backgroundColor === 'rgba(0, 0, 0, 0)'))).toBe(true);
   await expect(page.locator('#completion-title')).toHaveText('Neighborhood complete');
   await expect(page.locator('#completion-detail')).toHaveText('No hints');
-  await expect(page.locator('#next-puzzle')).toBeVisible();
+  await expect(page.locator('#next-puzzle')).toBeHidden();
   await expect(page.locator('#next-puzzle-time')).toHaveAttribute('aria-live', 'off');
   await expect(page.locator('.confetti')).toHaveCount(0);
-  await choose(page.locator('#view-solved'));
+  await expect(page.locator('#board')).toBeVisible();
   for (const control of ['#clear', '#undo', '#hint']) await expect(page.locator(control)).toBeHidden();
   await expectBoard(page, daily.solution);
-  await page.locator('#view-result').click();
+  await expect(page.locator('#view-result')).toBeHidden();
   await expect(page.locator('#completion')).toBeVisible();
 });
 
-for (const [label, puzzle, date] of [
+for (const isNative of [false, true]) for (const [label, puzzle, date] of [
   ['daily', daily, today],
   ['archive', bank.puzzles.find(item => item.date === '2026-09-16'), '2026-09-16'],
   ['Tutorial', bank.tutorial, 'practice']
-]) test(`${label} completion celebrates once with visible, nonblocking confetti`, async ({ page }, testInfo) => {
+]) test(`${isNative ? 'native' : 'web'} ${label} completion celebrates once with visible, nonblocking confetti`, async ({ page }, testInfo) => {
+  if (isNative) await mockNative(page);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   if (date !== 'practice') await seedProgress(page, { board: [...puzzle.solution.slice(0, 8), null], moves: 8 }, date);
   await openGame(page, `date=${date}`);
@@ -502,10 +506,19 @@ for (const [label, puzzle, date] of [
     return left >= 0 && right <= innerWidth && top >= 0 && bottom <= innerHeight && Number(getComputedStyle(piece).opacity) > 0;
   }))).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('completion-confetti.png') });
-  await choose(page.locator('#view-solved'));
-  await expect(page.locator('.confetti')).toHaveCount(0);
-  await page.clock.fastForward(2500);
-  await choose(page.locator('#view-result'));
+  if (isNative) {
+    await choose(page.locator('#view-solved'));
+    await expect(page.locator('.confetti')).toHaveCount(0);
+    await page.clock.fastForward(2500);
+    await choose(page.locator('#view-result'));
+  } else {
+    await expect(page.locator('#board')).toBeVisible();
+    await expect(page.locator('#view-solved')).toBeHidden();
+    await page.clock.fastForward(2500);
+    await expect(page.locator('.confetti')).toHaveCount(0);
+    await choose(page.locator('#help-open'));
+    await choose(page.locator('#help-dialog [data-close]'));
+  }
   await expect(page.locator('.confetti')).toHaveCount(0);
   if (date !== 'practice') {
     await page.reload();
@@ -546,7 +559,7 @@ test('timer starts with play, excludes hidden time and remains stopped after sol
   expect((await readProgress(page)).elapsedMs).toBe(solved);
 });
 
-test('share uses the canonical daily URL and handles copy, native cancellation and fallback', async ({ page }) => {
+test('web share uses the canonical daily URL and handles copy, browser cancellation and fallback', async ({ page }) => {
   await seedProgress(page, ['2026-09-15', '2026-09-16'], 'streak');
   await seedProgress(page, { board: daily.solution, moves: 9, hints: 2, elapsedMs: 61_000 });
   await page.addInitScript(() => {
@@ -559,7 +572,8 @@ test('share uses the canonical daily URL and handles copy, native cancellation a
   const result = await page.evaluate(() => window.copiedResult);
   expect(result).toContain('Solved in 1:01 with 2 hints.');
   expect(result).toContain('Your daily brain game.');
-  expect(result).toContain('\n3 day streak\n');
+  expect(result).not.toMatch(/streak/i);
+  expect(await readProgress(page, 'streak')).toEqual(['2026-09-15', '2026-09-16']);
   expect(result).toContain('\nCan you beat my time?\n');
   const link = new URL(result.split('\n').at(-1));
   expect(link.origin).toBe('https://nookgrid.com');

@@ -231,6 +231,11 @@ a.calendar-day.is-streak:hover{background:var(--accent-hover)}
 .calendar-swatch.is-completed{background:var(--surface)}
 .calendar-swatch.is-uncompleted{background:transparent;border:1px solid var(--control-border)}
 #calendar-months[hidden]+.calendar-legend{display:none}
+.web-game .result-history,.web-game #completion-board,.web-game #view-solved,.web-game #result-calendar-open,.web-game #calendar-streak,.web-game .calendar-legend li:has(.is-streak){display:none}
+.web-game #puzzle-tutorial{margin-top:20px;gap:8px}
+.web-game .completion{grid-column:2;grid-row:2;margin-top:20px}
+.web-game .completion h2{font-size:20px}
+.web-game .completion .completion-meta p{font-size:14px}
 @media(max-width:927px){
   .home-progress{margin:0}
   .home-streak{margin-bottom:24px;font-size:clamp(72px,11svh,96px)}

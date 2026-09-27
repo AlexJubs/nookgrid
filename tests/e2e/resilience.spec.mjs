@@ -28,7 +28,8 @@ test('loading remains inert until the puzzle resource arrives', async ({ page })
   await expect(page.locator('#calendar-months')).toBeVisible();
   await expect(page.locator('#calendar-status')).toBeHidden();
   await expect(page.locator('#calendar-months a[data-puzzle-date]')).toHaveCount(8);
-  await expect(page.locator('#calendar-streak')).toHaveText('1 day streak');
+  await expect(page.locator('#calendar-streak')).toBeHidden();
+  expect(await page.evaluate(() => localStorage.getItem('nookgrid:test:v1:streak'))).toBe('["2026-09-16"]');
   expect(errors).toEqual([]);
   await page.getByRole('button', { name: 'Close calendar', exact: true }).click();
   await expectBoard(page, emptyBoard);

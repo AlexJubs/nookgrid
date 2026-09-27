@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { test, expect, bank, daily, today, emptyBoard, openGame, enterGame, place, expectBoard, solvePuzzle, readProgress, seedProgress, choose } from './fixtures.mjs';
+import { test, expect, bank, daily, today, emptyBoard, openGame, enterGame, place, expectBoard, solvePuzzle, readProgress, seedProgress, choose, mockNative } from './fixtures.mjs';
 
 const streakKey = 'nookgrid:test:v1:streak';
 const almostSolved = { board: [...daily.solution.slice(0, 8), null], moves: 8 };
@@ -16,7 +16,8 @@ async function openCalendar(page) {
   await expect(page.locator('#calendar-dialog')).toBeVisible();
 }
 
-test('a daily completion stays read-only across review and reload without earning twice', async ({ page }) => {
+test('native daily completion stays read-only across review and reload without earning twice', async ({ page }) => {
+  await mockNative(page);
   await seedProgress(page, almostSolved);
   await openGame(page);
   await openCalendar(page);
@@ -44,7 +45,8 @@ test('a daily completion stays read-only across review and reload without earnin
   expect(await readStreak(page)).toEqual([today]);
 });
 
-test('a daily puzzle completed with a hint earns the same streak', async ({ page }) => {
+test('native daily puzzle completed with a hint earns the same streak', async ({ page }) => {
+  await mockNative(page);
   await seedProgress(page, almostSolved);
   await openGame(page);
   await page.locator('#hint').click();
@@ -55,7 +57,8 @@ test('a daily puzzle completed with a hint earns the same streak', async ({ page
   expect((await readProgress(page)).hints).toBe(1);
 });
 
-test('archive and Tutorial completions leave earned daily history unchanged', async ({ page }) => {
+test('native archive and Tutorial completions leave earned daily history unchanged', async ({ page }) => {
+  await mockNative(page);
   const archive = bank.puzzles.find(puzzle => puzzle.date === '2026-09-16');
   await seedProgress(page, [today], 'streak');
   await seedProgress(page, { board: [...archive.solution.slice(0, 8), null], moves: 8 }, archive.date);
@@ -72,7 +75,8 @@ test('archive and Tutorial completions leave earned daily history unchanged', as
   expect(await readStreak(page)).toEqual([today]);
 });
 
-test('yesterday keeps a streak active until a UTC day is missed', async ({ page }) => {
+test('native streak remains active after yesterday until a UTC day is missed', async ({ page }) => {
+  await mockNative(page);
   const earned = ['2026-09-16', today];
   await seedProgress(page, earned, 'streak');
   await openGame(page);
@@ -89,23 +93,20 @@ test('yesterday keeps a streak active until a UTC day is missed', async ({ page 
   expect(await readStreak(page)).toEqual(earned);
 });
 
-test('archive sharing uses the current streak without earning a day and expires at midnight', async ({ page }) => {
+test('native archive sharing uses the current streak without earning a day and expires at midnight', async ({ page }) => {
+  await mockNative(page);
   const archive = bank.puzzles.find(puzzle => puzzle.date === '2026-09-15');
   const earned = ['2026-09-15', '2026-09-16'];
   await seedProgress(page, earned, 'streak');
   await seedProgress(page, { board: archive.solution, moves: 9 }, archive.date);
-  await page.addInitScript(() => {
-    Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
-    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { window.copiedResult = text; } } });
-  });
   await openGame(page, `date=${archive.date}`);
   await page.locator('#share').click();
-  expect(await page.evaluate(() => window.copiedResult)).toContain('\n2 day streak\n');
+  expect(await page.evaluate(() => window.nativeSharedText)).toContain('\n2 day streak\n');
   expect(await readStreak(page)).toEqual(earned);
 
   await page.clock.setSystemTime(new Date('2026-09-18T00:00:00Z'));
   await page.locator('#share').click();
-  expect(await page.evaluate(() => window.copiedResult)).not.toContain('streak');
+  expect(await page.evaluate(() => window.nativeSharedText)).not.toContain('streak');
   expect(await readStreak(page)).toEqual(earned);
 });
 
@@ -149,7 +150,8 @@ test('UTC midnight refreshes Today without replacing the current board', async (
   expect((await readProgress(page, '2026-09-18')).board).toEqual([null, null, null, null, 'park', null, null, null, null]);
 });
 
-test('finishing an old board after UTC midnight cannot earn a daily streak', async ({ page }) => {
+test('native completion of an old board after UTC midnight cannot earn a daily streak', async ({ page }) => {
+  await mockNative(page);
   await page.clock.pauseAt(new Date('2026-09-17T23:59:58Z'));
   await seedProgress(page, almostSolved);
   await openGame(page);
@@ -179,7 +181,8 @@ for (const timezone of ['America/New_York', 'Asia/Tokyo', 'Europe/London']) {
   test.describe(`UTC daily boundary in ${timezone}`, () => {
     test.use({ timezoneId: timezone });
 
-    test('completion, countdown, Home and calendar agree across UTC midnight', async ({ page }) => {
+    test('native completion, countdown, Home and calendar agree across UTC midnight', async ({ page }) => {
+      await mockNative(page);
       await page.clock.pauseAt(new Date('2026-09-17T23:59:58Z'));
       await seedProgress(page, almostSolved);
       await seedProgress(page, ['2026-09-16'], 'streak');
@@ -209,7 +212,8 @@ for (const timezone of ['America/New_York', 'Asia/Tokyo', 'Europe/London']) {
 test.describe('saved history from the previous local-day schedule', () => {
   test.use({ timezoneId: 'Asia/Tokyo' });
 
-  test('a previously earned future date survives until its UTC release without duplicate credit', async ({ page }) => {
+  test('native previously earned future date survives until its UTC release without duplicate credit', async ({ page }) => {
+    await mockNative(page);
     const next = bank.puzzles.find(puzzle => puzzle.date === '2026-09-18');
     const earned = ['2026-09-16', today, next.date];
     await page.clock.pauseAt(new Date('2026-09-17T23:59:58Z'));

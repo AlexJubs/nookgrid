@@ -1,9 +1,9 @@
-import { test, expect, bank, daily, today, emptyBoard, openGame, enterGame, place, expectBoard, solvePuzzle, seedProgress, readProgress, choose } from './fixtures.mjs';
+import { test, expect, bank, daily, today, emptyBoard, openGame, enterGame, place, expectBoard, solvePuzzle, seedProgress, readProgress, choose, mockNative } from './fixtures.mjs';
 
-for (const state of ['drag', 'focus']) {
-  test(`${state} rings stay visible over neighboring cells on every edge`, async ({ page, isMobile }, testInfo) => {
+for (const isNative of [false, true]) for (const state of ['drag', 'focus']) {
+  test(`${isNative ? 'native' : 'web'} ${state} rings stay visible over neighboring cells on every edge`, async ({ page }, testInfo) => {
+    if (isNative) await mockNative(page);
     await openGame(page, 'date=2026-09-11');
-    if (isMobile) await page.evaluate(() => document.documentElement.classList.add('native-app'));
     if (state === 'focus') {
       await place(page, 'pond', 8);
       await choose(page.locator('[data-lot="8"]'));
@@ -11,6 +11,8 @@ for (const state of ['drag', 'focus']) {
     for (const theme of ['light', 'dark']) {
       await page.emulateMedia({ colorScheme: theme });
       if (state === 'drag') {
+        await page.locator('[data-place="pond"]').scrollIntoViewIfNeeded();
+        await expect(page.locator('[data-place="pond"]')).toBeInViewport();
         const pond = await page.locator('[data-place="pond"]').boundingBox();
         await page.mouse.move(pond.x + pond.width / 2, pond.y + pond.height / 2);
         await page.mouse.down();
@@ -18,6 +20,7 @@ for (const state of ['drag', 'focus']) {
       for (const index of [7, 0, 1, 2, 3, 4, 5, 6, 8]) {
         const lot = page.locator(`[data-lot="${index}"]`);
         if (state === 'drag') {
+          await expect(lot).toBeInViewport();
           const box = await lot.boundingBox();
           await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 3 });
           await expect(lot).toHaveClass(/drop-target/);
@@ -126,7 +129,8 @@ test('dated completions stay read-only while Tutorial starts fresh after reload'
     await expect(page.locator('#completion')).toBeVisible();
     if (date === 'practice') expect(await readProgress(page, puzzle.date)).toBeNull();
     else await expect.poll(async () => (await readProgress(page, puzzle.date)).reported).toBe(true);
-    await choose(page.locator('#view-solved'));
+    await expect(page.locator('#board')).toBeVisible();
+    await expect(page.locator('#view-solved')).toBeHidden();
     await expectBoard(page, puzzle.solution);
     for (const control of ['#clear', '#undo', '#hint']) await expect(page.locator(control)).toBeHidden();
     await page.reload();
@@ -155,7 +159,7 @@ test('dated completions stay read-only while Tutorial starts fresh after reload'
   await expect(page.locator('#calendar-dialog .calendar-day.is-completed')).toHaveCount(2);
   await expect(page.locator('#calendar-dialog [aria-current="page"]')).not.toHaveClass(/is-completed/);
   await expect(page.locator('#calendar-dialog .is-current')).toHaveCount(1);
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('nookgrid:test:v1:streak')))).toEqual([today]);
+  expect(await page.evaluate(() => localStorage.getItem('nookgrid:test:v1:streak'))).toBeNull();
 });
 
 test('a stale tab cannot erase an earned completion badge', async ({ page }) => {
@@ -280,7 +284,8 @@ test('browsing a month survives a saved completion and midnight without losing t
   await expectBoard(page, ['cafe', ...Array(8).fill(null)]);
 });
 
-test('archived completion reaches today through Home and has no countdown', async ({ page }) => {
+test('native archived completion reaches today through Home and has no countdown', async ({ page }) => {
+  await mockNative(page);
   const archive = bank.puzzles.find(puzzle => puzzle.date === '2026-09-11');
   await seedProgress(page, { board: archive.solution, moves: 9, elapsedMs: 90_000 }, archive.date);
   await openGame(page, `date=${archive.date}`);
@@ -521,7 +526,7 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
     expect(new Set(titleSizes)).toEqual(new Set([20]));
     expect(titleSizes[0]).toBeLessThan(await page.locator('.brand').evaluate(brand => parseFloat(getComputedStyle(brand).fontSize)));
     await choose(page.locator('#menu-open'));
-    const rows = await page.locator('#menu-dialog .menu-links > *').evaluateAll(elements => elements.map(element => {
+    const rows = await page.locator('#menu-dialog .menu-links > :visible').evaluateAll(elements => elements.map(element => {
       const style = getComputedStyle(element), bounds = element.getBoundingClientRect();
       const chevron = element.querySelector('.menu-chevron');
       return {
@@ -534,7 +539,8 @@ for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }
         hasChevron: Boolean(chevron?.checkVisibility() && chevron.getAttribute('aria-hidden') === 'true')
       };
     }));
-    expect(rows.map(row => row.label)).toEqual(['All puzzles', 'Settings', 'Feedback', 'Privacy']);
+    expect(rows.filter(row => row.label !== 'Play tutorial').map(row => row.label)).toEqual(['All puzzles', 'Settings', 'Feedback', 'Privacy']);
+    expect(rows.filter(row => row.label === 'Play tutorial')).toHaveLength(1);
     for (const row of rows) {
       expect(row.width, row.label).toBeGreaterThanOrEqual(44);
       expect(row.height, row.label).toBeGreaterThanOrEqual(44);
@@ -656,7 +662,7 @@ test('normal and solved layouts preserve touch targets without horizontal overfl
         width: innerWidth, height: innerHeight,
         scrollWidth: document.documentElement.scrollWidth,
         bottom: document.querySelector('#game').getBoundingClientRect().bottom,
-        targets: [...document.querySelectorAll('.lot,.place,.icon-button,.board-actions button,.completion button,.puzzle-switch')]
+        targets: [...document.querySelectorAll('.lot,.place,.icon-button,.board-actions button,.completion button,.puzzle-switch,#puzzle-tutorial')]
           .filter(visible).map(element => ({ name: element.getAttribute('aria-label') || element.textContent.trim(), width: element.getBoundingClientRect().width, height: element.getBoundingClientRect().height }))
       };
     });
@@ -681,14 +687,23 @@ test('normal and solved layouts preserve touch targets without horizontal overfl
   await page.screenshot({ path: testInfo.outputPath('narrow-solved.png'), fullPage: true });
 });
 
-test('phone layout stacks the plan, board, items and actions without overlap', async ({ page }) => {
+for (const isNative of [false, true]) test(`${isNative ? 'native' : 'web'} phone layout stacks the plan, board, items and actions without overlap`, async ({ page }) => {
+  if (isNative) await mockNative(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await openGame(page);
   const getBounds = selector => page.locator(selector).boundingBox();
+  const verifyBoardSize = async board => {
+    if (!isNative) expect(board.width).toBeGreaterThanOrEqual(280);
+    else for (const lot of await page.locator('#board .lot').all()) {
+      const bounds = await lot.boundingBox();
+      expect(bounds.width).toBeGreaterThanOrEqual(44);
+      expect(bounds.height).toBeGreaterThanOrEqual(44);
+    }
+  };
   const verifyStack = async () => {
     const [plan, board, tray, actions] = await Promise.all(['#clue-list', '#board', '#tray', '.board-actions'].map(getBounds));
     expect(plan.y + plan.height).toBeLessThanOrEqual(board.y);
-    expect(board.width).toBeGreaterThanOrEqual(280);
+    await verifyBoardSize(board);
     expect(board.y + board.height).toBeLessThan(tray.y);
     expect(tray.y + tray.height).toBeLessThan(actions.y);
   };
@@ -696,15 +711,20 @@ test('phone layout stacks the plan, board, items and actions without overlap', a
   await place(page, 'bakery', 0);
   await expect(page.getByRole('status').filter({ hasText: 'Bakery moved to A1.' })).toHaveCount(1);
   await solvePuzzle(page);
-  await expect(page.locator('#board')).toBeHidden();
   await expect(page.locator('#completion')).toBeVisible();
-  await page.locator('#view-solved').click();
+  if (isNative) {
+    await expect(page.locator('#board')).toBeHidden();
+    await page.locator('#view-solved').click();
+  } else {
+    await expect(page.locator('#board')).toBeVisible();
+    await expect(page.locator('#view-solved')).toBeHidden();
+  }
   await page.locator('#solved-plan summary').click();
   await expect(page.locator('#tray')).toBeHidden();
   await expect(page.locator('.board-actions')).toBeHidden();
-  const [plan, board, result] = await Promise.all(['#solved-plan', '#board', '#view-result'].map(getBounds));
+  const [plan, board, result] = await Promise.all(['#solved-plan', '#board', isNative ? '#view-result' : '#completion'].map(getBounds));
   expect(plan.y + plan.height).toBeLessThanOrEqual(board.y);
-  expect(board.width).toBeGreaterThanOrEqual(280);
+  await verifyBoardSize(board);
   expect(board.y + board.height).toBeLessThan(result.y);
   await expectBoard(page, daily.solution);
   await openGame(page, 'date=practice');

@@ -16,7 +16,7 @@ let today = openedDay;
 const params = new URLSearchParams(location.search);
 const progressPrefix = testMode ? 'nookgrid:test:v1:' : 'nookgrid:v1:';
 const streakKey = `${progressPrefix}streak`;
-let streakDays = restoreStreakDays(read(streakKey));
+let streakDays = native ? restoreStreakDays(read(streakKey)) : [];
 let config = {feedbackEnabled:false};
 let puzzle, mode, bank, progress, selected = null, history = [], started = false;
 let wasSolved = false, shouldCelebrate = false, feedbackKey = null, feedbackPayload = null;
@@ -119,7 +119,14 @@ function openDialog(id, opener) {
 for (const [button, dialog] of [['help-open','help-dialog'],['menu-open','menu-dialog'],['menu-calendar-open','calendar-dialog'],['calendar-open','calendar-dialog'],['result-calendar-open','calendar-dialog'],['feedback-open','feedback-dialog'],['settings-open','settings-dialog'],['hint','hint-dialog']]) {
   $(button).addEventListener('click', () => openDialog(dialog, $(button)));
 }
-$('help-tutorial').href = `?date=practice${testMode ? '&test=1' : ''}`;
+document.body.classList.toggle('web-game', !native);
+for (const id of ['help-tutorial','menu-tutorial','puzzle-tutorial']) $(id).href = `?date=practice${testMode ? '&test=1' : ''}`;
+$('menu-tutorial').hidden = Boolean(native);
+if (!native) {
+  $('home-open').setAttribute('aria-label', "Back to today's puzzle");
+  document.querySelector('.brand').setAttribute('aria-label', "NookGrid, today's puzzle");
+  document.querySelector('.settings-note').textContent = 'Your progress stays in this browser. Clearing browser data removes it.';
+}
 
 function getCompletedDates() {
   return bank.puzzles.filter(item => item.date <= today && (
@@ -170,7 +177,7 @@ for (const [id,offset] of [['calendar-previous',1],['calendar-next',-1]]) {
 }
 
 function renderHistory() {
-  if (!bank || !puzzle) return;
+  if (!native || !bank || !puzzle) return;
   const completed = new Set(getCompletedDates());
   const daily = bank.puzzles.find(item => item.date === today);
   const saved = daily ? daily.date === puzzle.date ? progress : restoreProgress(read(`${progressPrefix}${today}`),ids,daily.solution) : null;
@@ -213,13 +220,15 @@ function renderScreen() {
   document.body.classList.toggle('show-result',screen === 'result');
   $('home').hidden = screen !== 'home';
   $('game').hidden = screen === 'home';
-  $('home-open').hidden = screen === 'home';
+  $('home-open').hidden = native ? screen === 'home' : puzzle.date === today;
+  $('puzzle-tutorial').hidden = Boolean(native) || mode === 'practice';
   $('help-tutorial').hidden = mode === 'practice' && screen !== 'home';
-  $('completion').hidden = screen !== 'result' || !solved;
+  const hasResult = solved && (!native || screen === 'result');
+  $('completion').hidden = !hasResult;
   document.querySelector('.completion-actions').hidden = Boolean(pendingAd);
   $('result-week').inert = Boolean(pendingAd);
-  const isResultVisible = screen === 'result' && solved && !pendingAd && !document.hidden && isNativeActive && !document.querySelector('dialog[open]');
-  if (screen !== 'result') {
+  const isResultVisible = hasResult && !pendingAd && !document.hidden && isNativeActive && !document.querySelector('dialog[open]');
+  if (!hasResult) {
     shouldCelebrate = false;
     document.querySelector('.confetti')?.remove();
   }
@@ -231,7 +240,7 @@ function renderScreen() {
     recordAdEvent({event:'ad_outcome',outcome:'result_visible',placement:'completion',ad_mode:native.ads.mode,ad_opportunity_id:resultOpportunity});
     resultOpportunity = null;
   }
-  $('view-result').hidden = screen !== 'puzzle' || !solved;
+  $('view-result').hidden = !native || screen !== 'puzzle' || !solved;
   document.querySelector('.skip-link').href = screen === 'home' ? '#home' : screen === 'result' ? '#completion' : '#game';
   recordPuzzleView();
 }
@@ -260,11 +269,12 @@ function showScreen(next) {
   (next === 'home' ? $('home-play').hidden ? $('home-result') : $('home-play') : next === 'result' ? $('share').hidden ? $('play-today') : $('share') : $('home-open')).focus({preventScroll:true});
 }
 
-$('home-open').addEventListener('click',() => showScreen('home'));
+$('home-open').addEventListener('click',() => native ? showScreen('home') : navigateTo(`?date=${today}${testMode ? '&test=1' : ''}`));
 document.querySelector('.brand').addEventListener('click',event => {
   if (!puzzle || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
   event.preventDefault();
-  showScreen('home');
+  if (native) showScreen('home');
+  else navigateTo(`?date=${today}${testMode ? '&test=1' : ''}`);
 });
 $('home-play').addEventListener('click',() => puzzle.date === today ? showScreen('puzzle') : navigateTo(`?date=${today}${testMode ? '&test=1' : ''}`));
 $('home-tutorial').addEventListener('click',() => navigateTo($('help-tutorial').href));
@@ -337,10 +347,10 @@ async function save(shouldRun = !document.hidden) {
   };
   if (mode === 'practice') { reportCompletion(); return true; }
   progress.reported ||= restoreProgress(read(`${progressPrefix}${puzzle.date}`),ids,puzzle.solution).reported;
-  streakDays = [...new Set([...restoreStreakDays(read(streakKey)),...streakDays])].sort();
+  if (native) streakDays = [...new Set([...restoreStreakDays(read(streakKey)),...streakDays])].sort();
   try {
     const writes = [saveValue(`${progressPrefix}${puzzle.date}`, JSON.stringify(progress))];
-    if (streakDays.length) writes.push(saveValue(streakKey, JSON.stringify(streakDays)));
+    if (native && streakDays.length) writes.push(saveValue(streakKey, JSON.stringify(streakDays)));
     await Promise.all(writes);
     reportCompletion();
     $('save-warning').hidden = !native || Boolean(native.storage);
@@ -571,23 +581,24 @@ function updateReturnPrompt() {
       document.title = `NookGrid | ${isToday ? 'Free daily brain game' : `Brain game ${number}`}`;
     }
     renderHistory();
+    if (!native) renderScreen();
     if ($('calendar-dialog').open) prepareCalendar(false);
   }
   $('new-day').hidden = currentDay === openedDay || isToday || !hasToday || mode === 'practice';
   $('play-today').hidden = mode !== 'practice' || !hasToday;
   $('play-today').href = `?date=${currentDay}${testMode ? '&test=1' : ''}`;
   $('new-day').querySelector('a').href = $('play-today').href;
-  $('next-puzzle').hidden = !isToday || !hasTomorrow;
+  $('next-puzzle').hidden = !native || !isToday || !hasTomorrow;
   if (isToday && hasTomorrow) $('next-puzzle-time').textContent = nextPuzzleCountdown(now);
   const streak = streakLength(streakDays,currentDay);
   $('daily-streak-label').textContent = `${streak} day streak`;
-  $('daily-streak').hidden = streak === 0 || !isToday;
+  $('daily-streak').hidden = !native || streak === 0 || !isToday;
   $('clues-title').textContent = mode === 'practice' ? 'Tutorial plan' : new Date(`${puzzle.date}T12:00:00Z`).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
 }
 
 window.addEventListener('storage',event => {
   if (event.key !== null && !event.key.startsWith(progressPrefix)) return;
-  streakDays = restoreStreakDays(read(streakKey));
+  if (native) streakDays = restoreStreakDays(read(streakKey));
   updateReturnPrompt();
   renderHistory();
   if ($('calendar-dialog').open) prepareCalendar(false);
@@ -653,7 +664,7 @@ function render() {
   const plan = solved ? $('solved-plan') : $('clue-list');
   if ($('clues').parentElement !== plan) plan.append($('clues'));
   if (solved) {
-    if (!wasSolved && screen !== 'home') screen = 'result';
+    if (native && !wasSolved && screen !== 'home') screen = 'result';
     $('completion-board').innerHTML = board.map(id => `<span class="completion-place">${placeArt(id)}</span>`).join('');
     const hintNote = progress.hints ? `${progress.hints} hint${progress.hints === 1 ? '' : 's'}` : 'No hints';
     $('completion-detail').textContent = hintNote;
@@ -661,7 +672,7 @@ function render() {
     $('completion-time').textContent = solveTime ? `Solved in ${solveTime}` : '';
     $('completion-time').hidden = !solveTime;
     $('selection-status').textContent = 'The neighborhood plan is complete.';
-    const earnedDays = addDailyCompletion(streakDays,puzzle.date,puzzleDay());
+    const earnedDays = native ? addDailyCompletion(streakDays,puzzle.date,puzzleDay()) : streakDays;
     const hasEarnedDay = earnedDays !== streakDays;
     streakDays = earnedDays;
     const shouldReport = !progress.reported;
@@ -673,9 +684,9 @@ function render() {
     if (shouldReport || hasEarnedDay) saved = save();
     if (!wasSolved) shouldCelebrate = true;
     renderScreen();
-    if (shouldFocusCompletion && screen === 'result') {
-      window.scrollTo({top:0,behavior:'instant'});
-      $('completion').focus({preventScroll:true});
+    if (shouldFocusCompletion && (!native || screen === 'result')) {
+      if (native) window.scrollTo({top:0,behavior:'instant'});
+      $('completion').focus({preventScroll:Boolean(native)});
     }
   }
   wasSolved = solved;
@@ -719,7 +730,7 @@ $('confirm-hint').addEventListener('click', () => {
 });
 
 $('share').addEventListener('click', async () => {
-  const text = shareText(puzzle.date,progress.hints,'https://nookgrid.com/',progress.elapsedMs,streakLength(streakDays,puzzleDay()));
+  const text = shareText(puzzle.date,progress.hints,'https://nookgrid.com/',progress.elapsedMs,native ? streakLength(streakDays,puzzleDay()) : 0);
   $('share-status').textContent = '';
   try {
     if (native) { await native.share(text); track('share_result',{result:'shared'}); }
@@ -777,7 +788,7 @@ async function init() {
     progress = restoreProgress(mode === 'practice' ? null : read(`${progressPrefix}${puzzle.date}`),ids,puzzle.solution);
     if (mode !== 'practice' && native && !native.storage) $('save-warning').hidden = false;
     const solved = isSolved(puzzle,progress.board);
-    screen = mode !== 'practice' && (params.get('view') === 'home' || !params.has('date') && (!progress.board.some(Boolean) || solved)) ? 'home' : solved ? 'result' : 'puzzle';
+    screen = !native ? 'puzzle' : mode !== 'practice' && (params.get('view') === 'home' || !params.has('date') && (!progress.board.some(Boolean) || solved)) ? 'home' : solved ? 'result' : 'puzzle';
     if (params.get('view') === 'home') {
       const url = new URL(location.href);
       url.searchParams.delete('view');

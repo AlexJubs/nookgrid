@@ -45,6 +45,8 @@ for (const path of ['/', '/index.html', '/?date=2026-09-11', '/?date=practice', 
       await expect(page.locator('#game')).toHaveAttribute('aria-busy', 'false');
       await expect(page).toHaveURL(`${origin}${path}`);
       await expect(page.locator('#download-store')).toHaveCount(0);
+      await expect(page.locator('#home')).toBeHidden();
+      await expect(page.locator('#board')).toBeVisible();
       expect(requests.includes(store)).toBe(false);
     }
   });
