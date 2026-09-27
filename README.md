@@ -20,7 +20,7 @@ NookGrid is available on the [App Store](https://apps.apple.com/us/app/nookgrid/
 
 <img src="docs/images/nookgrid-ios.png" alt="NookGrid on iPhone, with the neighborhood plan above the grid and places below it" width="300">
 
-[Development guide](docs/DEVELOPMENT.md) · [Release guide](docs/RELEASING.md)
+[Development guide](docs/DEVELOPMENT.md) · [Release guide](docs/RELEASING.md) · [Ad creative](docs/marketing/ads/2026-09-27/)
 
 ## Before a release
 

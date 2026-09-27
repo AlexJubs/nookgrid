@@ -1,0 +1,82 @@
+{
+  "sourceCommit": "3641b1221b340175736859d7735adf3621ad80b9",
+  "date": "2026-09-26",
+  "clues": [
+    {
+      "type": "row",
+      "a": "bikes",
+      "value": 2
+    },
+    {
+      "type": "adjacent",
+      "a": "cafe",
+      "b": "bikes"
+    },
+    {
+      "type": "adjacent",
+      "a": "park",
+      "b": "bikes"
+    }
+  ],
+  "board": [
+    "homes",
+    "bakery",
+    "books",
+    "cafe",
+    null,
+    "pond",
+    null,
+    null,
+    "market"
+  ],
+  "pieces": [
+    "florist",
+    "bikes",
+    "park"
+  ],
+  "emptyCells": [
+    4,
+    6,
+    7
+  ],
+  "checkedArrangements": 6,
+  "solutions": [
+    [
+      "homes",
+      "bakery",
+      "books",
+      "cafe",
+      "florist",
+      "pond",
+      "bikes",
+      "park",
+      "market"
+    ]
+  ],
+  "countsWithoutClues": [
+    2,
+    3,
+    2
+  ],
+  "variants": [
+    {
+      "id": "01-app-first",
+      "theme": "light",
+      "title": "Where do these three go?",
+      "subtitle": ""
+    },
+    {
+      "id": "02-board-first",
+      "theme": "light",
+      "title": "Can you finish this neighborhood?",
+      "subtitle": ""
+    },
+    {
+      "id": "03-evening",
+      "theme": "dark",
+      "title": "A little brain break.",
+      "subtitle": "Where do these three go?"
+    }
+  ],
+  "state": "Visuals approved September 27, 2026; no advertising campaign launched"
+}
