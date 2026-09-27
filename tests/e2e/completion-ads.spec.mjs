@@ -27,6 +27,7 @@ test.beforeEach(async ({page}) => {
 });
 
 test('a newly completed puzzle and streak save before its ad, then dismissal reveals results',async ({page}) => {
+  await page.emulateMedia({reducedMotion:'no-preference'});
   await openGame(page);
   await page.evaluate(() => {
     const save = window.nookgridNative.storage.setItem;
@@ -38,15 +39,21 @@ test('a newly completed puzzle and streak save before its ad, then dismissal rev
   await place(page,daily.solution[8],8);
   await expect(page.locator('#completion')).toBeVisible();
   await expect(page.locator('#share')).toBeHidden();
+  expect(await page.locator('.confetti').count()).toBe(0);
   expect(await page.evaluate(() => window.adCalls)).toEqual([]);
   await page.evaluate(() => window.finishSave());
   await expect.poll(() => page.evaluate(() => window.adCalls.length)).toBe(1);
   expect(await page.evaluate(() => window.adCalls[0].saved.reported)).toBe(true);
   expect(await page.evaluate(() => window.adCalls[0].streak)).toEqual(['2026-09-17']);
+  await page.clock.fastForward(3000);
   await page.evaluate(() => window.dismissAd());
   await expect(page.locator('#share')).toBeVisible();
+  await expect(page.locator('.confetti')).toBeVisible();
+  await page.clock.fastForward(2500);
+  await expect(page.locator('.confetti')).toHaveCount(0);
   await page.locator('#view-solved').click();
   await page.locator('#view-result').click();
+  await expect(page.locator('.confetti')).toHaveCount(0);
   expect(await page.evaluate(() => window.adCalls.length)).toBe(1);
   await page.reload();
   await expect(page.locator('#game')).toHaveAttribute('aria-busy','false');
@@ -109,13 +116,19 @@ test('ad privacy and reporting stay available independently of play analytics',a
 });
 
 test('backgrounding an already presented ad waits for dismissal without another opportunity',async ({page}) => {
+  await page.emulateMedia({reducedMotion:'no-preference'});
   await openGame(page);
   await place(page,daily.solution[8],8);
   await expect.poll(() => page.evaluate(() => window.adCalls.length)).toBe(1);
   await page.evaluate(() => window.nativeStateListeners.forEach(listener => listener({isActive:false})));
   await page.evaluate(() => window.nativeStateListeners.forEach(listener => listener({isActive:true})));
   await expect(page.locator('#share')).toBeHidden();
+  await page.evaluate(() => window.nativeStateListeners.forEach(listener => listener({isActive:false})));
   await page.evaluate(() => window.dismissAd());
   await expect(page.locator('#share')).toBeVisible();
+  await page.clock.fastForward(3000);
+  await expect(page.locator('.confetti')).toHaveCount(0);
+  await page.evaluate(() => window.nativeStateListeners.forEach(listener => listener({isActive:true})));
+  await expect(page.locator('.confetti')).toBeVisible();
   expect(await page.evaluate(() => window.adCalls.length)).toBe(1);
 });

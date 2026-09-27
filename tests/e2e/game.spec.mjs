@@ -478,6 +478,42 @@ test('a full incorrect board remains playable and a correct board completes', as
   await expect(page.locator('#completion')).toBeVisible();
 });
 
+for (const [label, puzzle, date] of [
+  ['daily', daily, today],
+  ['archive', bank.puzzles.find(item => item.date === '2026-09-16'), '2026-09-16'],
+  ['Tutorial', bank.tutorial, 'practice']
+]) test(`${label} completion celebrates once with visible, nonblocking confetti`, async ({ page }, testInfo) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  if (date !== 'practice') await seedProgress(page, { board: [...puzzle.solution.slice(0, 8), null], moves: 8 }, date);
+  await openGame(page, `date=${date}`);
+  await expect(page.locator('.confetti')).toHaveCount(0);
+  await solvePuzzle(page, puzzle.solution, date === 'practice' ? 0 : 8);
+  await expect(page.locator('.confetti')).toBeVisible();
+  await expect(page.locator('.confetti')).toHaveAttribute('aria-hidden', 'true');
+  expect(await page.locator('.confetti').evaluate(burst => {
+    for (const animation of burst.getAnimations({ subtree: true })) {
+      animation.pause();
+      animation.currentTime = 600;
+    }
+    return getComputedStyle(burst).pointerEvents;
+  })).toBe('none');
+  expect(await page.locator('.confetti i').evaluateAll(pieces => pieces.some(piece => {
+    const { left, right, top, bottom } = piece.getBoundingClientRect();
+    return left >= 0 && right <= innerWidth && top >= 0 && bottom <= innerHeight && Number(getComputedStyle(piece).opacity) > 0;
+  }))).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('completion-confetti.png') });
+  await choose(page.locator('#view-solved'));
+  await expect(page.locator('.confetti')).toHaveCount(0);
+  await page.clock.fastForward(2500);
+  await choose(page.locator('#view-result'));
+  await expect(page.locator('.confetti')).toHaveCount(0);
+  if (date !== 'practice') {
+    await page.reload();
+    await expect(page.locator('#completion')).toBeVisible();
+    await expect(page.locator('.confetti')).toHaveCount(0);
+  }
+});
+
 test('timer starts with play, excludes hidden time and remains stopped after solving', async ({ page }) => {
   await openGame(page);
   await page.clock.fastForward(60_000);

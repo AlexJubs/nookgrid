@@ -19,7 +19,7 @@ const streakKey = `${progressPrefix}streak`;
 let streakDays = restoreStreakDays(read(streakKey));
 let config = {feedbackEnabled:false};
 let puzzle, mode, bank, progress, selected = null, history = [], started = false;
-let wasSolved = false, feedbackKey = null, feedbackPayload = null;
+let wasSolved = false, shouldCelebrate = false, feedbackKey = null, feedbackPayload = null;
 let hasGuidance = false, shouldShowGuidance = false;
 let solveTimer = {elapsedMs:0,startedAt:null};
 let screen = 'puzzle';
@@ -218,7 +218,16 @@ function renderScreen() {
   $('completion').hidden = screen !== 'result' || !solved;
   document.querySelector('.completion-actions').hidden = Boolean(pendingAd);
   $('result-week').inert = Boolean(pendingAd);
-  if (resultOpportunity && screen === 'result' && !pendingAd && !document.hidden && isNativeActive && !document.querySelector('dialog[open]')) {
+  const isResultVisible = screen === 'result' && solved && !pendingAd && !document.hidden && isNativeActive && !document.querySelector('dialog[open]');
+  if (screen !== 'result') {
+    shouldCelebrate = false;
+    document.querySelector('.confetti')?.remove();
+  }
+  if (shouldCelebrate && isResultVisible) {
+    shouldCelebrate = false;
+    celebrateSolve();
+  }
+  if (resultOpportunity && isResultVisible) {
     recordAdEvent({event:'ad_outcome',outcome:'result_visible',placement:'completion',ad_mode:native.ads.mode,ad_opportunity_id:resultOpportunity});
     resultOpportunity = null;
   }
@@ -236,7 +245,7 @@ function recordPuzzleView() {
   track('puzzle_view');
 }
 document.addEventListener('nookgrid:entry',recordPuzzleView);
-document.addEventListener('visibilitychange',recordPuzzleView);
+document.addEventListener('visibilitychange',() => { if (puzzle) renderScreen(); });
 document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('close',() => { if (puzzle) renderScreen(); }));
 
 function showScreen(next) {
@@ -643,7 +652,6 @@ function render() {
   $('solved-plan').hidden = !solved;
   const plan = solved ? $('solved-plan') : $('clue-list');
   if ($('clues').parentElement !== plan) plan.append($('clues'));
-  if (!solved) document.querySelector('.confetti')?.remove();
   if (solved) {
     if (!wasSolved && screen !== 'home') screen = 'result';
     $('completion-board').innerHTML = board.map(id => `<span class="completion-place">${placeArt(id)}</span>`).join('');
@@ -663,12 +671,12 @@ function render() {
       progress.reported = true;
     }
     if (shouldReport || hasEarnedDay) saved = save();
+    if (!wasSolved) shouldCelebrate = true;
     renderScreen();
     if (shouldFocusCompletion && screen === 'result') {
       window.scrollTo({top:0,behavior:'instant'});
       $('completion').focus({preventScroll:true});
     }
-    if (!wasSolved) celebrateSolve();
   }
   wasSolved = solved;
   renderScreen();
