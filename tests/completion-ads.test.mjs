@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createCompletionAds } from '../public/completion-ads.mjs';
 
-test('a completion presents once, only after both saved progress and streak resolve', async () => {
+test('a completion waits three seconds and saved progress before presenting once', async t => {
+  t.mock.timers.enable({apis:['setTimeout','Date'],now:0});
   let finishSave, presentations = 0;
   const ads = createCompletionAds({present:async () => { presentations++; }});
   const saved = new Promise(resolve => { finishSave = resolve; });
@@ -10,8 +11,26 @@ test('a completion presents once, only after both saved progress and streak reso
   assert.equal(presentations,0);
   assert.equal(await ads.complete({key:'2026-09-25',saved:Promise.resolve(true),isCurrent:() => true}),false);
   finishSave(true);
+  await new Promise(setImmediate);
+  t.mock.timers.tick(2999);
+  assert.equal(presentations,0);
+  t.mock.timers.tick(1);
   assert.equal(await result,true);
   assert.equal(presentations,1);
+});
+
+for (const action of ['cancel','leave']) test(`${action} during the result pause prevents the ad`, async t => {
+  t.mock.timers.enable({apis:['setTimeout','Date'],now:0});
+  let presentations = 0, isCurrent = true;
+  const ads = createCompletionAds({present:async () => { presentations++; }});
+  const result = ads.complete({key:'2026-09-25',saved:Promise.resolve(true),isCurrent:() => isCurrent});
+  await new Promise(setImmediate);
+  t.mock.timers.tick(2999);
+  if (action === 'cancel') ads.cancel();
+  else isCurrent = false;
+  t.mock.timers.tick(1);
+  assert.equal(await result,false);
+  assert.equal(presentations,0);
 });
 
 test('failed, cancelled and stale saves skip the ad without retrying the opportunity', async () => {

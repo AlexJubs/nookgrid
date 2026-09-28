@@ -12,11 +12,15 @@ export function createCompletionAds(ads,{saveTimeout = 1000} = {}) {
       if (attempted.has(key)) return false;
       attempted.add(key);
       const current = generation;
+      const presentAt = Date.now() + 3000;
       pendingOpportunity = opportunity;
       let timer;
       try {
         const didSave = await Promise.race([saved,new Promise(resolve => { timer = setTimeout(() => resolve(false),saveTimeout); })]);
         if (!didSave || generation !== current || !isCurrent()) return false;
+        clearTimeout(timer);
+        await new Promise(resolve => { timer = setTimeout(resolve,Math.max(0,presentAt - Date.now())); });
+        if (generation !== current || !isCurrent()) return false;
         await ads.present({opportunity,expiresAt:Date.now() + 500});
         return true;
       } catch { return false; }

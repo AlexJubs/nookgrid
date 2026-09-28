@@ -26,9 +26,10 @@ test.beforeEach(async ({page}) => {
   },daily.solution);
 });
 
-test('a newly completed puzzle and streak save before its ad, then dismissal reveals results',async ({page}) => {
+test('completion stays visible for three seconds before its saved puzzle ad',async ({page}) => {
   await page.emulateMedia({reducedMotion:'no-preference'});
   await openGame(page);
+  await page.clock.pauseAt(new Date('2026-09-17T12:10:00Z'));
   await page.evaluate(() => {
     const save = window.nookgridNative.storage.setItem;
     window.nookgridNative.storage.setItem = async (key,value) => {
@@ -39,16 +40,21 @@ test('a newly completed puzzle and streak save before its ad, then dismissal rev
   await place(page,daily.solution[8],8);
   await expect(page.locator('#completion')).toBeVisible();
   await expect(page.locator('#share')).toBeHidden();
-  expect(await page.locator('.confetti').count()).toBe(0);
+  await expect(page.locator('.confetti')).toBeVisible();
   expect(await page.evaluate(() => window.adCalls)).toEqual([]);
+  await page.clock.runFor(500);
   await page.evaluate(() => window.finishSave());
+  await page.clock.runFor(2499);
+  expect(await page.evaluate(() => window.adCalls)).toEqual([]);
+  await expect(page.locator('#completion')).toBeVisible();
+  await page.clock.runFor(1);
   await expect.poll(() => page.evaluate(() => window.adCalls.length)).toBe(1);
   expect(await page.evaluate(() => window.adCalls[0].saved.reported)).toBe(true);
   expect(await page.evaluate(() => window.adCalls[0].streak)).toEqual(['2026-09-17']);
   await page.clock.fastForward(3000);
   await page.evaluate(() => window.dismissAd());
   await expect(page.locator('#share')).toBeVisible();
-  await expect(page.locator('.confetti')).toBeVisible();
+  await expect(page.locator('.confetti')).toHaveCount(0);
   await page.clock.fastForward(2500);
   await expect(page.locator('.confetti')).toHaveCount(0);
   await page.locator('#view-solved').click();
@@ -58,6 +64,27 @@ test('a newly completed puzzle and streak save before its ad, then dismissal rev
   await page.reload();
   await expect(page.locator('#game')).toHaveAttribute('aria-busy','false');
   expect(await page.evaluate(() => window.adCalls)).toEqual([]);
+});
+
+for (const action of ['home','menu','background']) test(`${action} during the three-second pause cancels the ad`,async ({page}) => {
+  await openGame(page);
+  await page.clock.pauseAt(new Date('2026-09-17T12:10:00Z'));
+  await place(page,daily.solution[8],8);
+  await expect(page.locator('#completion')).toBeVisible();
+  await page.clock.runFor(1000);
+  if (action === 'home') await page.locator('#home-open').click();
+  else if (action === 'menu') await page.locator('#menu-open').click();
+  else await page.evaluate(() => window.nativeStateListeners.forEach(listener => listener({isActive:false})));
+  await page.clock.runFor(5000);
+  if (action === 'home') await expect(page.locator('#home')).toBeVisible();
+  else {
+    if (action === 'menu') await page.getByRole('button',{name:'Close menu',exact:true}).click();
+    else await page.evaluate(() => window.nativeStateListeners.forEach(listener => listener({isActive:true})));
+    await expect(page.locator('#share')).toBeVisible();
+  }
+  await page.clock.runFor(3000);
+  expect(await page.evaluate(() => window.adCalls)).toEqual([]);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('nookgrid:test:v1:2026-09-17')).reported)).toBe(true);
 });
 
 for (const failure of ['save','presentation','background']) test(`${failure} failure skips ads and leaves results usable`,async ({page}) => {
@@ -129,6 +156,6 @@ test('backgrounding an already presented ad waits for dismissal without another 
   await page.clock.fastForward(3000);
   await expect(page.locator('.confetti')).toHaveCount(0);
   await page.evaluate(() => window.nativeStateListeners.forEach(listener => listener({isActive:true})));
-  await expect(page.locator('.confetti')).toBeVisible();
+  await expect(page.locator('.confetti')).toHaveCount(0);
   expect(await page.evaluate(() => window.adCalls.length)).toBe(1);
 });

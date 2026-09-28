@@ -5,7 +5,7 @@ import { testMode, analytics } from './session.mjs?v=20260924-calendar2';
 import { native, savedValue, saveValue } from './platform.mjs';
 import { updatePuzzleLinks } from './navigation.mjs?v=20260924-calendar2';
 import { getWeekDates, getCalendarMonths, renderCalendar } from './calendar.mjs?v=20260924-calendar3';
-import { createCompletionAds } from './completion-ads.mjs';
+import { createCompletionAds } from './completion-ads.mjs?v=20260928-ad-delay';
 
 const $ = id => document.getElementById(id);
 const renderIcon = (name, className = '') => `<svg class="ui-icon ${className}" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260927-clues#${name}"/></svg>`;
@@ -227,7 +227,7 @@ function renderScreen() {
   $('completion').hidden = !hasResult;
   document.querySelector('.completion-actions').hidden = Boolean(pendingAd);
   $('result-week').inert = Boolean(pendingAd);
-  const isResultVisible = hasResult && !pendingAd && !document.hidden && isNativeActive && !document.querySelector('dialog[open]');
+  const isResultVisible = hasResult && !document.hidden && isNativeActive && !document.querySelector('dialog[open]');
   if (!hasResult) {
     shouldCelebrate = false;
     document.querySelector('.confetti')?.remove();
@@ -236,7 +236,7 @@ function renderScreen() {
     shouldCelebrate = false;
     celebrateSolve();
   }
-  if (resultOpportunity && isResultVisible) {
+  if (resultOpportunity && isResultVisible && !pendingAd) {
     recordAdEvent({event:'ad_outcome',outcome:'result_visible',placement:'completion',ad_mode:native.ads.mode,ad_opportunity_id:resultOpportunity});
     resultOpportunity = null;
   }
