@@ -1,7 +1,7 @@
 import { PLACES, clueText, clueStatus, isSolved } from './engine.mjs?v=20260915-teaser1';
 import { movePlace, selectPuzzle, restoreProgress, hasPuzzleCompletion, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces, puzzleDay, restoreStreakDays, addDailyCompletion, streakLength } from './state.mjs?v=20260925-streak';
 import { placeArt } from './art.mjs?v=20260915-teaser1';
-import { testMode, analytics } from './session.mjs?v=20260924-calendar2';
+import { testMode, analytics } from './session.mjs?v=20260929-banner';
 import { native, savedValue, saveValue } from './platform.mjs';
 import { updatePuzzleLinks } from './navigation.mjs?v=20260924-calendar2';
 import { getWeekDates, getCalendarMonths, renderCalendar } from './calendar.mjs?v=20260924-calendar3';
@@ -28,6 +28,55 @@ let viewedEntry = null, puzzleState = 'fresh', completionEvent = null;
 const completionAds = native?.ads ? createCompletionAds(native.ads) : null;
 const adSnapshots = new Map();
 let hasAds = false, pendingAd = null, resultOpportunity = null, isNativeActive = true;
+let bannerContext = null, bannerContextKey = null, bannerRequest = null;
+let bannerRequestVersion = 0, bannerPromise = Promise.resolve({visible:false});
+let dialogRequest = 0, isOpeningDialog = false;
+
+function updateBanner() {
+  if (!native?.ads?.setBanner || !puzzle) return;
+  const hasSlot = mode !== 'practice' && screen === 'puzzle' && !isSolved(puzzle,progress.board);
+  $('gameplay-banner').hidden = !hasSlot;
+  document.body.classList.toggle('has-gameplay-banner',hasSlot);
+  const viewport = window.visualViewport;
+  const isViewportAligned = !viewport || viewport.scale === 1 && viewport.offsetLeft === 0 && viewport.offsetTop === 0;
+  const visible = hasSlot && hasAds && isViewportAligned && isNativeActive && !document.hidden && !pendingAd && !isOpeningDialog && !document.querySelector('dialog[open]');
+  let options = {visible:false};
+  if (visible) {
+    const key = `${puzzle.date}:${mode}:${bank.version}:${analytics.entryId() || ''}:${analytics.epoch()}`;
+    if (key !== bannerContextKey) {
+      bannerContextKey = key;
+      bannerContext = crypto.randomUUID();
+      const snapshot = analytics.snapshot();
+      if (snapshot) {
+        const {event_id,event_index,occurred_at,...properties} = snapshot;
+        adSnapshots.set(bannerContext,{properties:{...properties,puzzle_date:puzzle.date,puzzle_mode:mode,puzzle_version:bank.version,puzzle_state:puzzleState},epoch:analytics.epoch()});
+      }
+    }
+    const {x,y,width,height} = $('gameplay-banner-frame').getBoundingClientRect();
+    options = {visible:true,frame:{x,y,width,height,viewportWidth:innerWidth},context:bannerContext};
+  }
+  sendBannerState(options).catch(() => {});
+}
+
+function sendBannerState(options) {
+  if (!native?.ads?.setBanner) return Promise.resolve({visible:false});
+  const request = JSON.stringify(options);
+  if (request === bannerRequest) return bannerPromise;
+  bannerRequest = request;
+  const version = ++bannerRequestVersion;
+  bannerPromise = Promise.resolve().then(() => native.ads.setBanner(options)).then(state => {
+    if (version === bannerRequestVersion && state?.visible !== options.visible) bannerRequest = null;
+    return state;
+  },error => {
+    if (version === bannerRequestVersion) bannerRequest = null;
+    throw error;
+  });
+  return bannerPromise;
+}
+
+window.addEventListener('resize',updateBanner);
+window.visualViewport?.addEventListener('resize',updateBanner);
+window.visualViewport?.addEventListener('scroll',updateBanner);
 
 function cancelCompletionAd() {
   if (!pendingAd) return;
@@ -39,9 +88,9 @@ function cancelCompletionAd() {
   });
 }
 
-function recordAdEvent({event,...properties}) {
+function recordAdEvent({event,banner_context_id,...properties}) {
   if (!['ad_outcome','ad_revenue'].includes(event)) return;
-  const snapshot = adSnapshots.get(properties.ad_opportunity_id);
+  const snapshot = adSnapshots.get(properties.placement === 'banner' ? banner_context_id : properties.ad_opportunity_id);
   if (properties.ad_opportunity_id && (!snapshot?.properties || snapshot.epoch !== analytics.epoch())) return;
   analytics.track(event,{...snapshot?.properties,...properties});
 }
@@ -50,6 +99,8 @@ function updateAdPrivacy(state) {
   hasAds = state?.enabled === true;
   $('ad-privacy-open').hidden = !state?.privacyOptionsRequired;
   $('report-ad').hidden = !hasAds;
+  bannerRequest = null;
+  updateBanner();
 }
 
 async function initializeAds() {
@@ -92,6 +143,8 @@ function showAppStoreLink(identifier) {
 $('retry-save').addEventListener('click', () => save());
 
 async function navigateTo(url) {
+  dialogRequest++;
+  isOpeningDialog = false;
   cancelCompletionAd();
   if (native && progress) {
     try {
@@ -108,13 +161,22 @@ async function navigateTo(url) {
   location.assign(url);
 }
 
-function openDialog(id, opener) {
+async function openDialog(id, opener) {
+  const request = ++dialogRequest;
+  isOpeningDialog = true;
   cancelCompletionAd();
-  const isFromMenu = $('menu-dialog').open;
-  if (isFromMenu) $('menu-dialog').close();
-  if (id === 'calendar-dialog' && bank && puzzle) prepareCalendar();
-  (isFromMenu ? $('menu-open') : opener).focus({preventScroll:true});
-  $(id).showModal();
+  try {
+    const state = await sendBannerState({visible:false});
+    if (request !== dialogRequest || state?.visible === true || !isNativeActive || document.hidden) return;
+    const isFromMenu = $('menu-dialog').open;
+    if (isFromMenu) $('menu-dialog').close();
+    if (id === 'calendar-dialog' && bank && puzzle) prepareCalendar();
+    (isFromMenu ? $('menu-open') : opener).focus({preventScroll:true});
+    $(id).showModal();
+  } catch {}
+  finally {
+    if (request === dialogRequest) { isOpeningDialog = false; updateBanner(); }
+  }
 }
 for (const [button, dialog] of [['help-open','help-dialog'],['menu-open','menu-dialog'],['menu-calendar-open','calendar-dialog'],['calendar-open','calendar-dialog'],['result-calendar-open','calendar-dialog'],['feedback-open','feedback-dialog'],['settings-open','settings-dialog'],['hint','hint-dialog']]) {
   $(button).addEventListener('click', () => openDialog(dialog, $(button)));
@@ -243,6 +305,7 @@ function renderScreen() {
   $('view-result').hidden = !native || screen !== 'puzzle' || !solved;
   document.querySelector('.skip-link').href = screen === 'home' ? '#home' : screen === 'result' ? '#completion' : '#game';
   recordPuzzleView();
+  updateBanner();
 }
 
 function recordPuzzleView() {
@@ -253,12 +316,14 @@ function recordPuzzleView() {
   puzzleState = analytics.puzzleState(puzzle.date,mode,bank.version,progress.reported || isSolved(puzzle,progress.board) ? 'replay' : progress.board.some(Boolean) ? 'resumed' : 'fresh');
   track('puzzle_view');
 }
-document.addEventListener('nookgrid:entry',recordPuzzleView);
+document.addEventListener('nookgrid:entry',() => { recordPuzzleView(); updateBanner(); });
 document.addEventListener('visibilitychange',() => { if (puzzle) renderScreen(); });
 document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('close',() => { if (puzzle) renderScreen(); }));
 
 function showScreen(next) {
   if (!puzzle) return;
+  dialogRequest++;
+  isOpeningDialog = false;
   cancelCompletionAd();
   save(false);
   screen = next;
@@ -266,6 +331,7 @@ function showScreen(next) {
   render();
   save();
   window.scrollTo({top:0,behavior:'instant'});
+  document.querySelector('main').scrollTo({top:0,behavior:'instant'});
   (next === 'home' ? $('home-play').hidden ? $('home-result') : $('home-play') : next === 'result' ? $('share').hidden ? $('play-today') : $('share') : $('home-open')).focus({preventScroll:true});
 }
 
@@ -573,12 +639,14 @@ function updateReturnPrompt() {
   if (currentDay !== today) {
     today = currentDay;
     if (mode !== 'practice') {
+      const previousMode = mode;
       mode = isToday ? 'daily' : 'archive';
       $('board-title').textContent = isToday ? "Today's puzzle" : 'Archived puzzle';
       analytics.setContext({puzzle_date:puzzle.date,puzzle_mode:mode,puzzle_version:bank.version,has_guidance:hasGuidance});
       recordPuzzleView();
       const number = bank.puzzles.findIndex(item => item.date === puzzle.date) + 1;
       document.title = `NookGrid | ${isToday ? 'Free daily brain game' : `Brain game ${number}`}`;
+      if (mode !== previousMode) updateBanner();
     }
     renderHistory();
     if (!native) renderScreen();
@@ -741,7 +809,7 @@ $('share').addEventListener('click', async () => {
     track('share_result',{result:isCancelled ? 'cancelled' : 'failed'});
     if (!isCancelled) {
       $('share-text').value = text;
-      openDialog('share-dialog', $('share'));
+      await openDialog('share-dialog', $('share'));
       $('share-text').focus();
       $('share-text').select();
     }
@@ -834,11 +902,17 @@ async function init() {
     setInterval(updateReturnPrompt,1000);
     document.addEventListener('visibilitychange',updateReturnPrompt);
     document.addEventListener('visibilitychange',() => save());
-    window.addEventListener('pagehide',() => { cancelCompletionAd(); save(false); });
-    window.addEventListener('pageshow',event => event.persisted && mode === 'practice' && screen !== 'home' ? location.reload() : save());
+    window.addEventListener('pagehide',() => { isNativeActive = false; updateBanner(); cancelCompletionAd(); save(false); });
+    window.addEventListener('pageshow',event => {
+      isNativeActive = true;
+      updateBanner();
+      if (event.persisted && mode === 'practice' && screen !== 'home') location.reload();
+      else save();
+    });
     document.addEventListener('visibilitychange',() => { if (document.hidden) cancelCompletionAd(); });
     if (native) native.onStateChange(({isActive}) => {
       isNativeActive = isActive;
+      updateBanner();
       if (!isActive) cancelCompletionAd();
       save(isActive); updateReturnPrompt();
       if (isActive) {

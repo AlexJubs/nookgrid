@@ -4,10 +4,10 @@ import StoreKit
 import UserMessagingPlatform
 
 @objc(CompletionAdsPlugin)
-class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegate {
+class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegate, BannerViewDelegate {
     let identifier = "CompletionAdsPlugin"
     let jsName = "CompletionAds"
-    let pluginMethods: [CAPPluginMethod] = ["initialize", "present", "cancel", "privacyOptions"].map {
+    let pluginMethods: [CAPPluginMethod] = ["initialize", "present", "cancel", "privacyOptions", "setBanner"].map {
         CAPPluginMethod(name: $0, returnType: CAPPluginReturnPromise)
     }
     private var mode = "off"
@@ -22,12 +22,30 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
     private var impressions = Set<String>()
     private var paid = Set<String>()
 
+    private var banner: BannerView?
+    private var bannerState = BannerAdState()
+    private var bannerLoad: Task<Void, Never>?
+    private var hasRequestedBanner = false
+    private var pageObservation: NSKeyValueObservation?
+
+    override func load() {
+        NotificationCenter.default.addObserver(self, selector: #selector(hideBanner),
+                                               name: UIApplication.willResignActiveNotification, object: nil)
+        pageObservation = bridge?.webView?.observe(\.url, options: .new) { [weak self] view, _ in
+            guard let path = view.url?.path, !["", "/", "/index.html"].contains(path) else { return }
+            self?.removeBanner()
+        }
+    }
+
+    deinit { NotificationCenter.default.removeObserver(self) }
+
     @objc func initialize(_ call: CAPPluginCall) {
         Task { @MainActor in
             guard call.getBool("isTest") != true,
                   !ProcessInfo.processInfo.arguments.contains("nookgrid-offline"),
                   let bridge, bridge.config.serverURL == bridge.config.localURL else {
                 mode = "off"
+                removeBanner()
                 adState.invalidate(needsConsentUpdate: true)
                 interstitial = nil
                 call.resolve(["enabled": false, "privacyOptionsRequired": false]); return
@@ -88,24 +106,11 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
         Task { @MainActor in
             defer { adState.finishLoad(current) }
             guard mode != "off", adState.isCurrent(current) else { return }
-            if sdkReady == nil {
-                sdkReady = Task { @MainActor in
-                    guard mode != "off", adState.isCurrent(current), adState.hasUpdatedConsent,
-                          ConsentInformation.shared.canRequestAds, UIApplication.shared.applicationState == .active else {
-                        sdkReady = nil; return false
-                    }
-                    _ = await MobileAds.shared.start()
-                    return true
-                }
-            }
-            guard await sdkReady?.value == true else { return }
+            guard await startSDK() else { return }
             guard adState.isCurrent(current), adState.hasUpdatedConsent, ConsentInformation.shared.canRequestAds,
                   UIApplication.shared.applicationState == .active else { return }
             emit("request")
-            let request = Request()
-            let extras = Extras()
-            extras.additionalParameters = ["npa": "1"]
-            request.register(extras)
+            let request = adRequest()
             let unit = mode == "demo" ? "ca-app-pub-3940256099942544/4411468910" : "ca-app-pub-8670243692600313/2433919115"
             do {
                 let ad = try await InterstitialAd.load(with: unit, request: request)
@@ -116,6 +121,158 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
                 emit("load")
             } catch { if adState.isCurrent(current) { emit((error as NSError).code == 1 ? "no_fill" : "load_failed") } }
         }
+    }
+
+    @MainActor private func startSDK() async -> Bool {
+        if sdkReady == nil {
+            sdkReady = Task { @MainActor in
+                guard mode != "off", adState.hasUpdatedConsent, ConsentInformation.shared.canRequestAds,
+                      UIApplication.shared.applicationState == .active else {
+                    sdkReady = nil; return false
+                }
+                _ = await MobileAds.shared.start()
+                return true
+            }
+        }
+        return await sdkReady?.value == true
+    }
+
+    private func adRequest() -> Request {
+        let request = Request()
+        let extras = Extras()
+        extras.additionalParameters = ["npa": "1"]
+        request.register(extras)
+        return request
+    }
+
+    @objc func setBanner(_ call: CAPPluginCall) {
+        Task { @MainActor in
+            guard call.getBool("visible") == true else {
+                hideBanner(); call.resolve(["visible": false]); return
+            }
+            guard mode != "off", adState.hasUpdatedConsent, ConsentInformation.shared.canRequestAds,
+                  UIApplication.shared.applicationState == .active, presentingAd == nil,
+                  let bridge, bridge.config.serverURL == bridge.config.localURL,
+                  let webView = bridge.webView, let page = webView.url,
+                  page.scheme == bridge.config.localURL.scheme, page.host == bridge.config.localURL.host,
+                  page.port == bridge.config.localURL.port, ["", "/", "/index.html"].contains(page.path),
+                  let controller = bridge.viewController, controller.presentedViewController == nil,
+                  let context = call.getString("context"), UUID(uuidString: context) != nil,
+                  let values = call.getObject("frame"),
+                  let x = values["x"] as? Double, let y = values["y"] as? Double,
+                  let width = values["width"] as? Double, let height = values["height"] as? Double,
+                  let viewportWidth = values["viewportWidth"] as? Double else {
+                hideBanner(); call.resolve(["visible": false]); return
+            }
+            let safe = webView.convert(controller.view.safeAreaLayoutGuide.layoutFrame, from: controller.view)
+            guard let frame = BannerAdState.frame(x: x, y: y, width: width, height: height, viewportWidth: viewportWidth,
+                  viewWidth: webView.bounds.width, viewHeight: webView.bounds.height,
+                  safeTop: max(0, safe.minY), safeBottom: max(0, webView.bounds.height - safe.maxY),
+                  safeLeft: max(0, safe.minX), safeRight: max(0, webView.bounds.width - safe.maxX)) else {
+                hideBanner(); call.resolve(["visible": false]); return
+            }
+            if bannerState.context != context { removeBanner() }
+            let token = bannerState.show(context: context)
+            if banner == nil {
+                let view = BannerView(adSize: AdSizeBanner)
+                view.adUnitID = mode == "demo" ? "ca-app-pub-3940256099942544/2934735716" : "ca-app-pub-8670243692600313/6486477677"
+                view.rootViewController = controller
+                view.delegate = self
+                view.paidEventHandler = { [weak self, weak view] value in
+                    guard let view else { return }
+                    self?.recordBannerRevenue(value, view: view)
+                }
+                banner = view
+            }
+            guard let banner else { call.resolve(["visible": false]); return }
+            banner.frame = frame
+            banner.isHidden = false
+            if banner.superview !== webView { webView.addSubview(banner) }
+            loadBanner(banner, token: token)
+            call.resolve(["visible": true])
+        }
+    }
+
+    private func loadBanner(_ view: BannerView, token: Int) {
+        guard !hasRequestedBanner, bannerLoad == nil else { return }
+        bannerLoad = Task { @MainActor [weak self, weak view] in
+            guard let self, let view else { return }
+            defer { if bannerState.isCurrent(token) { bannerLoad = nil } }
+            guard await startSDK(), banner === view, bannerState.isCurrent(token), bannerState.isVisible,
+                  mode != "off", adState.hasUpdatedConsent, ConsentInformation.shared.canRequestAds,
+                  UIApplication.shared.applicationState == .active, presentingAd == nil else { return }
+            hasRequestedBanner = true
+            emitBanner("request")
+            view.load(adRequest())
+        }
+    }
+
+    @objc private func hideBanner() {
+        bannerState.hide()
+        banner?.isHidden = true
+        banner?.removeFromSuperview()
+    }
+
+    private func removeBanner() {
+        hideBanner()
+        bannerLoad?.cancel()
+        bannerLoad = nil
+        banner?.delegate = nil
+        banner?.paidEventHandler = nil
+        banner = nil
+        hasRequestedBanner = false
+        bannerState.invalidate()
+    }
+
+    private func responseKey(_ view: BannerView) -> String? {
+        guard banner === view, let response = view.responseInfo else { return nil }
+        return response.responseIdentifier ?? String(describing: ObjectIdentifier(response))
+    }
+
+    func bannerViewDidReceiveAd(_ bannerView: BannerView) {
+        guard let response = responseKey(bannerView), let identifier = bannerState.opportunity(response: response) else { return }
+        emitBanner("load", opportunity: identifier)
+    }
+
+    func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
+        guard banner === bannerView else { return }
+        emitBanner((error as NSError).code == 1 ? "no_fill" : "load_failed")
+    }
+
+    func bannerViewDidRecordImpression(_ bannerView: BannerView) {
+        guard let response = responseKey(bannerView), let identifier = bannerState.recordImpression(response: response) else { return }
+        emitBanner("impression", opportunity: identifier)
+    }
+
+    func bannerViewWillPresentScreen(_ bannerView: BannerView) {
+        guard banner === bannerView else { return }
+        bannerView.isHidden = true
+        bannerView.removeFromSuperview()
+    }
+
+    func bannerViewDidDismissScreen(_ bannerView: BannerView) {
+        guard banner === bannerView, bannerState.isVisible, mode != "off", adState.hasUpdatedConsent,
+              ConsentInformation.shared.canRequestAds, UIApplication.shared.applicationState == .active,
+              presentingAd == nil, let webView = bridge?.webView,
+              bridge?.viewController?.presentedViewController == nil else { return }
+        bannerView.isHidden = false
+        webView.addSubview(bannerView)
+    }
+
+    private func emitBanner(_ outcome: String, opportunity: String? = nil) {
+        guard let context = bannerState.context else { return }
+        var event: [String: Any] = ["event": "ad_outcome", "outcome": outcome, "placement": "banner",
+                                    "ad_mode": mode, "banner_context_id": context]
+        if let opportunity { event["ad_opportunity_id"] = opportunity }
+        notifyListeners("adEvent", data: event)
+    }
+
+    private func recordBannerRevenue(_ value: AdValue, view: BannerView) {
+        guard let response = responseKey(view), let context = bannerState.context,
+              var event = revenue(value), let identifier = bannerState.recordPaid(response: response) else { return }
+        event.merge(["event": "ad_revenue", "placement": "banner", "ad_mode": mode,
+                     "banner_context_id": context, "ad_opportunity_id": identifier]) { _, new in new }
+        notifyListeners("adEvent", data: event)
     }
 
     @objc func present(_ call: CAPPluginCall) {
@@ -140,6 +297,7 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
             }
             do { try ad.canPresent(from: controller) }
             catch { interstitial = nil; skip("presentation_failed"); return }
+            hideBanner()
             interstitial = nil
             presentingAd = ad
             presentation = call
@@ -151,6 +309,7 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
 
     @objc func cancel(_ call: CAPPluginCall) {
         Task { @MainActor in
+            hideBanner()
             adState.invalidate()
             interstitial = nil
             if let opportunity = call.getString("opportunity"), UUID(uuidString: opportunity) != nil { attempted.insert(opportunity) }
@@ -163,6 +322,7 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
             guard mode != "off", presentingAd == nil,
                   ConsentInformation.shared.privacyOptionsRequirementStatus == .required,
                   let controller = bridge?.viewController else { call.resolve(state()); return }
+            removeBanner()
             adState.invalidate(needsConsentUpdate: true)
             interstitial = nil
             guard let current = adState.beginConsent() else { call.resolve(state()); return }
@@ -203,10 +363,17 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
     }
 
     private func recordRevenue(_ value: AdValue, opportunity: String) {
-        guard !paid.contains(opportunity), value.currencyCode.range(of: "^[A-Z]{3}$", options: .regularExpression) != nil else { return }
-        let micros = value.value.multiplying(byPowerOf10: 6).doubleValue.rounded()
-        guard micros.isFinite, micros >= 0, micros <= 1_000_000_000_000 else { return }
+        guard !paid.contains(opportunity), var event = revenue(value) else { return }
         paid.insert(opportunity)
+        event.merge(["event": "ad_revenue", "placement": "completion", "ad_mode": mode,
+                     "ad_opportunity_id": opportunity]) { _, new in new }
+        notifyListeners("adEvent", data: event)
+    }
+
+    private func revenue(_ value: AdValue) -> [String: Any]? {
+        guard value.currencyCode.range(of: "^[A-Z]{3}$", options: .regularExpression) != nil else { return nil }
+        let micros = value.value.multiplying(byPowerOf10: 6).doubleValue.rounded()
+        guard micros.isFinite, micros >= 0, micros <= 1_000_000_000_000 else { return nil }
         let precision: String
         switch value.precision {
         case .estimated: precision = "estimated"
@@ -214,7 +381,6 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
         case .precise: precision = "precise"
         default: precision = "unknown"
         }
-        notifyListeners("adEvent", data: ["event": "ad_revenue", "placement": "completion", "ad_mode": mode,
-            "ad_opportunity_id": opportunity, "revenue_micros": Int64(micros), "currency": value.currencyCode, "precision": precision])
+        return ["revenue_micros": Int64(micros), "currency": value.currencyCode, "precision": precision]
     }
 }

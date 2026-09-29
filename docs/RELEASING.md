@@ -18,7 +18,9 @@ Keep tests in the same change as each feature or bug fix. Identify the behavior 
 
 ## Completion ads
 
-Ads are native-only and off in every default build, including production. The Xcode project pins the official Google Mobile Ads package; its UMP dependency and privacy manifests ship with it. No mediation SDK is installed. The existing application and completion unit are used. [Google setup](https://developers.google.com/admob/ios/quick-start).
+Ads are native-only and off in every default build, including production. The Xcode project pins the official Google Mobile Ads package; its UMP dependency and privacy manifests ship with it. No mediation SDK is installed. The existing application uses separate completion interstitial and gameplay banner units. [Google setup](https://developers.google.com/admob/ios/quick-start).
+
+The 320 × 50 banner appears below the header during unfinished daily/archive puzzles. It shares the consent and distribution checks below, hides for dialogs, backgrounding and zoomed content, and has separate SDK impression/revenue reporting for each served refresh. Demo builds use Google's example banner. Include banner geometry, hide/resume, consent recovery and saved-progress checks in ad QA; loading a banner is not an impression.
 
 For a separate authorized network smoke check, build with `NOOKGRID_PRODUCTION=1 NOOKGRID_ADS=demo npm run build:ios` and use a signed Release build. This uses Google's demo interstitial unit and disables gameplay analytics. `?test=1`, the offline launch argument and live-reload servers prevent native SDK initialization. Debug rejects live mode. TestFlight is never a live-ad channel. Never click real ads. Restore `npm run build:ios` afterward. [Test ads](https://developers.google.com/admob/ios/test-ads).
 

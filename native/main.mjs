@@ -26,6 +26,7 @@ window.nookgridReady = (async () => {
       mode:__NOOKGRID_ADS__,
       initialize:() => CompletionAds.initialize({isTest:new URLSearchParams(location.search).get('test') === '1'}),
       present:options => CompletionAds.present(options),
+      setBanner:options => CompletionAds.setBanner(options),
       cancel:options => CompletionAds.cancel(options),
       privacyOptions:() => CompletionAds.privacyOptions(),
       onEvent:listener => CompletionAds.addListener('adEvent',listener)

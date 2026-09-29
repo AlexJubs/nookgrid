@@ -44,7 +44,7 @@ function safeProperties(properties = {}) {
     else if (key === 'distribution_channel' && ['app_store','sandbox','development','unknown'].includes(value)) clean[key] = value;
     else if (key === 'distribution_reason' && DISTRIBUTION_REASONS.has(value)) clean[key] = value;
     else if (key === 'outcome' && ['consent_unavailable','request','load','no_fill','load_failed','not_ready','expired','presentation_failed','impression','dismissal','result_visible'].includes(value)) clean[key] = value;
-    else if (key === 'placement' && value === 'completion') clean[key] = value;
+    else if (key === 'placement' && ['completion','banner'].includes(value)) clean[key] = value;
     else if (key === 'ad_mode' && ['demo','live'].includes(value)) clean[key] = value;
     else if (key === 'revenue_micros' && Number.isSafeInteger(value) && value >= 0 && value <= 1e12) clean[key] = value;
     else if (key === 'currency' && typeof value === 'string' && /^[A-Z]{3}$/.test(value)) clean[key] = value;

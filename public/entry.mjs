@@ -6,7 +6,7 @@ if (globalThis.nookgridNative || isLocalPreview || (window.self === window.top &
   const game = document.getElementById('game-content');
   document.body.className = 'game-page';
   document.body.replaceChildren(game.content.cloneNode(true));
-  await import('./app.mjs?v=20260928-ad-delay');
+  await import('./app.mjs?v=20260929-banner');
 } else if (window.self === window.top) {
   location.replace('https://apps.apple.com/app/id6813274587');
 }

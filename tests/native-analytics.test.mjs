@@ -69,3 +69,10 @@ test('ad outcomes and paid events preserve bounded opportunity data without ad i
   for (const revenue_micros of [-1,0.1,1e12 + 1,Infinity,'12500']) assert.deepEqual(sanitizeEvent({event:'ad_revenue',properties:{revenue_micros}}).properties,{$geoip_disable:true});
   assert.deepEqual(sanitizeEvent({event:'ad_outcome',properties:{ad_opportunity_id:'private',placement:'private',ad_mode:'private',outcome:'private',currency:'usd',precision:'private'}}).properties,{$geoip_disable:true});
 });
+
+test('banner impressions and paid callbacks retain their own opportunity without vendor identifiers', () => {
+  const properties = {ad_opportunity_id:'a13b1b56-4be8-4e72-b0ef-a19c72e0cafa',placement:'banner',ad_mode:'live'};
+  for (const [event,values] of [['ad_outcome',{outcome:'impression'}],['ad_revenue',{revenue_micros:1500,currency:'USD',precision:'estimated'}]]) {
+    assert.deepEqual(sanitizeEvent({event,properties:{...properties,...values,banner_context_id:'private',response_id:'private',ad_unit_id:'private'}}).properties,{...properties,...values,$geoip_disable:true});
+  }
+});
