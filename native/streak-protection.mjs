@@ -3,6 +3,13 @@ import {restoreStreakDays} from '../public/state.mjs';
 const stateKey = 'nookgrid:v1:protection', streakKey = 'nookgrid:v1:streak';
 const days = values => restoreStreakDays(JSON.stringify(values));
 const merge = (...sets) => days(sets.flat());
+function eventId() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = bytes[6] & 15 | 64; bytes[8] = bytes[8] & 63 | 128;
+  const hex = [...bytes].map(value => value.toString(16).padStart(2,'0')).join('');
+  return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+}
 function restore(raw,legacy) {
   try {
     const value = JSON.parse(raw);
@@ -101,7 +108,7 @@ export async function createStreakProtection({storage,bridge,enabled = false,onC
     historyDates:() => merge(state.recoveredDates || [],verified?.facts.map(fact => fact.puzzleDate) || []),
     prepareCompletion(puzzleDate,board) {
       if (allDays().includes(puzzleDate)) return;
-      state.pending.push({id:crypto.randomUUID(),puzzleDate,board:[...board]});
+      state.pending.push({id:eventId(),puzzleDate,board:[...board]});
       dirty = true;
       // Preserve a full queue's earned dates without claiming online verification.
       if (state.pending.length > 64) state.unverifiedDates = merge(state.unverifiedDates,state.pending.splice(0,state.pending.length-64).map(event => event.puzzleDate));

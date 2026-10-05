@@ -1,22 +1,23 @@
 const journalKey = 'nookgrid:save-journal:v1', backupKey = `${journalKey}:backup`;
 const protectedKey = key => /^nookgrid:(?:test:)?v1:/.test(key) || ['nookgrid:analytics','nookgrid:analytics-withdrawn'].includes(key);
 const checksum = async value => [...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value)))].map(byte => byte.toString(16).padStart(2,'0')).join('');
-async function decode(raw) {
+async function decode(raw,digest = checksum) {
   try {
     const envelope = JSON.parse(raw), body = JSON.parse(envelope.body);
-    if (envelope.checksum !== await checksum(envelope.body) || body.version !== 1 || !Number.isSafeInteger(body.revision) || body.revision < 1 || !Array.isArray(body.entries) || body.entries.some(entry => !Array.isArray(entry) || entry.length !== 2 || !protectedKey(entry[0]) || typeof entry[1] !== 'string') || new Set(body.entries.map(entry => entry[0])).size !== body.entries.length) return null;
+    if (envelope.checksum !== await digest(envelope.body) || body.version !== 1 || !Number.isSafeInteger(body.revision) || body.revision < 1 || !Array.isArray(body.entries) || body.entries.some(entry => !Array.isArray(entry) || entry.length !== 2 || !protectedKey(entry[0]) || typeof entry[1] !== 'string') || new Set(body.entries.map(entry => entry[0])).size !== body.entries.length) return null;
     return {raw,body};
   } catch { return null; }
 }
 
 export async function createNativeStorage(preferences,{journal} = {}) {
+  const digest = journal?.checksum ? async body => (await journal.checksum({body})).checksum : checksum;
   const {keys} = await preferences.keys();
   const entries = await Promise.all(keys.map(async key => [key,(await preferences.get({key})).value]));
   const values = new Map(entries);
   // The file journal is an atomic, durable mirror. Preferences remains the native
   // compatibility store; browser storage is never a native recovery substitute.
   const mirror = journal ? await journal.readJournal() : {};
-  const candidates = await Promise.all([values.get(journalKey),values.get(backupKey),mirror.primary,mirror.backup].map(decode));
+  const candidates = await Promise.all([values.get(journalKey),values.get(backupKey),mirror.primary,mirror.backup].map(raw => decode(raw,digest)));
   let last = candidates.filter(Boolean).sort((a,b) => b.body.revision - a.body.revision)[0] || null;
   if (last) {
     for (const key of values.keys()) if (protectedKey(key)) values.delete(key);
@@ -34,7 +35,7 @@ export async function createNativeStorage(preferences,{journal} = {}) {
     const snapshot = [...values].filter(([key]) => protectedKey(key)).sort(([a],[b]) => a.localeCompare(b));
     return enqueue(async () => {
       const body = JSON.stringify({version:1,revision:(last?.body.revision || 0)+1,entries:snapshot});
-      const raw = JSON.stringify({body,checksum:await checksum(body)});
+      const raw = JSON.stringify({body,checksum:await digest(body)});
       if (journal) await journal.writeJournal({primary:raw,backup:last?.raw || null});
       if (last) await preferences.set({key:backupKey,value:last.raw});
       await preferences.set({key:journalKey,value:raw});

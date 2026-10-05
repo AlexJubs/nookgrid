@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createNativeStorage} from '../native/storage.mjs';
+import {createHash} from 'node:crypto';
+import {createStreakProtection} from '../native/streak-protection.mjs';
 
 const board = 'nookgrid:v1:2026-10-03', streak = 'nookgrid:v1:streak';
 function disk(seed = []) {
@@ -53,4 +55,20 @@ test('the atomic native mirror recovers progress and privacy after Preferences l
   assert.equal(recovered.getItem(board),'{"hintedPlaces":["park"],"elapsedMs":65000}');
   assert.equal(recovered.getItem('nookgrid:analytics'),'off');
   assert.equal(recovered.getItem(streak),'["2026-10-03"]');
+});
+
+test('native journal and completion IDs work without secure-context Web Crypto',async () => {
+  const original = globalThis.crypto;
+  Object.defineProperty(globalThis,'crypto',{configurable:true,value:{getRandomValues:original.getRandomValues.bind(original)}});
+  try {
+    const preferences = disk(); let mirror = {};
+    const journal = {readJournal:async () => mirror,writeJournal:async value => { mirror = value; },checksum:async ({body}) => ({checksum:createHash('sha256').update(body).digest('hex')})};
+    const store = await createNativeStorage(preferences,{journal});
+    const protection = await createStreakProtection({storage:store,bridge:{verifySnapshot:async () => false}});
+    protection.prepareCompletion('2026-10-03',Array(9).fill('place'));
+    await store.setItems([protection.entry()]);
+    const restarted = await createNativeStorage(preferences,{journal});
+    const event = JSON.parse(restarted.getItem('nookgrid:v1:protection')).pending[0];
+    assert.match(event.id,/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/);
+  } finally { Object.defineProperty(globalThis,'crypto',{configurable:true,value:original}); }
 });

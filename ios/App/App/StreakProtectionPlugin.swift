@@ -8,7 +8,7 @@ import Security
 class StreakProtectionPlugin: CAPPlugin, CAPBridgedPlugin {
     let identifier = "StreakProtectionPlugin"
     let jsName = "StreakProtection"
-    let pluginMethods: [CAPPluginMethod] = ["readJournal", "writeJournal", "readCloud", "writeCloud", "identity", "sync", "verifySnapshot"].map { CAPPluginMethod(name: $0, returnType: CAPPluginReturnPromise) }
+    let pluginMethods: [CAPPluginMethod] = ["readJournal", "writeJournal", "checksum", "readCloud", "writeCloud", "identity", "sync", "verifySnapshot"].map { CAPPluginMethod(name: $0, returnType: CAPPluginReturnPromise) }
     private final class NoRedirects: NSObject, URLSessionTaskDelegate {
         func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) { completionHandler(nil) }
     }
@@ -59,6 +59,10 @@ class StreakProtectionPlugin: CAPPlugin, CAPBridgedPlugin {
             }
             call.resolve(result)
         }
+    }
+    @objc func checksum(_ call: CAPPluginCall) {
+        guard let body = call.getString("body"), body.utf8.count <= 8_000_000 else { call.reject("Invalid journal"); return }
+        call.resolve(["checksum": SHA256.hash(data: Data(body.utf8)).map { String(format: "%02x", $0) }.joined()])
     }
     @objc func writeJournal(_ call: CAPPluginCall) {
         guard let primary = call.getString("primary"), primary.utf8.count <= 8_000_000 else { call.reject("Invalid journal"); return }
