@@ -6,7 +6,7 @@ import {createStreakProtection,checkedSnapshot} from '../native/streak-protectio
 
 const key = generateKeyPairSync('ed25519'), playerId = randomUUID();
 function snapshot(dates,revision = dates.length,id = playerId) {
-  const payload = JSON.stringify({version:1,playerId:id,revision,issuedAt:Date.parse('2026-10-03T18:00:00Z'),facts:dates.map(puzzleDate => ({puzzleDate,receivedAt:Date.parse(`${puzzleDate}T12:00:00Z`)}))});
+  const payload = JSON.stringify({version:1,playerId:id,requestNonce:'test-nonce',revision,issuedAt:Date.parse('2026-10-03T18:00:00Z'),facts:dates.map(puzzleDate => ({puzzleDate,receivedAt:Date.parse(`${puzzleDate}T12:00:00Z`)}))});
   return {payload,signature:sign(null,Buffer.from(payload),key.privateKey).toString('base64')};
 }
 function fixture(seed = [],cloud = {available:true,ready:true,value:null}) {
@@ -18,7 +18,7 @@ function fixture(seed = [],cloud = {available:true,ready:true,value:null}) {
     readCloud:async () => cloud,
     writeCloud:async value => { writes.push(value); if (cloud.ready) cloud.value = value.value; },
     identity:async ({preferredId}) => { if (preferredId && preferredId !== playerId) throw Error('pending credential'); return {playerId}; },
-    sync:async ({events}) => { requests.push(events); if (!online) throw Error('offline'); return {snapshot:signed,outcomes:events.map(event => ({id:event.id,status:'accepted'}))}; },
+    sync:async ({events}) => { requests.push(events); if (!online) throw Error('offline'); return {snapshot:signed,expectedNonce:'test-nonce',outcomes:events.map(event => ({id:event.id,status:'accepted'}))}; },
     onCloudChange:async listener => { callback = listener; return {remove:async () => { callback = () => {}; }}; }
   };
   return {disk,preferences,bridge,cloud,requests,writes,changes,notify:() => callback(),offline:() => { online = false; },response:value => { signed = value; },controller:async () => createStreakProtection({storage:await createNativeStorage(preferences),bridge,enabled:true,onChange:state => changes.push(state)})};
@@ -96,7 +96,7 @@ test('cloud signature edits, rollback and another iCloud identity cannot fabrica
 
 test('rejected late offline credit retains local history and finishes the queue without becoming verified',async () => {
   const f = fixture();
-  f.bridge.sync = async ({events}) => ({snapshot:snapshot([]),outcomes:events.map(event => ({id:event.id,status:'unverified'}))});
+  f.bridge.sync = async ({events}) => ({snapshot:snapshot([]),expectedNonce:'test-nonce',outcomes:events.map(event => ({id:event.id,status:'unverified'}))});
   const controller = await f.controller(); controller.prepareCompletion('2026-10-02',Array(9).fill('place'));
   await controller.start();
   assert.deepEqual(controller.days(),['2026-10-02']); assert.deepEqual(controller.verifiedDays(),[]);
@@ -109,4 +109,15 @@ test('disabled QA protection never reads iCloud, Keychain or contacts the servic
   const controller = await createStreakProtection({storage:await createNativeStorage(f.preferences),bridge:f.bridge});
   await controller.start(); await controller.sync(); assert.deepEqual(controller.days(),[]);
   assert.equal(await checkedSnapshot(snapshot([]),async () => { throw Error('unavailable'); }),null);
+});
+
+test('a replayed signed response cannot refresh verification and the verified day uses server time',async () => {
+  const f = fixture(); f.response(snapshot(['2026-10-03']));
+  const controller = await f.controller(); await controller.start();
+  assert.equal(f.changes.at(-1).verifiedDay,'2026-10-03');
+  assert.equal(f.changes.at(-1).status,'verified');
+  f.bridge.sync = async () => ({snapshot:snapshot(['2026-10-03']),expectedNonce:'new-request-nonce',outcomes:[]});
+  await controller.sync({force:true});
+  assert.equal(f.changes.at(-1).status,'pending');
+  assert.deepEqual(controller.verifiedDays(),['2026-10-03']);
 });

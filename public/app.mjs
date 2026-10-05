@@ -863,7 +863,7 @@ async function init() {
     if (!streakProtection && native?.createStreakProtection) {
       streakProtection = await native.createStreakProtection(state => {
         streakDays = state.days;
-        const verifiedCount = streakLength(state.verifiedDays,puzzleDay());
+        const verifiedCount = streakLength(state.verifiedDays,state.verifiedDay);
         const localCount = streakLength(state.days,puzzleDay());
         const description = state.status === 'verified' ? `${verifiedCount} day verified streak${localCount !== verifiedCount ? ' · local history kept' : ''}` : state.status === 'local' ? 'Streak saved on this device' : 'Local streak · verification pending';
         for (const id of ['home-streak-status','streak-protection-status']) {

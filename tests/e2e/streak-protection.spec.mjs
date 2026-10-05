@@ -7,7 +7,7 @@ async function protection(page) {
     window.protectionEvents = [];
     window.nookgridNative.createStreakProtection = async onChange => {
       let history = JSON.parse(localStorage.getItem('nookgrid:test:v1:streak') || '[]'), recovered = [], verified = [];
-      const publish = status => onChange({days:history,verifiedDays:verified,status,cloudStatus:'ready'});
+      const publish = status => onChange({days:history,verifiedDays:verified,verifiedDay:'2026-09-17',status,cloudStatus:'ready'});
       window.recoverStreak = dates => { recovered = dates; history = [...new Set([...history,...dates])].sort(); verified = dates; publish('verified'); };
       return {
         days:() => history,historyDates:() => recovered,

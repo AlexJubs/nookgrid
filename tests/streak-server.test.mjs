@@ -49,10 +49,12 @@ test('server accepts real assertion signatures and signs canonical dates; edits 
   try {
     f.enroll();
     const event = f.event('2026-10-03');
-    const result = f.service.sync(f.request([event,event]));
+    const request = f.request([event,event]);
+    const result = f.service.sync(request);
     assert.equal(result.outcomes[0].status,'accepted');
     const snapshot = JSON.parse(result.snapshot.payload);
     assert.equal(snapshot.revision,1);
+    assert.equal(snapshot.requestNonce,JSON.parse(request.payload).nonce);
     assert.deepEqual(snapshot.facts,[{puzzleDate:'2026-10-03',receivedAt:Date.parse('2026-10-03T12:00:00Z')}]);
     assert.ok(verify(null,Buffer.from(result.snapshot.payload),signing.publicKey,Buffer.from(result.snapshot.signature,'base64')));
     assert.equal(verify(null,Buffer.from(result.snapshot.payload.replace('2026-10-03','2026-10-01')),signing.publicKey,Buffer.from(result.snapshot.signature,'base64')),false);

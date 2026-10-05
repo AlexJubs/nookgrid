@@ -41,10 +41,10 @@ export function createStreakService({database = ':memory:',signingKey,verifier,b
     db.prepare('DELETE FROM challenges WHERE id=?').run(id);
     return challenge;
   }
-  function snapshot(playerId) {
+  function snapshot(playerId,requestNonce) {
     const player = db.prepare('SELECT revision FROM players WHERE id=?').get(playerId);
     const facts = db.prepare('SELECT date,received FROM completions WHERE player=? ORDER BY date').all(playerId);
-    const payload = JSON.stringify({version:1,playerId,revision:player.revision,issuedAt:clock(),facts:facts.map(fact => ({puzzleDate:fact.date,receivedAt:fact.received}))});
+    const payload = JSON.stringify({version:1,playerId,requestNonce,revision:player.revision,issuedAt:clock(),facts:facts.map(fact => ({puzzleDate:fact.date,receivedAt:fact.received}))});
     return {payload,signature:sign(null,Buffer.from(payload),key).toString('base64')};
   }
   return {
@@ -77,7 +77,7 @@ export function createStreakService({database = ':memory:',signingKey,verifier,b
         requireValue(!previous || previous.player === playerId,'invalid_device',401);
         // A recovery enrollment must not reset the replay counter of an existing key.
         if (!previous) db.prepare('INSERT INTO devices(key,player,public_key) VALUES(?,?,?)').run(keyId,playerId,verified.publicKey);
-        return snapshot(playerId);
+        return snapshot(playerId,challenge.nonce);
       });
     },
     sync({playerId,token,keyId,payload,assertion}) {
@@ -109,7 +109,7 @@ export function createStreakService({database = ':memory:',signingKey,verifier,b
           if (result.changes) db.prepare('UPDATE players SET revision=revision+1 WHERE id=?').run(playerId);
           outcomes.push({id:event.id,status:'accepted'});
         }
-        return {snapshot:snapshot(playerId),outcomes};
+        return {snapshot:snapshot(playerId,challenge.nonce),outcomes};
       });
     }
   };

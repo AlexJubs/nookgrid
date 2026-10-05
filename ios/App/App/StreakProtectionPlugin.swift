@@ -208,11 +208,14 @@ class StreakProtectionPlugin: CAPPlugin, CAPBridgedPlugin {
                 }
                 var input = identity; input["purpose"] = "sync"
                 let challenge = try await post("/v1/challenge", input)
-                let payload: [String: Any] = ["version": 1, "playerId": credentials["playerId"]!, "challengeId": challenge["id"]!, "nonce": challenge["nonce"]!, "events": events]
+                guard let nonce = challenge["nonce"] as? String, let challengeId = challenge["id"] as? String else { throw ProtectionError.invalid }
+                let payload: [String: Any] = ["version": 1, "playerId": credentials["playerId"]!, "challengeId": challengeId, "nonce": nonce, "events": events]
                 let bytes = try JSONSerialization.data(withJSONObject: payload, options: [.sortedKeys])
                 let assertion = try await attest.generateAssertion(key, clientDataHash: Data(SHA256.hash(data: bytes)))
                 input = identity; input["payload"] = String(data: bytes, encoding: .utf8)!; input["assertion"] = assertion.base64EncodedString()
-                call.resolve(try await post("/v1/sync", input))
+                var result = try await post("/v1/sync", input)
+                result["expectedNonce"] = nonce
+                call.resolve(result)
             } catch {
                 if let nativeError = error as? DCError, nativeError.code == .invalidKey {
                     UserDefaults.standard.removeObject(forKey: "nookgrid.attest-key.v1")

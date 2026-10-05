@@ -1,4 +1,4 @@
-import {restoreStreakDays} from '../public/state.mjs';
+import {restoreStreakDays,puzzleDay} from '../public/state.mjs';
 
 const stateKey = 'nookgrid:v1:protection', streakKey = 'nookgrid:v1:streak';
 const days = values => restoreStreakDays(JSON.stringify(values));
@@ -35,14 +35,14 @@ export async function createStreakProtection({storage,bridge,enabled = false,onC
   let status = enabled ? 'pending' : 'local', cloudStatus = 'unavailable', running = null, listener = null, stopped = false, dirty = false, lastAttempt = 0, timer = null;
   let remote = null;
   const allDays = () => merge(state.legacyDates,state.unverifiedDates,state.pending.map(event => event.puzzleDate),verified?.facts.map(fact => fact.puzzleDate) || []);
-  const notify = () => onChange({days:allDays(),verifiedDays:verified?.facts.map(fact => fact.puzzleDate) || [],status,cloudStatus});
+  const notify = () => onChange({days:allDays(),verifiedDays:verified?.facts.map(fact => fact.puzzleDate) || [],verifiedDay:verified ? puzzleDay(new Date(verified.issuedAt)) : null,status,cloudStatus});
   async function persist() {
     await storage.setItems([[stateKey,JSON.stringify(state)],[streakKey,JSON.stringify(allDays())]]);
     notify();
   }
-  async function accept(snapshot,expectedId) {
+  async function accept(snapshot,expectedId,expectedNonce = null) {
     const next = await checkedSnapshot(snapshot,item => bridge.verifySnapshot(item),expectedId);
-    if (!next || verified && (next.playerId !== verified.playerId || next.revision < verified.revision || next.revision === verified.revision && next.issuedAt < verified.issuedAt)) throw Error('Invalid or stale verified history');
+    if (!next || expectedNonce && next.requestNonce !== expectedNonce || verified && (next.playerId !== verified.playerId || next.revision < verified.revision || next.revision === verified.revision && next.issuedAt < verified.issuedAt)) throw Error('Invalid or stale verified history');
     state.playerId = next.playerId; state.snapshot = snapshot; verified = next;
   }
   async function recover() {
@@ -89,7 +89,8 @@ export async function createStreakProtection({storage,bridge,enabled = false,onC
       try { await uploadCloud(); } catch { cloudStatus = 'pending'; }
       const events = state.pending.slice(0,64);
       const result = await bridge.sync({events});
-      await accept(result.snapshot,identity.playerId);
+      if (typeof result.expectedNonce !== 'string' || !result.expectedNonce) throw Error('Unbound verification response');
+      await accept(result.snapshot,identity.playerId,result.expectedNonce);
       // Never discard an offline event merely because the service was unavailable.
       const terminal = new Map((result.outcomes || []).filter(item => ['accepted','unverified','invalid'].includes(item.status)).map(item => [item.id,item.status]));
       state.recentEvents = [...new Map([...(state.recentEvents || []),...state.pending.filter(event => terminal.get(event.id) === 'accepted')].map(event => [event.id,event])).values()].slice(-64);
