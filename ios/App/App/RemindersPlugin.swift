@@ -5,7 +5,7 @@ import UserNotifications
 class RemindersPlugin: CAPPlugin, CAPBridgedPlugin, UNUserNotificationCenterDelegate {
     let identifier = "RemindersPlugin"
     let jsName = "Reminders"
-    let pluginMethods = ["getPermission", "requestPermission", "pending", "replace", "sendTest"].map { CAPPluginMethod(name: $0, returnType: CAPPluginReturnPromise) }
+    let pluginMethods: [CAPPluginMethod] = ["getPermission", "requestPermission", "pending", "replace", "sendTest"].map { CAPPluginMethod(name: $0, returnType: CAPPluginReturnPromise) }
     private let center = UNUserNotificationCenter.current()
     private let prefix = "nookgrid."
     private weak var previousDelegate: UNUserNotificationCenterDelegate?
