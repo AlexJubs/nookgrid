@@ -99,7 +99,7 @@ class StreakProtectionPlugin: CAPPlugin, CAPBridgedPlugin {
         call.resolve(["available": FileManager.default.ubiquityIdentityToken != nil, "ready": cloudReady, "accountChanged": accountChanged, "value": value as Any? ?? NSNull()])
     }
     @objc func writeCloud(_ call: CAPPluginCall) {
-        guard enabled, !accountChanged, FileManager.default.ubiquityIdentityToken != nil, let value = call.getString("value"), value.utf8.count < 200_000, let bytes = value.data(using: .utf8), let document = try? JSONSerialization.jsonObject(with: bytes) as? [String: Any], let id = document["playerId"] as? String, UUID(uuidString: id) != nil else { call.reject("iCloud recovery unavailable"); return }
+        guard enabled, !accountChanged, FileManager.default.ubiquityIdentityToken != nil, let value = call.getString("value"), value.utf8.count < 500_000, let bytes = value.data(using: .utf8), let document = try? JSONSerialization.jsonObject(with: bytes) as? [String: Any], let id = document["playerId"] as? String, UUID(uuidString: id) != nil else { call.reject("iCloud recovery unavailable"); return }
         let key = cloudPrefix + id
         // An early empty document is never useful and never written.
         guard (document["legacyDates"] as? [String])?.isEmpty == false || (document["unverifiedDates"] as? [String])?.isEmpty == false || document["snapshot"] is [String: Any] else { call.resolve(); return }
@@ -109,13 +109,13 @@ class StreakProtectionPlugin: CAPPlugin, CAPBridgedPlugin {
             for field in ["legacyDates", "unverifiedDates"] { merged[field] = Array(Set((previous[field] as? [String] ?? []) + (document[field] as? [String] ?? []))).sorted() }
             if let oldSnapshot = previous["snapshot"] as? [String: String], let payload = oldSnapshot["payload"], validSnapshot(payload, oldSnapshot["signature"] ?? ""), let data = payload.data(using: .utf8), let facts = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                 let newSnapshot = document["snapshot"] as? [String: String]
-                let newFacts = newSnapshot?["payload"].flatMap { $0.data(using: .utf8) }.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+                let newFacts = newSnapshot.flatMap { validSnapshot($0["payload"] ?? "", $0["signature"] ?? "") ? $0["payload"] : nil }.flatMap { $0.data(using: .utf8) }.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
                 if (facts["revision"] as? Int ?? 0) > (newFacts?["revision"] as? Int ?? -1) { merged["snapshot"] = oldSnapshot }
             }
         }
         do {
             let encoded = try JSONSerialization.data(withJSONObject: merged, options: [.sortedKeys])
-            guard encoded.count < 200_000 else { throw ProtectionError.invalid }
+            guard encoded.count < 500_000 else { throw ProtectionError.invalid }
             NSUbiquitousKeyValueStore.default.set(String(data: encoded, encoding: .utf8)!, forKey: key)
             NSUbiquitousKeyValueStore.default.synchronize()
             call.resolve() // Queued; no successful-upload claim.
@@ -170,7 +170,7 @@ class StreakProtectionPlugin: CAPPlugin, CAPBridgedPlugin {
         request.httpMethod = "POST"; request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: value)
         let (data, response) = try await session.data(for: request)
-        guard (response as? HTTPURLResponse)?.statusCode == 200, data.count < 250_000, let result = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { throw ProtectionError.network }
+        guard (response as? HTTPURLResponse)?.statusCode == 200, data.count < 600_000, let result = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { throw ProtectionError.network }
         return result
     }
     @objc func sync(_ call: CAPPluginCall) {

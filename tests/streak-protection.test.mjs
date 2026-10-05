@@ -70,6 +70,7 @@ test('a provisional first-launch identity adopts late cloud recovery without los
   assert.equal(f.writes.length,0);
   controller.prepareCompletion('2026-10-03',Array(9).fill('place'));
   f.response(snapshot(['2026-10-03'],1,temporary)); await controller.sync({force:true});
+  await controller.sync({force:true}); // A refresh must retain the event for late identity recovery.
   f.cloud.ready = true;
   f.cloud.value = JSON.stringify({version:1,playerId,legacyDates:[],unverifiedDates:[],snapshot:snapshot(['2026-10-01','2026-10-02'])});
   f.response(snapshot(['2026-10-01','2026-10-02','2026-10-03']));

@@ -12,7 +12,7 @@ function restore(raw,legacy) {
 }
 export async function checkedSnapshot(snapshot,verify,playerId = null) {
   try {
-    if (!snapshot || typeof snapshot.payload !== 'string' || snapshot.payload.length > 200_000 || typeof snapshot.signature !== 'string' || !await verify(snapshot)) return null;
+    if (!snapshot || typeof snapshot.payload !== 'string' || snapshot.payload.length > 400_000 || typeof snapshot.signature !== 'string' || !await verify(snapshot)) return null;
     const value = JSON.parse(snapshot.payload);
     if (value.version !== 1 || typeof value.playerId !== 'string' || playerId && value.playerId !== playerId || !Number.isSafeInteger(value.revision) || value.revision < 0 || !Number.isSafeInteger(value.issuedAt) || !Array.isArray(value.facts) || value.facts.length > 3660 || value.facts.some(fact => days([fact?.puzzleDate]).length !== 1 || !Number.isSafeInteger(fact.receivedAt) || fact.receivedAt > value.issuedAt || fact.receivedAt < 0) || new Set(value.facts.map(fact => fact.puzzleDate)).size !== value.facts.length) return null;
     return value;
@@ -85,7 +85,7 @@ export async function createStreakProtection({storage,bridge,enabled = false,onC
       await accept(result.snapshot,identity.playerId);
       // Never discard an offline event merely because the service was unavailable.
       const terminal = new Map((result.outcomes || []).filter(item => ['accepted','unverified','invalid'].includes(item.status)).map(item => [item.id,item.status]));
-      state.recentEvents = state.pending.filter(event => terminal.get(event.id) === 'accepted').slice(-64);
+      state.recentEvents = [...new Map([...(state.recentEvents || []),...state.pending.filter(event => terminal.get(event.id) === 'accepted')].map(event => [event.id,event])).values()].slice(-64);
       state.unverifiedDates = merge(state.unverifiedDates,state.pending.filter(event => terminal.has(event.id) && terminal.get(event.id) !== 'accepted').map(event => event.puzzleDate));
       state.pending = state.pending.filter(event => !terminal.has(event.id));
       status = 'verified';
