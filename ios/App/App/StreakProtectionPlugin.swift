@@ -83,7 +83,7 @@ class StreakProtectionPlugin: CAPPlugin, CAPBridgedPlugin {
         }
     }
     @objc func readCloud(_ call: CAPPluginCall) {
-        guard enabled else { call.resolve(["available": false, "ready": false]); return }
+        guard enabled else { call.resolve(["canQueue": false, "ready": false]); return }
         observeCloud()
         // Per-player keys are additive. A provisional first launch cannot erase
         // an older identity whose cloud document has not arrived yet.
@@ -100,10 +100,12 @@ class StreakProtectionPlugin: CAPPlugin, CAPBridgedPlugin {
             }
             .sorted { $0.1 == $1.1 ? $0.2 < $1.2 : $0.1 > $1.1 }
         let value = candidates.first?.0
-        call.resolve(["available": FileManager.default.ubiquityIdentityToken != nil, "ready": cloudReady, "accountChanged": accountChanged, "value": value as Any? ?? NSNull()])
+        // Key-value storage does not require iCloud Drive Documents. A successful
+        // synchronize call means local scheduling is available, not that data uploaded.
+        call.resolve(["canQueue": NSUbiquitousKeyValueStore.default.synchronize(), "ready": cloudReady, "accountChanged": accountChanged, "value": value as Any? ?? NSNull()])
     }
     @objc func writeCloud(_ call: CAPPluginCall) {
-        guard enabled, !accountChanged, FileManager.default.ubiquityIdentityToken != nil, let value = call.getString("value"), value.utf8.count < 500_000, let bytes = value.data(using: .utf8), let document = try? JSONSerialization.jsonObject(with: bytes) as? [String: Any], let id = document["playerId"] as? String, UUID(uuidString: id) != nil else { call.reject("iCloud recovery unavailable"); return }
+        guard enabled, !accountChanged, NSUbiquitousKeyValueStore.default.synchronize(), let value = call.getString("value"), value.utf8.count < 500_000, let bytes = value.data(using: .utf8), let document = try? JSONSerialization.jsonObject(with: bytes) as? [String: Any], let id = document["playerId"] as? String, UUID(uuidString: id) != nil else { call.reject("iCloud recovery unavailable"); return }
         let key = cloudPrefix + id
         // An early empty document is never useful and never written.
         guard (document["legacyDates"] as? [String])?.isEmpty == false || (document["unverifiedDates"] as? [String])?.isEmpty == false || document["snapshot"] is [String: Any] else { call.resolve(); return }

@@ -47,7 +47,7 @@ export async function createStreakProtection({storage,bridge,enabled = false,onC
   }
   async function recover() {
     const cloud = await bridge.readCloud();
-    cloudStatus = cloud.accountChanged ? 'account_changed' : cloud.available ? cloud.ready ? 'ready' : 'waiting' : 'unavailable';
+    cloudStatus = cloud.accountChanged ? 'account_changed' : cloud.canQueue ? cloud.ready ? 'ready' : 'waiting' : 'unavailable';
     remote = null;
     try { remote = JSON.parse(cloud.value); } catch {}
     if (remote?.version === 1 && typeof remote.playerId === 'string') {

@@ -9,7 +9,7 @@ function snapshot(dates,revision = dates.length,id = playerId) {
   const payload = JSON.stringify({version:1,playerId:id,requestNonce:'test-nonce',revision,issuedAt:Date.parse('2026-10-03T18:00:00Z'),facts:dates.map(puzzleDate => ({puzzleDate,receivedAt:Date.parse(`${puzzleDate}T12:00:00Z`)}))});
   return {payload,signature:sign(null,Buffer.from(payload),key.privateKey).toString('base64')};
 }
-function fixture(seed = [],cloud = {available:true,ready:true,value:null}) {
+function fixture(seed = [],cloud = {canQueue:true,ready:true,value:null}) {
   const disk = new Map(seed), requests = [], writes = [], changes = [];
   let callback = () => {}, online = true, signed = snapshot([]);
   const preferences = {keys:async () => ({keys:[...disk.keys()]}),get:async ({key}) => ({value:disk.get(key) ?? null}),set:async ({key,value}) => disk.set(key,value),remove:async ({key}) => disk.delete(key)};
@@ -41,7 +41,7 @@ test('offline completion remains durably queued through restart and legacy histo
 
 test('reinstall recovers a signed iCloud history without a NookGrid login or overwriting an unfinished local board',async () => {
   const record = snapshot(['2026-10-01','2026-10-02']);
-  const cloud = {available:true,ready:true,value:JSON.stringify({version:1,playerId,legacyDates:['2026-09-30'],unverifiedDates:[],snapshot:record})};
+  const cloud = {canQueue:true,ready:true,value:JSON.stringify({version:1,playerId,legacyDates:['2026-09-30'],unverifiedDates:[],snapshot:record})};
   const f = fixture([['nookgrid:v1:2026-10-03','{"board":["bakery"]}']],cloud);
   f.response(record);
   const controller = await f.controller(); await controller.start();
@@ -52,7 +52,7 @@ test('reinstall recovers a signed iCloud history without a NookGrid login or ove
 });
 
 test('late iCloud arrival merges history; early uploads contain history in a separate player document',async () => {
-  const f = fixture([['nookgrid:v1:streak','["2026-10-03"]']],{available:true,ready:false,value:null});
+  const f = fixture([['nookgrid:v1:streak','["2026-10-03"]']],{canQueue:true,ready:false,value:null});
   const controller = await f.controller(); await controller.start();
   assert.ok(f.writes.every(item => JSON.parse(item.value).legacyDates.length > 0));
   const record = snapshot(['2026-10-01','2026-10-02']);
@@ -63,7 +63,7 @@ test('late iCloud arrival merges history; early uploads contain history in a sep
 });
 
 test('a provisional first-launch identity adopts late cloud recovery without losing its new offline event',async () => {
-  const temporary = randomUUID(), f = fixture([],{available:true,ready:false,value:null});
+  const temporary = randomUUID(), f = fixture([],{canQueue:true,ready:false,value:null});
   f.bridge.identity = async ({preferredId}) => ({playerId:preferredId || temporary});
   f.response(snapshot([],0,temporary));
   const controller = await f.controller(); await controller.start();

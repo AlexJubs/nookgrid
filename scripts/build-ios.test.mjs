@@ -36,6 +36,7 @@ test('streak protection requires explicit production configuration; QA never inh
   assert.match(await readFile('dist/ios-protection-test/index.html','utf8'),/existing iCloud account/);
   const plugin = await readFile('ios/App/App/StreakProtectionPlugin.swift','utf8');
   assert.match(plugin,/#if DEBUG \|\| targetEnvironment\(simulator\)/);
+  assert.doesNotMatch(plugin,/ubiquityIdentityToken/,'key-value recovery must not require iCloud Drive Documents');
 });
 
 test('ads require an explicit build mode and demo builds never collect analytics',async () => {
