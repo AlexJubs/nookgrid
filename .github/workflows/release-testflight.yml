@@ -44,7 +44,7 @@ jobs:
     timeout-minutes: 30
     environment: ios-testflight
     env:
-      DEVELOPER_DIR: /Applications/Xcode_26.4.1.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
       APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
       IOS_BUNDLE_ID: com.nookgrid.app
       EXPECTED_COMMIT: ${{ inputs.expected_commit }}

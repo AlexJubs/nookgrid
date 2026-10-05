@@ -8,13 +8,21 @@ final class AdFreePurchaseUITests: XCTestCase {
     private var app: XCUIApplication!
     private var session: SKTestSession!
 
-    override func setUpWithError() throws {
+    override func setUp() async throws {
         continueAfterFailure = false
         let file = try XCTUnwrap(Bundle(for: Self.self).url(forResource: "AdFreeTest", withExtension: "storekit"))
         session = try SKTestSession(contentsOf: file)
         session.resetToDefaultState()
         session.clearTransactions()
         session.disableDialogs = true
+        // Session setters can log a simulator service failure without throwing. Check
+        // a throwing API before launching the app so unavailable test infrastructure
+        // fails here, rather than masquerading as missing production product metadata.
+        guard #available(iOS 17.0, *) else {
+            throw NSError(domain: "NookGridStoreKitTest", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "The StoreKit test suite requires iOS 17 or later."])
+        }
+        try await session.setSimulatedError(nil, forAPI: .purchase)
         app = XCUIApplication()
         app.launchArguments = ["nookgrid-reset-test-state", "nookgrid-storekit-test"]
         app.launch()
@@ -25,7 +33,7 @@ final class AdFreePurchaseUITests: XCTestCase {
     }
 
     override func tearDownWithError() throws {
-        if app.state != .notRunning { app.terminate() }
+        if let app, app.state != .notRunning { app.terminate() }
         session?.clearTransactions()
         session?.resetToDefaultState()
     }
