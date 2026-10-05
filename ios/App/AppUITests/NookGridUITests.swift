@@ -69,9 +69,12 @@ final class NookGridUITests: XCTestCase {
     private func assertLot(_ address: String, _ place: String, file: StaticString = #filePath, line: UInt = #line) {
         let wasResult = button("View solved puzzle").exists
         if wasResult { tap(button("View solved puzzle")) }
+        assertLotOnBoard(address, place, file: file, line: line)
+        if wasResult { viewResult() }
+    }
+    private func assertLotOnBoard(_ address: String, _ place: String, file: StaticString = #filePath, line: UInt = #line) {
         let target = button("Lot \(address), \(place)")
         XCTAssertTrue(target.exists || target.waitForExistence(timeout: 5), app.debugDescription, file: file, line: line)
-        if wasResult { viewResult() }
     }
     private func place(_ name: String, at address: String) {
         tap(button("\(name), choose a lot"))
@@ -81,10 +84,12 @@ final class NookGridUITests: XCTestCase {
     }
     private func openTutorial() {
         tap(button("How to play"))
-        XCTAssertTrue(button("Close how to play").waitForExistence(timeout: 5))
+        let closeHelp = button("Close how to play")
+        XCTAssertTrue(closeHelp.exists || closeHelp.waitForExistence(timeout: 5))
         tap(app.webViews.links["Play tutorial"].firstMatch)
-        XCTAssertTrue(button("Close how to play").waitForNonExistence(timeout: 5), app.debugDescription)
-        XCTAssertTrue(app.staticTexts["Tutorial plan"].waitForExistence(timeout: 5))
+        XCTAssertTrue(!closeHelp.exists || closeHelp.waitForNonExistence(timeout: 5), app.debugDescription)
+        let tutorialPlan = app.staticTexts["Tutorial plan"]
+        XCTAssertTrue(tutorialPlan.exists || tutorialPlan.waitForExistence(timeout: 5))
         XCTAssertTrue(lot("A1").exists)
         XCTAssertTrue(button("How to play").exists)
     }
@@ -352,7 +357,7 @@ final class NookGridUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["9 hints"].exists)
         tap(button("Back to home"))
         tap(button("Play tutorial"))
-        for address in lots { assertLot(address, "empty") }
+        for address in lots { assertLotOnBoard(address, "empty") }
         XCTAssertTrue(button("Hint, 0 hints used").exists)
         XCTAssertFalse(button("Undo").isEnabled)
 
@@ -365,7 +370,7 @@ final class NookGridUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["0 day streak"].exists)
         tap(button("Close calendar"))
         openTutorial()
-        for address in lots { assertLot(address, "empty") }
+        for address in lots { assertLotOnBoard(address, "empty") }
         XCTAssertTrue(button("Hint, 0 hints used").exists)
         XCTAssertFalse(button("Undo").isEnabled)
         XCTAssertTrue(button("Bakery, choose a lot").isEnabled)

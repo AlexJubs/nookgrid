@@ -27,15 +27,45 @@ final class AdFreePurchaseUITests: XCTestCase {
         app.launchArguments = ["nookgrid-reset-test-state", "nookgrid-storekit-test"]
         app.launch()
         XCTAssertTrue(element("Play today's puzzle").waitForExistence(timeout: 60), app.debugDescription)
+        // The test environment is shared. Clear and verify its purchase override
+        // again with the target app running, including after an interrupted test.
+        try await clearPurchaseError()
+        XCTAssertFalse(session.askToBuyEnabled, "Every scenario must start without Ask to Buy.")
+        XCTAssertFalse(session.failTransactionsEnabled, "Every scenario must start without forced transaction failures.")
+        XCTAssertTrue(session.allTransactions().isEmpty, "Every scenario must start with cleared test history.")
         openSettings()
         XCTAssertTrue(purchaseButton.waitForExistence(timeout: 15), app.debugDescription)
         XCTAssertTrue(purchaseButton.isEnabled, app.debugDescription)
     }
 
-    override func tearDownWithError() throws {
-        if let app, app.state != .notRunning { app.terminate() }
-        session?.clearTransactions()
-        session?.resetToDefaultState()
+    override func tearDown() async throws {
+        defer {
+            if let app, app.state != .notRunning { app.terminate() }
+            session?.clearTransactions()
+            session?.resetToDefaultState()
+        }
+        // Method-body cleanup is bypassed when continueAfterFailure interrupts a
+        // test. Await API-override cleanup here before terminating the target app.
+        if session != nil { try await clearPurchaseError() }
+    }
+
+    private func clearPurchaseError() async throws {
+        guard #available(iOS 17.0, *) else {
+            throw NSError(domain: "NookGridStoreKitTest", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "The StoreKit test suite requires iOS 17 or later."])
+        }
+        try await session.setSimulatedError(nil, forAPI: .purchase)
+        let configuredErrorPresent = try await hasPurchaseError()
+        XCTAssertFalse(configuredErrorPresent, "The local purchase API must have no simulated error after cleanup.")
+    }
+
+    private func hasPurchaseError() async throws -> Bool {
+        guard #available(iOS 17.0, *) else {
+            throw NSError(domain: "NookGridStoreKitTest", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "The StoreKit test suite requires iOS 17 or later."])
+        }
+        let configuredError = await session.simulatedError(forAPI: .purchase)
+        return configuredError != nil
     }
 
     private func element(_ label: String) -> XCUIElement {
@@ -60,10 +90,14 @@ final class AdFreePurchaseUITests: XCTestCase {
         XCTAssertTrue(element("Close settings").waitForExistence(timeout: 10), app.debugDescription)
     }
 
-    func testVerifiedPurchaseRelaunchRestoreAndRefund() throws {
+    func testVerifiedPurchaseRelaunchRestoreAndRefund() async throws {
         XCTAssertTrue(purchaseButton.label.contains("9.99"), "The local StoreKit test price must reach the UI.")
         tap(purchaseButton)
-        XCTAssertTrue(element("Ad-free play is active.").waitForExistence(timeout: 15), app.debugDescription)
+        let becameActive = element("Ad-free play is active.").waitForExistence(timeout: 15)
+        let configuredErrorPresent = try await hasPurchaseError()
+        let states = session.allTransactions().map { $0.state.rawValue }
+        XCTAssertTrue(becameActive,
+                      "Direct local purchase must activate ad-free play. State codes: \(states); simulated error present: \(configuredErrorPresent). \(app.debugDescription)")
         XCTAssertFalse(element("Ad-free play is active").isEnabled)
         XCTAssertEqual(session.allTransactions().filter { $0.productIdentifier == AdFreeEntitlementState.productID }.count, 1)
 
@@ -103,8 +137,15 @@ final class AdFreePurchaseUITests: XCTestCase {
             tap(purchaseButton)
             XCTAssertTrue(element("Your purchase could not be completed. Try again.").waitForExistence(timeout: 15), app.debugDescription)
             XCTAssertTrue(purchaseButton.isEnabled)
-            XCTAssertTrue(session.allTransactions().isEmpty)
-            try await session.setSimulatedError(nil, forAPI: .purchase)
+            XCTAssertFalse(element("Ad-free play is active.").exists)
+            // StoreKit keeps failed attempts in allTransactions(), including ones
+            // that never grant an entitlement or appear in the receipt.
+            let transactions = session.allTransactions()
+            let states = transactions.map { $0.state.rawValue }
+            print("NookGrid StoreKit failed-attempt state codes: \(states)")
+            XCTAssertTrue(transactions.allSatisfy { $0.state == .failed },
+                          "Cancelled and failed purchases must leave no successful or pending transaction. State codes: \(states)")
+            try await clearPurchaseError()
             tap(element("Close settings"))
             tap(element("Play today's puzzle"))
             XCTAssertTrue(element("Lot A1, empty").waitForExistence(timeout: 10), "Free daily play must remain available after purchase errors.")
