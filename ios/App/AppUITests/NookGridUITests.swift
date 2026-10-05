@@ -10,8 +10,13 @@ final class NookGridUITests: XCTestCase {
         app = XCUIApplication()
         app.launchArguments = ["nookgrid-reset-test-state", "nookgrid-offline"]
         app.launch()
-        XCTAssertTrue(button("Play today's puzzle").waitForExistence(timeout: 60), app.debugDescription)
-        tap(button("Play today's puzzle"))
+        let play = button("Play today's puzzle")
+        XCTAssertTrue(play.waitForExistence(timeout: 60), app.debugDescription)
+        scrollTo(play)
+        XCTAssertTrue(play.isHittable, app.debugDescription)
+        // Use a tap for the first Play interaction; press(forDuration:) synthesizes
+        // a different gesture. testHomePlayPressOpensPuzzle also checks holding it.
+        play.tap()
         XCTAssertTrue(button("Lot A1, empty").waitForExistence(timeout: 5), app.debugDescription)
     }
 

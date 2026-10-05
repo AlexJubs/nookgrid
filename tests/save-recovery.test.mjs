@@ -57,6 +57,31 @@ test('the atomic native mirror recovers progress and privacy after Preferences l
   assert.equal(recovered.getItem(streak),'["2026-10-03"]');
 });
 
+test('fallback recovery retains a newer analytics refusal from Preferences',async () => {
+  const preferences = disk([['nookgrid:analytics','yes']]);
+  let mirror = {};
+  const journal = {readJournal:async () => mirror,writeJournal:async value => { mirror = value; }};
+  const store = await createNativeStorage(preferences,{journal});
+  await store.setItems([[board,'{"elapsedMs":65000}']]);
+  await store.setItem('nookgrid:analytics','no');
+  preferences.values.set('nookgrid:save-journal:v1','damaged');
+  mirror.primary = 'damaged';
+  const recovered = await createNativeStorage(preferences,{journal});
+  assert.equal(recovered.getItem(board),'{"elapsedMs":65000}');
+  assert.equal(recovered.getItem('nookgrid:analytics'),'no');
+});
+
+test('an intact primary retains a later opt-in after a compatibility write fails',async () => {
+  const preferences = disk([['nookgrid:analytics','no']]);
+  const store = await createNativeStorage(preferences);
+  await store.setItems([[board,'{"elapsedMs":65000}']]);
+  const set = preferences.set;
+  preferences.set = async entry => { if (entry.key === 'nookgrid:analytics') throw Error('interrupted'); return set(entry); };
+  await assert.rejects(store.setItem('nookgrid:analytics','yes'),/interrupted/);
+  const recovered = await createNativeStorage(preferences);
+  assert.equal(recovered.getItem('nookgrid:analytics'),'yes');
+});
+
 test('native journal and completion IDs work without secure-context Web Crypto',async () => {
   const original = globalThis.crypto;
   Object.defineProperty(globalThis,'crypto',{configurable:true,value:{getRandomValues:original.getRandomValues.bind(original)}});

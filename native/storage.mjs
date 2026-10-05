@@ -20,8 +20,13 @@ export async function createNativeStorage(preferences,{journal} = {}) {
   const candidates = await Promise.all([values.get(journalKey),values.get(backupKey),mirror.primary,mirror.backup].map(raw => decode(raw,digest)));
   let last = candidates.filter(Boolean).sort((a,b) => b.body.revision - a.body.revision)[0] || null;
   if (last) {
+    const refusedAnalytics = values.get('nookgrid:analytics') === 'no';
+    const hasCurrentPrimary = [candidates[0],candidates[2]].some(candidate => candidate?.body.revision === last.body.revision);
     for (const key of values.keys()) if (protectedKey(key)) values.delete(key);
     for (const [key,value] of last.body.entries) values.set(key,value);
+    // A backup may predate a refusal that reached Preferences. Preserve that
+    // refusal; an intact current primary still preserves an explicit later opt-in.
+    if (!hasCurrentPrimary && refusedAnalytics) values.set('nookgrid:analytics','no');
   }
   let pending = Promise.resolve();
   function enqueue(action) {
