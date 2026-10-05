@@ -3,7 +3,7 @@
   "eventsEnabled": false,
   "analytics": {
     "enabled": true,
-    "projectToken": "phc_sFWFzLqxV6vdbRYQQXygHCbHBQyL3wmLBFyciD6gBqss",
+    "projectToken": "phc_oAS2KqWbdUdZfNddDBQySsWy4Tu3fNqwo2xWJrKC9bzf",
     "apiHost": "https://us.i.posthog.com"
   }
 }
