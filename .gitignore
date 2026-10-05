@@ -13,6 +13,7 @@
 !/ios/
 !/docs/
 !/.github/
+!/.githooks/
 !/public/
 !/scripts/
 !/tests/

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {mkdtemp, rm, symlink, writeFile} from 'node:fs/promises';
+import {mkdtemp, readFile, rm, symlink, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import test from 'node:test';
@@ -64,4 +64,42 @@ test('web releases validate targets, preserve the base version and verify publis
   } finally {
     await rm(directory, {recursive: true, force: true});
   }
+});
+
+
+test('web release renders only validated capture configuration after committed-source verification',async () => {
+  const directory = await mkdtemp(join(tmpdir(),'nookgrid-analytics-release-'));
+  try {
+    const template = {analytics:{enabled:true,projectToken:'',apiHost:'https://us.i.posthog.com'}};
+    await writeFile(join(directory,'index.html'),'<h1>NookGrid</h1>');
+    await writeFile(join(directory,'site-config.json'),JSON.stringify(template));
+    const captureToken = 'phc_' + 'example'.repeat(6);
+    const options = {directory,apiKey:'test-key',slug:'nookgrid-test',baseVersionId:'01AAAAAAAAAAAAAAAAAAAAAAAA',captureToken};
+    const siteApi = 'https://here.now/api/v1/publish/nookgrid-test';
+    const versionId = '01BBBBBBBBBBBBBBBBBBBBBBBB';
+    let checked = false,manifest,uploaded = new Map(),calls = 0;
+    const check = async ({files}) => {
+      assert.deepEqual(JSON.parse(files.find(file => file.path === 'site-config.json').bytes),template);
+      checked = true;
+      return {source:'tested-source'};
+    };
+    const request = async (url,init) => {
+      assert.equal(checked,true);calls++;
+      if (url === siteApi && init.method === 'PUT') {
+        manifest = JSON.parse(init.body).files;
+        return Response.json({slug:options.slug,upload:{versionId,finalizeUrl:`${siteApi}/finalize`,uploads:manifest.map(file => ({path:file.path,method:'PUT',url:`https://bucket.r2.cloudflarestorage.com/${file.path}`,headers:{}}))}});
+      }
+      if (url.startsWith('https://bucket.r2.cloudflarestorage.com/')) {uploaded.set(url.split('/').pop(),init.body);return new Response(null,{status:200});}
+      if (url === `${siteApi}/finalize`) return Response.json({success:true,slug:options.slug,currentVersionId:versionId,publishStatus:{state:'live'}});
+      if (url === siteApi && init.method === 'GET') return Response.json({currentVersionId:versionId,manifest});
+      assert.fail('Unexpected request');
+    };
+    await publishWeb(options,request,check);
+    assert.equal(JSON.parse(uploaded.get('site-config.json')).analytics.projectToken,captureToken);
+    assert.deepEqual(JSON.parse(await readFile(join(directory,'site-config.json'),'utf8')),template);
+    const before = calls;
+    await assert.rejects(publishWeb({...options,captureToken:undefined},request,check),/public capture token/);
+    await assert.rejects(publishWeb({...options,captureToken:'phx_' + 'example'.repeat(6)},request,check),/public capture token/);
+    assert.equal(calls,before);
+  } finally { await rm(directory,{recursive:true,force:true}); }
 });

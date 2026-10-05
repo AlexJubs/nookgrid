@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { buildIos } from './build-ios.mjs';
 import {generateKeyPairSync} from 'node:crypto';
+const captureToken = 'phc_' + 'example'.repeat(6);
 
 test('iOS bundle is offline, isolated in development, and declares native privacy',async () => {
   await buildIos({directory:'dist/ios-test'});
@@ -31,7 +32,7 @@ test('streak protection requires explicit production configuration; QA never inh
   await assert.rejects(buildIos({directory:'dist/ios-protection-test',protection}),/Production/);
   await assert.rejects(buildIos({directory:'dist/ios-protection-test',production:true,protection:{...protection,endpoint:'http://localhost/'}}),/Production/);
   await assert.rejects(buildIos({directory:'dist/ios-protection-test',production:true,protection:{...protection,publicKey:'fake'}}),/public key/);
-  await buildIos({directory:'dist/ios-protection-test',production:true,protection});
+  await buildIos({directory:'dist/ios-protection-test',production:true,protection,captureToken});
   assert.deepEqual(JSON.parse(await readFile('dist/ios-protection-test/protection-config.json','utf8')),{enabled:true,...protection});
   assert.match(await readFile('dist/ios-protection-test/index.html','utf8'),/existing iCloud account/);
   const plugin = await readFile('ios/App/App/StreakProtectionPlugin.swift','utf8');
@@ -54,12 +55,24 @@ test('production rejects live reload instead of shipping a development URL',asyn
 });
 
 test('production bundles the same offline game with its app analytics and privacy configuration',async () => {
-  await buildIos({directory:'dist/ios-release-test',production:true});
+  await buildIos({directory:'dist/ios-release-test',production:true,captureToken});
   const config = JSON.parse(await readFile('dist/ios-release-test/site-config.json','utf8'));
   assert.equal(config.analytics.enabled,true);
+  assert.equal(config.analytics.projectToken,captureToken);
+  assert.equal(JSON.parse(await readFile('public/site-config.json','utf8')).analytics.projectToken,'');
   assert.equal(config.feedbackEnabled,false);
   const html = await readFile('dist/ios-release-test/index.html','utf8');
   assert.ok(!/src="https?:/.test(html));
   assert.ok(!/google-adsense-account/.test(html));
   assert.ok((await readFile('dist/ios-release-test/native.js','utf8')).includes('nookgridDebug'));
+});
+
+
+test('production analytics requires a capture token and rejects personal/admin keys',async () => {
+  await assert.rejects(buildIos({directory:'dist/ios-missing-token',production:true}),/public capture token/);
+  await assert.rejects(buildIos({directory:'dist/ios-admin-token',production:true,captureToken:'phx_' + 'example'.repeat(6)}),/public capture token/);
+  await buildIos({directory:'dist/ios-qa-token',captureToken});
+  const config = JSON.parse(await readFile('dist/ios-qa-token/site-config.json','utf8'));
+  assert.equal(config.analytics.enabled,false);
+  assert.equal(config.analytics.projectToken,'');
 });

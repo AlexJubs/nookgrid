@@ -1,12 +1,19 @@
 import { test, expect } from '@playwright/test';
 import { enterGame, daily, place } from './fixtures.mjs';
 import { buildIos } from '../../scripts/build-ios.mjs';
+import { releaseAnalyticsConfig } from '../../scripts/analytics-config.mjs';
 import { readFileSync } from 'node:fs';
 
 const storageSource = readFileSync(new URL('../../native/storage.mjs',import.meta.url),'utf8').replace('export async function','async function');
 
-test.beforeEach(async ({page}) => {
+const contractConfig = releaseAnalyticsConfig(
+  JSON.parse(readFileSync(new URL('../../public/site-config.json',import.meta.url),'utf8')),
+  'phc_' + 'example'.repeat(6)
+);
+
+test.beforeEach(async ({page,baseURL}) => {
   await page.route('**/*',route => new URL(route.request().url()).hostname === '127.0.0.1' ? route.continue() : route.abort());
+  await page.route(`${baseURL}/site-config.json`,route => route.fulfill({json:contractConfig}));
   await page.addInitScript(() => {
     const storage = {
       getItem:key => localStorage.getItem(key),

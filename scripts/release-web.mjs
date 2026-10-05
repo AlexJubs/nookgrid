@@ -3,6 +3,7 @@ import {lstat, readdir, readFile} from 'node:fs/promises';
 import {extname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {checkRelease} from './check-release.mjs';
+import {releaseAnalyticsConfig} from './analytics-config.mjs';
 
 const api = 'https://here.now/api/v1/publish';
 const contentTypes = {
@@ -35,14 +36,21 @@ export async function collectFiles(directory, prefix = '') {
   return files.sort((left, right) => left.path.localeCompare(right.path));
 }
 
-export async function releaseWeb({directory, apiKey, slug, baseVersionId, expectedDirectory, account}, request = fetch, check = checkRelease) {
+export async function releaseWeb({directory, apiKey, slug, baseVersionId, expectedDirectory, account, captureToken}, request = fetch, check = checkRelease) {
   if (!apiKey || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug || '') ||
       (!expectedDirectory && !/^[A-Z0-9]{26}$/.test(baseVersionId || ''))) {
     throw new Error('HERENOW_API_KEY, HERENOW_SLUG and a valid base version or expected directory are required.');
   }
-  const files = await collectFiles(directory);
+  const sourceFiles = await collectFiles(directory);
+  let files = sourceFiles;
   if (!files.some(file => file.path === 'index.html')) throw new Error('The public directory must contain index.html.');
-  const release = await check({directory, files});
+  const release = await check({directory, files:sourceFiles});
+  const configFile = sourceFiles.find(file => file.path === 'site-config.json');
+  if (configFile) {
+    const config = releaseAnalyticsConfig(JSON.parse(configFile.bytes.toString('utf8')),captureToken);
+    const bytes = Buffer.from(JSON.stringify(config));
+    files = sourceFiles.map(file => file === configFile ? {...file,bytes,size:bytes.length,hash:createHash('sha256').update(bytes).digest('hex')} : file);
+  } else if (captureToken) throw new Error('Analytics configuration file is missing.');
   const headers = {'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'X-HereNow-Client': 'github-actions/nookgrid'};
   if (account) headers['X-HereNow-Account'] = account;
   const siteApi = `${api}/${slug}`;
@@ -91,7 +99,7 @@ export async function releaseWeb({directory, apiKey, slug, baseVersionId, expect
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   releaseWeb({directory: fileURLToPath(new URL('../public/', import.meta.url)), apiKey: process.env.HERENOW_API_KEY,
     slug: process.env.HERENOW_SLUG, baseVersionId: process.env.HERENOW_BASE_VERSION,
-    expectedDirectory: process.env.HERENOW_EXPECTED_DIRECTORY, account: process.env.HERENOW_ACCOUNT})
+    expectedDirectory: process.env.HERENOW_EXPECTED_DIRECTORY, account: process.env.HERENOW_ACCOUNT,captureToken:process.env.NOOKGRID_POSTHOG_CAPTURE_TOKEN})
     .then(result => console.log(JSON.stringify(result, null, 2)))
     .catch(error => { console.error(error.message); process.exitCode = 1; });
 }

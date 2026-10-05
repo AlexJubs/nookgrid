@@ -24,6 +24,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run check:credentials
       - run: npm test
       - run: npx playwright install chromium webkit --with-deps
       - run: npm run test:e2e

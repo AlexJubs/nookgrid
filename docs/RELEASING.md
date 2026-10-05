@@ -100,6 +100,10 @@ Create GitHub environments named `web-production` and `ios-testflight`. Restrict
 
 Both release workflows start only through a manual Actions dispatch on `main`. They verify the checked-out commit's existing successful CI run instead of duplicating its suites. Their read-only token includes Actions access for this check. Automatic publication is disabled regardless of historical `ENABLE_WEB_RELEASE` or `ENABLE_TESTFLIGHT_RELEASE` values. The workflows serialize releases separately. No new hosting service, paid CI plan or Apple membership is purchased by these workflows.
 
+## Private analytics configuration
+
+Keep capture tokens out of committed source, even though PostHog capture tokens are public client credentials. Set `NOOKGRID_POSTHOG_CAPTURE_TOKEN` only in command-scoped release configuration or the encrypted secret with that name in each release environment. Never use a personal/admin PostHog API key. The web publisher verifies the committed source and exact CI first, then renders only `site-config.json` in memory. Native production builds inject the same capture token into the generated bundle. QA and demo bundles remain analytics-disabled and contain no capture token. Production builds and web publication fail when required configuration is missing. The shipped client necessarily exposes the public capture token; passwords and read/admin API keys never belong in client artifacts.
+
 ## Website
 
 Configure these values in `web-production`:

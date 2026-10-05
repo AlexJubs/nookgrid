@@ -33,6 +33,7 @@ jobs:
       - name: Publish public files and verify the owner manifest
         env:
           GH_TOKEN: ${{ github.token }}
+          NOOKGRID_POSTHOG_CAPTURE_TOKEN: ${{ secrets.NOOKGRID_POSTHOG_CAPTURE_TOKEN }}
           HERENOW_API_KEY: ${{ secrets.HERENOW_API_KEY }}
           HERENOW_SLUG: ${{ vars.HERENOW_SLUG }}
           HERENOW_ACCOUNT: ${{ vars.HERENOW_ACCOUNT }}

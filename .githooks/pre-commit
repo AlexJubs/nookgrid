@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+if [ -x ./.local-tools/bin/npm ]; then
+  exec ./.local-tools/bin/npm run check:credentials -- --staged
+fi
+exec node scripts/check-credentials.mjs --staged

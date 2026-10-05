@@ -6,7 +6,7 @@ Serve only `public/`. Use `?test=1` for browser QA. Run `npm test` and relevant 
 
 For every feature or behavior change, add or update behavioral regression tests, or identify the existing named tests that cover it. Bug fixes should reproduce the failure before the fix. Run focused checks while iterating, then require the full exact-source web and iOS CI release gate. Record applicable visual and physical-device checks separately; automated passes do not prove every state is covered or bug-free.
 
-The public repository tracks reviewed game source, native iOS source, build helpers, tests, CI and public project guidance. Private operations files remain local. Publish only `main`; never push local history branches or all refs.
+The public repository tracks reviewed game source, native iOS source, build helpers, tests, CI and public project guidance. Private operations files remain local. Publish only `main`; never push local history branches or all refs. Run `npm run check:credentials -- --staged` before every commit and `npm run check:credentials -- --committed` before every push. Keep raw capture tokens out of source too; release helpers inject them from private configuration.
 
 ## Design
 

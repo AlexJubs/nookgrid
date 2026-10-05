@@ -2,8 +2,9 @@ import { build } from 'esbuild';
 import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import {releaseAnalyticsConfig} from './analytics-config.mjs';
 
-export async function buildIos({directory = 'dist/ios',production = false,ads = 'off',protection = null} = {}) {
+export async function buildIos({directory = 'dist/ios',production = false,ads = 'off',protection = null,captureToken = ''} = {}) {
   if (!['off','demo','live'].includes(ads)) throw new Error('Unknown ad mode.');
   if (ads === 'live' && !production) throw new Error('Live ads require a production build.');
   if (production && process.env.NOOKGRID_DEV_URL) throw new Error('Release builds cannot use a development server.');
@@ -33,9 +34,10 @@ export async function buildIos({directory = 'dist/ios',production = false,ads = 
     html = html.replace('id="feedback-unavailable" class="notice"','id="feedback-unavailable" class="feedback-email"');
     await writeFile(`${directory}/${file}`,html);
   }
-  const config = JSON.parse(await readFile(`${directory}/site-config.json`,'utf8'));
+  let config = JSON.parse(await readFile(`${directory}/site-config.json`,'utf8'));
+  if (production && ads !== 'demo') config = releaseAnalyticsConfig(config,captureToken);
   config.feedbackEnabled = false;
-  if (!production || ads === 'demo') config.analytics.enabled = false;
+  if (!production || ads === 'demo') config.analytics = {...config.analytics,enabled:false,projectToken:''};
   await writeFile(`${directory}/site-config.json`,JSON.stringify(config));
   await writeFile(`${directory}/ad-config.json`,JSON.stringify({mode:ads}));
   await writeFile(`${directory}/protection-config.json`,JSON.stringify(protection ? {enabled:true,...protection} : {enabled:false}));
@@ -45,5 +47,5 @@ export async function buildIos({directory = 'dist/ios',production = false,ads = 
 if (import.meta.url === pathToFileURL(resolve(process.argv[1] || '')).href) {
   const endpoint = process.env.NOOKGRID_STREAK_ENDPOINT, publicKey = process.env.NOOKGRID_STREAK_PUBLIC_KEY;
   if (Boolean(endpoint) !== Boolean(publicKey)) throw Error('Verification endpoint and public key must be configured together');
-  await buildIos({production:process.env.NOOKGRID_PRODUCTION === '1',ads:process.env.NOOKGRID_ADS || 'off',protection:endpoint ? {endpoint,publicKey} : null});
+  await buildIos({production:process.env.NOOKGRID_PRODUCTION === '1',ads:process.env.NOOKGRID_ADS || 'off',captureToken:process.env.NOOKGRID_POSTHOG_CAPTURE_TOKEN || '',protection:endpoint ? {endpoint,publicKey} : null});
 }
