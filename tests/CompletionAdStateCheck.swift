@@ -5,6 +5,7 @@ import Foundation
     static func main() {
         var state = CompletionAdState()
         assert(state.beginLoad() == nil)
+        state.setAdsAllowed(true)
         let first = state.beginConsent()!
         assert(state.beginConsent() == nil)
         state.invalidate()
@@ -37,6 +38,9 @@ import Foundation
         checkBannerLifecycle()
         checkBannerImpressions()
         checkBannerGeometry()
+        checkRevenue()
+        checkRevenueOpportunity()
+        checkPurchaseRaces()
         print("Ad state checks passed: duplicate work, consent invalidation, stale callbacks and recovery.")
     }
 
@@ -62,6 +66,8 @@ import Foundation
         assert(UUID(uuidString: first) != nil)
         assert(banner.recordPaid(response: "response-one") == first)
         assert(banner.recordPaid(response: "response-one") == nil)
+        assert(banner.recordPaidCallback(response: "response-one") == first)
+        assert(banner.recordPaidCallback(response: "response-one") == nil)
         assert(banner.opportunity(response: "response-one") == first)
         assert(banner.recordImpression(response: "response-one") == first)
         assert(banner.recordImpression(response: "response-one") == nil)
@@ -71,9 +77,61 @@ import Foundation
         let refreshed = banner.recordImpression(response: "response-two")!
         assert(refreshed != first)
         assert(banner.recordPaid(response: "response-two") == refreshed)
+        assert(banner.recordPaidCallback(response: "response-two") == refreshed)
         assert(banner.recordPaid(response: "response-two") == nil)
         _ = banner.show(context: "puzzle-two")
         assert(banner.opportunity(response: "response-two") != refreshed)
+    }
+
+    static func checkRevenue() {
+        let paid = AdRevenueMeasurement(value: NSDecimalNumber(string: "0.0001255"), currency: "USD", precision: "estimated")
+        assert(paid.status == .reported)
+        assert(paid.properties?["revenue_micros"] as? Int64 == 126)
+        assert(paid.properties?["currency"] as? String == "USD")
+        let zero = AdRevenueMeasurement(value: .zero, currency: "USD", precision: "precise")
+        assert(zero.status == .reported && zero.properties?["revenue_micros"] as? Int64 == 0)
+        let unknown = AdRevenueMeasurement(value: .zero, currency: "USD", precision: "unknown")
+        assert(unknown.status == .unavailable && unknown.properties == nil)
+        for value in [NSDecimalNumber.notANumber, NSDecimalNumber(string: "-0.0000001"), NSDecimalNumber(string: "1000001")] {
+            let invalid = AdRevenueMeasurement(value: value, currency: "USD", precision: "estimated")
+            assert(invalid.status == .invalid && invalid.properties == nil)
+        }
+        for currency in ["usd", "US", "private@example.com"] {
+            assert(AdRevenueMeasurement(value: .one, currency: currency, precision: "precise").status == .invalid)
+        }
+        assert(AdRevenueMeasurement(value: .one, currency: "USD", precision: "unrecognized").status == .invalid)
+    }
+
+    static func checkRevenueOpportunity() {
+        let loaded = AdRevenueOpportunity()
+        assert(loaded.identifier == nil)
+        loaded.bind("first-completion")
+        assert(loaded.identifier == "first-completion")
+        let nextLoaded = AdRevenueOpportunity()
+        assert(nextLoaded.identifier == nil)
+        nextLoaded.bind("next-completion")
+        loaded.bind("unexpected-rebind")
+        assert(loaded.identifier == "first-completion")
+        assert(nextLoaded.identifier == "next-completion")
+        // The handler retains its own context, so a late callback cannot join the next ad.
+    }
+
+    static func checkPurchaseRaces() {
+        var state = CompletionAdState()
+        assert(!state.allowsAds && state.beginLoad() == nil)
+        state.setAdsAllowed(true)
+        let consent = state.beginConsent()!
+        assert(state.finishConsent(consent, succeeded: true))
+        let prepared = state.beginLoad()!
+        state.setAdsAllowed(false) // A purchase, restore or unresolved entitlement suppresses ads first.
+        assert(!state.isCurrent(prepared) && !state.finishLoad(prepared))
+        assert(state.beginLoad() == nil)
+        state.setAdsAllowed(true) // Verified-free restoration can retry after the sheet closes.
+        let replacement = state.beginLoad()!
+        state.setAdsAllowed(true) // A routine verified-free refresh does not cancel its own request.
+        assert(state.isCurrent(replacement))
+        state.setAdsAllowed(false) // A verified purchase/update invalidates the in-flight response.
+        assert(!state.finishLoad(replacement) && state.beginLoad() == nil)
     }
 
     static func checkBannerGeometry() {

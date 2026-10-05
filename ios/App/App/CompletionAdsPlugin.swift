@@ -21,6 +21,10 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
     private var attempted = Set<String>()
     private var impressions = Set<String>()
     private var paid = Set<String>()
+    private var paidCallbacks = Set<String>()
+    private var loadedRevenueOpportunity: AdRevenueOpportunity?
+    private var adEntitlementAllowed: Bool { adState.allowsAds }
+    private var entitlementObservation: NSObjectProtocol?
 
     private var banner: BannerView?
     private var bannerState = BannerAdState()
@@ -35,9 +39,38 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
             guard let path = view.url?.path, !["", "/", "/index.html"].contains(path) else { return }
             self?.removeBanner()
         }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            entitlementObservation = NotificationCenter.default.addObserver(
+                forName: AdFreePurchaseStore.entitlementDidChange, object: nil, queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor in self?.updateEntitlement() }
+            }
+        }
     }
 
-    deinit { NotificationCenter.default.removeObserver(self) }
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+        if let entitlementObservation { NotificationCenter.default.removeObserver(entitlementObservation) }
+    }
+
+    @MainActor private func updateEntitlement() {
+        let previouslyAllowed = adEntitlementAllowed
+        adState.setAdsAllowed(AdFreePurchaseStore.shared.allowsAds)
+        if !adEntitlementAllowed {
+            removeBanner()
+            interstitial = nil
+            loadedRevenueOpportunity = nil
+        } else if !previouslyAllowed && adState.hasUpdatedConsent {
+            preload()
+        }
+    }
+
+    @MainActor private func verifyEntitlement() async -> Bool {
+        await AdFreePurchaseStore.shared.refreshEntitlement()
+        updateEntitlement()
+        return adEntitlementAllowed
+    }
 
     @objc func initialize(_ call: CAPPluginCall) {
         Task { @MainActor in
@@ -50,7 +83,10 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
                 interstitial = nil
                 call.resolve(["enabled": false, "privacyOptionsRequired": false]); return
             }
-            if adState.hasUpdatedConsent { preload(); call.resolve(state()); return }
+            if adState.hasUpdatedConsent {
+                guard await verifyEntitlement() else { call.resolve(state()); return }
+                preload(); call.resolve(state()); return
+            }
             guard
                   let url = Bundle.main.url(forResource: "ad-config", withExtension: "json", subdirectory: "public"),
                   let data = try? Data(contentsOf: url),
@@ -58,14 +94,13 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
                   let requestedMode = config["mode"], ["demo", "live"].contains(requestedMode) else {
                 call.resolve(["enabled": false, "privacyOptionsRequired": false]); return
             }
-            guard let current = adState.beginConsent() else { call.resolve(state()); return }
-            defer { adState.finishConsent(current, succeeded: false) }
+            let distributionGeneration = adState.generation
             if requestedMode == "live" {
                 #if DEBUG
                 call.resolve(["enabled": false, "privacyOptionsRequired": false]); return
                 #else
                 let result = try? await AppTransaction.shared
-                guard adState.isCurrent(current),
+                guard adState.isCurrent(distributionGeneration),
                       case .verified(let transaction) = result,
                       transaction.bundleID == Bundle.main.bundleIdentifier,
                       transaction.environment == .production else {
@@ -74,6 +109,8 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
                 #endif
             }
             mode = requestedMode
+            guard await verifyEntitlement(), let current = adState.beginConsent() else { call.resolve(state()); return }
+            defer { adState.finishConsent(current, succeeded: false) }
             let configuration = MobileAds.shared.requestConfiguration
             configuration.setPublisherFirstPartyIDEnabled(false)
             configuration.publisherPrivacyPersonalizationState = .disabled
@@ -94,28 +131,34 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
     }
 
     private func state() -> [String: Any] {
-        ["enabled": mode != "off", "privacyOptionsRequired": mode != "off" && ConsentInformation.shared.privacyOptionsRequirementStatus == .required]
+        ["enabled": mode != "off" && adEntitlementAllowed, "privacyOptionsRequired": mode != "off" && ConsentInformation.shared.privacyOptionsRequirementStatus == .required]
     }
 
     private func preload() {
-        guard mode != "off", adState.hasUpdatedConsent, ConsentInformation.shared.canRequestAds,
+        guard mode != "off", adEntitlementAllowed, adState.hasUpdatedConsent, ConsentInformation.shared.canRequestAds,
               UIApplication.shared.applicationState == .active, presentingAd == nil else { return }
         if interstitial != nil && Date().timeIntervalSince(loadedAt) < 3500 { return }
         interstitial = nil
         guard let current = adState.beginLoad() else { return }
         Task { @MainActor in
             defer { adState.finishLoad(current) }
-            guard mode != "off", adState.isCurrent(current) else { return }
+            guard mode != "off", await verifyEntitlement(), adState.isCurrent(current) else { return }
             guard await startSDK() else { return }
-            guard adState.isCurrent(current), adState.hasUpdatedConsent, ConsentInformation.shared.canRequestAds,
+            guard adState.isCurrent(current), AdFreePurchaseStore.shared.allowsAds, adEntitlementAllowed, adState.hasUpdatedConsent, ConsentInformation.shared.canRequestAds,
                   UIApplication.shared.applicationState == .active else { return }
             emit("request")
             let request = adRequest()
             let unit = mode == "demo" ? "ca-app-pub-3940256099942544/4411468910" : "ca-app-pub-8670243692600313/2433919115"
             do {
                 let ad = try await InterstitialAd.load(with: unit, request: request)
-                guard adState.isCurrent(current), adState.hasUpdatedConsent, ConsentInformation.shared.canRequestAds else { return }
+                guard adState.isCurrent(current), AdFreePurchaseStore.shared.allowsAds, adEntitlementAllowed, adState.hasUpdatedConsent, ConsentInformation.shared.canRequestAds else { return }
+                let revenueOpportunity = AdRevenueOpportunity()
+                ad.paidEventHandler = { [weak self] value in
+                    guard let identifier = revenueOpportunity.identifier else { return }
+                    self?.recordRevenue(value, opportunity: identifier)
+                }
                 interstitial = ad
+                loadedRevenueOpportunity = revenueOpportunity
                 loadedAt = Date()
                 ad.fullScreenContentDelegate = self
                 emit("load")
@@ -124,9 +167,10 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
     }
 
     @MainActor private func startSDK() async -> Bool {
+        guard await verifyEntitlement() else { return false }
         if sdkReady == nil {
             sdkReady = Task { @MainActor in
-                guard mode != "off", adState.hasUpdatedConsent, ConsentInformation.shared.canRequestAds,
+                guard mode != "off", AdFreePurchaseStore.shared.allowsAds, adEntitlementAllowed, adState.hasUpdatedConsent, ConsentInformation.shared.canRequestAds,
                       UIApplication.shared.applicationState == .active else {
                     sdkReady = nil; return false
                 }
@@ -150,7 +194,7 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
             guard call.getBool("visible") == true else {
                 hideBanner(); call.resolve(["visible": false]); return
             }
-            guard mode != "off", adState.hasUpdatedConsent, ConsentInformation.shared.canRequestAds,
+            guard mode != "off", await verifyEntitlement(), adState.hasUpdatedConsent, ConsentInformation.shared.canRequestAds,
                   UIApplication.shared.applicationState == .active, presentingAd == nil,
                   let bridge, bridge.config.serverURL == bridge.config.localURL,
                   let webView = bridge.webView, let page = webView.url,
@@ -199,7 +243,7 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
             guard let self, let view else { return }
             defer { if bannerState.isCurrent(token) { bannerLoad = nil } }
             guard await startSDK(), banner === view, bannerState.isCurrent(token), bannerState.isVisible,
-                  mode != "off", adState.hasUpdatedConsent, ConsentInformation.shared.canRequestAds,
+                  mode != "off", AdFreePurchaseStore.shared.allowsAds, adEntitlementAllowed, adState.hasUpdatedConsent, ConsentInformation.shared.canRequestAds,
                   UIApplication.shared.applicationState == .active, presentingAd == nil else { return }
             hasRequestedBanner = true
             emitBanner("request")
@@ -251,7 +295,7 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
     }
 
     func bannerViewDidDismissScreen(_ bannerView: BannerView) {
-        guard banner === bannerView, bannerState.isVisible, mode != "off", adState.hasUpdatedConsent,
+        guard banner === bannerView, bannerState.isVisible, mode != "off", adEntitlementAllowed, adState.hasUpdatedConsent,
               ConsentInformation.shared.canRequestAds, UIApplication.shared.applicationState == .active,
               presentingAd == nil, let webView = bridge?.webView,
               bridge?.viewController?.presentedViewController == nil else { return }
@@ -259,19 +303,24 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
         webView.addSubview(bannerView)
     }
 
-    private func emitBanner(_ outcome: String, opportunity: String? = nil) {
+    private func emitBanner(_ outcome: String, opportunity: String? = nil, revenueStatus: String? = nil) {
         guard let context = bannerState.context else { return }
         var event: [String: Any] = ["event": "ad_outcome", "outcome": outcome, "placement": "banner",
-                                    "ad_mode": mode, "banner_context_id": context]
+                                    "ad_mode": mode, "banner_context_id": context, "ad_measurement_version": 1]
         if let opportunity { event["ad_opportunity_id"] = opportunity }
+        if let revenueStatus { event["revenue_status"] = revenueStatus }
         notifyListeners("adEvent", data: event)
     }
 
     private func recordBannerRevenue(_ value: AdValue, view: BannerView) {
-        guard let response = responseKey(view), let context = bannerState.context,
-              var event = revenue(value), let identifier = bannerState.recordPaid(response: response) else { return }
+        guard let response = responseKey(view), let context = bannerState.context else { return }
+        let measurement = revenue(value)
+        if let identifier = bannerState.recordPaidCallback(response: response) {
+            emitBanner("paid_callback", opportunity: identifier, revenueStatus: measurement.status.rawValue)
+        }
+        guard var event = measurement.properties, let identifier = bannerState.recordPaid(response: response) else { return }
         event.merge(["event": "ad_revenue", "placement": "banner", "ad_mode": mode,
-                     "banner_context_id": context, "ad_opportunity_id": identifier]) { _, new in new }
+                     "banner_context_id": context, "ad_opportunity_id": identifier, "ad_measurement_version": 1]) { _, new in new }
         notifyListeners("adEvent", data: event)
     }
 
@@ -286,11 +335,12 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
                 call.resolve(["presented": false])
                 preload()
             }
+            guard mode != "off", await verifyEntitlement() else { skip("not_ready"); return }
             guard expiresAt >= Date().timeIntervalSince1970 * 1000,
                   expiresAt <= Date().timeIntervalSince1970 * 1000 + 1000,
                   UIApplication.shared.applicationState == .active else { skip("expired"); return }
-            guard mode != "off", adState.hasUpdatedConsent, ConsentInformation.shared.canRequestAds,
-                  let ad = interstitial, presentingAd == nil,
+            guard mode != "off", adEntitlementAllowed, adState.hasUpdatedConsent, ConsentInformation.shared.canRequestAds,
+                  let ad = interstitial, let revenueOpportunity = loadedRevenueOpportunity, presentingAd == nil,
                   let controller = bridge?.viewController, controller.presentedViewController == nil else { skip("not_ready"); return }
             guard Date().timeIntervalSince(loadedAt) < 3500 else {
                 interstitial = nil; skip("expired"); return
@@ -299,10 +349,11 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
             catch { interstitial = nil; skip("presentation_failed"); return }
             hideBanner()
             interstitial = nil
+            loadedRevenueOpportunity = nil
             presentingAd = ad
             presentation = call
             opportunity = identifier
-            ad.paidEventHandler = { [weak self] value in self?.recordRevenue(value, opportunity: identifier) }
+            revenueOpportunity.bind(identifier)
             ad.present(from: controller)
         }
     }
@@ -356,24 +407,26 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
         preload()
     }
 
-    private func emit(_ outcome: String, opportunity: String? = nil) {
-        var event: [String: Any] = ["event": "ad_outcome", "outcome": outcome, "placement": "completion", "ad_mode": mode]
+    private func emit(_ outcome: String, opportunity: String? = nil, revenueStatus: String? = nil) {
+        var event: [String: Any] = ["event": "ad_outcome", "outcome": outcome, "placement": "completion", "ad_mode": mode, "ad_measurement_version": 1]
         if let opportunity { event["ad_opportunity_id"] = opportunity }
+        if let revenueStatus { event["revenue_status"] = revenueStatus }
         notifyListeners("adEvent", data: event)
     }
 
     private func recordRevenue(_ value: AdValue, opportunity: String) {
-        guard !paid.contains(opportunity), var event = revenue(value) else { return }
+        let measurement = revenue(value)
+        if paidCallbacks.insert(opportunity).inserted {
+            emit("paid_callback", opportunity: opportunity, revenueStatus: measurement.status.rawValue)
+        }
+        guard !paid.contains(opportunity), var event = measurement.properties else { return }
         paid.insert(opportunity)
         event.merge(["event": "ad_revenue", "placement": "completion", "ad_mode": mode,
-                     "ad_opportunity_id": opportunity]) { _, new in new }
+                     "ad_opportunity_id": opportunity, "ad_measurement_version": 1]) { _, new in new }
         notifyListeners("adEvent", data: event)
     }
 
-    private func revenue(_ value: AdValue) -> [String: Any]? {
-        guard value.currencyCode.range(of: "^[A-Z]{3}$", options: .regularExpression) != nil else { return nil }
-        let micros = value.value.multiplying(byPowerOf10: 6).doubleValue.rounded()
-        guard micros.isFinite, micros >= 0, micros <= 1_000_000_000_000 else { return nil }
+    private func revenue(_ value: AdValue) -> AdRevenueMeasurement {
         let precision: String
         switch value.precision {
         case .estimated: precision = "estimated"
@@ -381,6 +434,6 @@ class CompletionAdsPlugin: CAPPlugin, CAPBridgedPlugin, FullScreenContentDelegat
         case .precise: precision = "precise"
         default: precision = "unknown"
         }
-        return ["revenue_micros": Int64(micros), "currency": value.currencyCode, "precision": precision]
+        return AdRevenueMeasurement(value: value.value, currency: value.currencyCode, precision: precision)
     }
 }

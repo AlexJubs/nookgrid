@@ -5,10 +5,12 @@ import { Share } from '@capacitor/share';
 import posthog from 'posthog-js/dist/module.no-external';
 import { createNativeStorage } from './storage.mjs';
 import { createStreakProtection } from './streak-protection.mjs';
+import { createAdFreePurchases } from '../public/ad-free-purchases.mjs';
 
 const AnalyticsMetadata = registerPlugin('AnalyticsMetadata');
 const CompletionAds = registerPlugin('CompletionAds');
 const Protection = registerPlugin('StreakProtection');
+const AdFreePurchases = registerPlugin('AdFreePurchases');
 
 window.nookgridReady = (async () => {
   if (!Capacitor.isNativePlatform()) return;
@@ -38,6 +40,12 @@ window.nookgridReady = (async () => {
     share:text => Share.share({title:'NookGrid',text,dialogTitle:'Share your result'}),
     onStateChange:listener => App.addListener('appStateChange',listener),
     getAnalyticsMetadata:() => AnalyticsMetadata.getMetadata(),
+    purchases:createAdFreePurchases({
+      getState:() => AdFreePurchases.getState({isTest:new URLSearchParams(location.search).get('test') === '1'}),
+      purchase:() => AdFreePurchases.purchase({isTest:new URLSearchParams(location.search).get('test') === '1'}),
+      restore:() => AdFreePurchases.restore({isTest:new URLSearchParams(location.search).get('test') === '1'}),
+      onChange:listener => AdFreePurchases.addListener('purchaseStateChanged',listener)
+    }),
     ads:__NOOKGRID_ADS__ === 'off' ? null : {
       mode:__NOOKGRID_ADS__,
       initialize:() => CompletionAds.initialize({isTest:new URLSearchParams(location.search).get('test') === '1'}),

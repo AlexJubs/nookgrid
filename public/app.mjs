@@ -6,6 +6,8 @@ import { native, savedValue, saveValue, saveValues } from './platform.mjs';
 import { updatePuzzleLinks } from './navigation.mjs?v=20260924-calendar2';
 import { getWeekDates, getCalendarMonths, renderCalendar } from './calendar.mjs?v=20260924-calendar3';
 import { createCompletionAds } from './completion-ads.mjs?v=20260928-ad-delay';
+import { nextPuzzleAvailability, dailyContinuation } from './return-loop.mjs';
+import { adFreePresentation } from './ad-free-purchases.mjs';
 
 const $ = id => document.getElementById(id);
 const renderIcon = (name, className = '') => `<svg class="ui-icon ${className}" width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260927-clues#${name}"/></svg>`;
@@ -28,6 +30,7 @@ let calendarMonths = [], calendarMonth;
 let viewedEntry = null, puzzleState = 'fresh', completionEvent = null;
 const completionAds = native?.ads ? createCompletionAds(native.ads) : null;
 const adSnapshots = new Map();
+let purchaseAllowsAds = !native?.purchases;
 let hasAds = false, pendingAd = null, resultOpportunity = null, isNativeActive = true;
 let bannerContext = null, bannerContextKey = null, bannerRequest = null;
 let bannerRequestVersion = 0, bannerPromise = Promise.resolve({visible:false});
@@ -35,7 +38,7 @@ let dialogRequest = 0, isOpeningDialog = false;
 
 function updateBanner() {
   if (!native?.ads?.setBanner || !puzzle) return;
-  const hasSlot = mode !== 'practice' && screen === 'puzzle' && !isSolved(puzzle,progress.board);
+  const hasSlot = purchaseAllowsAds && mode !== 'practice' && screen === 'puzzle' && !isSolved(puzzle,progress.board);
   $('gameplay-banner').hidden = !hasSlot;
   document.body.classList.toggle('has-gameplay-banner',hasSlot);
   const viewport = window.visualViewport;
@@ -125,6 +128,40 @@ $('ad-privacy-open').addEventListener('click',async () => {
   finally { $('ad-privacy-open').disabled = false; }
 });
 
+function renderAdFree(state) {
+  $('ad-free-settings').hidden = !native?.purchases;
+  if (!native?.purchases) return;
+  const presentation = adFreePresentation(state);
+  const previouslyAllowed = purchaseAllowsAds;
+  purchaseAllowsAds = state?.entitlement === 'free' && state?.operation === 'idle' && state?.owned !== true;
+  if (!purchaseAllowsAds) cancelCompletionAd();
+  updateBanner();
+  if (purchaseAllowsAds && !previouslyAllowed && puzzle && native?.ads) {
+    Promise.resolve().then(() => native.ads.initialize()).then(updateAdPrivacy).catch(() => {});
+  }
+  $('ad-free-settings').setAttribute('aria-busy',String(presentation.busy));
+  $('ad-free-status').textContent = presentation.statusText;
+  $('ad-free-purchase').textContent = presentation.purchaseLabel;
+  $('ad-free-purchase').disabled = !presentation.purchaseEnabled;
+  $('ad-free-restore').disabled = !presentation.restoreEnabled;
+}
+native?.purchases?.subscribe(renderAdFree);
+// Resolve entitlement without holding up the puzzle; StoreKit remains the authority.
+native?.purchases?.refresh();
+for (const [id,action] of [['ad-free-purchase','purchase'],['ad-free-restore','restore']]) {
+  $(id).addEventListener('click',async () => {
+    if (!native?.purchases) return;
+    const result = await native.purchases[action]();
+    const outcome = ['purchased','restored','already_owned','pending','cancelled','nothing_to_restore','error','unavailable'].includes(result?.outcome) ? result.outcome : 'unavailable';
+    track('purchase_outcome',{product:'ad_free',action,result:outcome});
+    if (action === 'purchase' && result?.owned === true && result.entitlement === 'ad_free' && outcome === 'purchased' &&
+        Number.isSafeInteger(result.purchaseRevenueMicros) && result.purchaseRevenueMicros >= 0 && result.purchaseRevenueMicros <= 1e12 &&
+        typeof result.purchaseCurrency === 'string' && /^[A-Z]{3}$/.test(result.purchaseCurrency)) {
+      track('purchase_revenue',{product:'ad_free',result:'purchased',revenue_basis:'gross',revenue_micros:result.purchaseRevenueMicros,currency:result.purchaseCurrency});
+    }
+  });
+}
+
 function read(key) {
   return savedValue(key);
 }
@@ -178,6 +215,7 @@ async function openDialog(id, opener) {
     if (id === 'calendar-dialog' && bank && puzzle) prepareCalendar();
     (isFromMenu ? $('menu-open') : opener).focus({preventScroll:true});
     $(id).showModal();
+    if (id === 'settings-dialog') native?.purchases?.refresh();
   } catch {}
   finally {
     if (request === dialogRequest) { isOpeningDialog = false; updateBanner(); }
@@ -243,6 +281,23 @@ for (const [id,offset] of [['calendar-previous',1],['calendar-next',-1]]) {
     if (hasFocus && $(id).disabled) $(offset === 1 ? 'calendar-next' : 'calendar-previous').focus({preventScroll:true});
   });
 }
+
+function todayContinuation() {
+  const daily = bank?.puzzles.find(item => item.date === today);
+  const saved = daily ? daily.date === puzzle.date ? progress : restoreProgress(read(`${progressPrefix}${today}`),ids,daily.solution) : null;
+  return dailyContinuation({available:Boolean(daily),solved:Boolean(saved && isSolved(daily,saved.board)),hasAttempt:Boolean(saved?.board.some(Boolean))});
+}
+
+for (const id of ['home-tutorial','help-tutorial','puzzle-tutorial','menu-tutorial']) {
+  $(id).addEventListener('click',() => {
+    updateReturnPrompt();
+    track('tutorial_entry',{control:id.replaceAll('-','_'),result:todayContinuation()?.state || 'unavailable'});
+  });
+}
+$('play-today').addEventListener('click',() => {
+  updateReturnPrompt();
+  track('tutorial_continue',{result:todayContinuation()?.state || 'unavailable'});
+});
 
 function renderHistory() {
   if (!native || !bank || !puzzle) return;
@@ -466,7 +521,7 @@ function applyBoard(board, message, action = 'place') {
   if (progress.hintedPlaces.some(id => board[puzzle.solution.indexOf(id)] !== id)) return false;
   const hasChanged = board.some((id,index) => id !== progress.board[index]);
   if (!hasChanged && action !== 'reset') return false;
-  const shouldOfferAd = hasAds && mode !== 'practice' && !progress.reported && ['place','hint'].includes(action) && isSolved(puzzle,board);
+  const shouldOfferAd = purchaseAllowsAds && hasAds && mode !== 'practice' && !progress.reported && ['place','hint'].includes(action) && isSolved(puzzle,board);
   if (hasChanged) {
     const previous = {board:[...progress.board],moves:progress.moves};
     if (action === 'reset') {
@@ -494,7 +549,7 @@ function applyBoard(board, message, action = 'place') {
       const {event_id,event_index,occurred_at,...properties} = snapshot;
       adSnapshots.set(opportunity,{properties:{...properties,puzzle_date:puzzle.date,puzzle_mode:mode,puzzle_version:bank.version,puzzle_state:puzzleState},epoch:analytics.epoch()});
     }
-    completionAds.complete({key:puzzle.date,opportunity,saved,isCurrent:() => pendingAd === opportunity && isNativeActive && !document.hidden && screen === 'result' && !document.querySelector('dialog[open]')}).finally(() => {
+    completionAds.complete({key:puzzle.date,opportunity,saved,isCurrent:() => purchaseAllowsAds && pendingAd === opportunity && isNativeActive && !document.hidden && screen === 'result' && !document.querySelector('dialog[open]')}).finally(() => {
       if (pendingAd !== opportunity) return;
       pendingAd = null;
       renderScreen();
@@ -661,11 +716,24 @@ function updateReturnPrompt() {
     if ($('calendar-dialog').open) prepareCalendar(false);
   }
   $('new-day').hidden = currentDay === openedDay || isToday || !hasToday || mode === 'practice';
-  $('play-today').hidden = mode !== 'practice' || !hasToday;
+  const continuation = todayContinuation();
+  $('play-today').hidden = mode !== 'practice' || !continuation;
+  if (continuation) {
+    $('play-today-label').textContent = continuation.label;
+    $('play-today').querySelector('use').setAttribute('href',`./icons.svg?v=20260925-results#${continuation.icon}`);
+  }
+  const availability = nextPuzzleAvailability(now,bank.puzzles.map(item => item.date));
+  const todayComplete = continuation?.state === 'replay';
+  $('home-return').hidden = !native || !todayComplete || !availability;
+  $('result-return').hidden = Boolean(native) || mode === 'practice' || !isToday || !isSolved(puzzle,progress.board) || !availability;
+  for (const id of ['home-return','result-return']) $(id).textContent = availability?.label || '';
   $('play-today').href = `?date=${currentDay}${testMode ? '&test=1' : ''}`;
   $('new-day').querySelector('a').href = $('play-today').href;
   $('next-puzzle').hidden = !native || !isToday || !hasTomorrow;
-  if (isToday && hasTomorrow) $('next-puzzle-time').textContent = nextPuzzleCountdown(now);
+  if (isToday && hasTomorrow) {
+    $('next-puzzle-time').textContent = nextPuzzleCountdown(now);
+    $('next-puzzle-time').setAttribute('aria-description',availability?.label || '');
+  }
   const streak = streakLength(streakDays,currentDay);
   $('daily-streak-label').textContent = `${streak} day streak`;
   $('daily-streak').hidden = !native || streak === 0 || !isToday;

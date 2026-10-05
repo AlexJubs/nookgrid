@@ -62,11 +62,11 @@ test('ad outcomes and paid events preserve bounded opportunity data without ad i
   for (const outcome of ['consent_unavailable','request','load','no_fill','load_failed','not_ready','expired','presentation_failed','impression','dismissal','result_visible']) {
     assert.deepEqual(sanitizeEvent({event:'ad_outcome',properties:{...opportunity,outcome,response_id:'private',advertising_id:'private'}}).properties,{...opportunity,outcome,$geoip_disable:true});
   }
-  for (const precision of ['unknown','estimated','publisher_provided','precise']) {
+  for (const precision of ['estimated','publisher_provided','precise']) {
     assert.deepEqual(sanitizeEvent({event:'ad_revenue',properties:{...opportunity,ad_mode:'live',revenue_micros:12500,currency:'USD',precision}}).properties,{...opportunity,ad_mode:'live',revenue_micros:12500,currency:'USD',precision,$geoip_disable:true});
   }
-  for (const revenue_micros of [0,1e12]) assert.equal(sanitizeEvent({event:'ad_revenue',properties:{revenue_micros}}).properties.revenue_micros,revenue_micros);
-  for (const revenue_micros of [-1,0.1,1e12 + 1,Infinity,'12500']) assert.deepEqual(sanitizeEvent({event:'ad_revenue',properties:{revenue_micros}}).properties,{$geoip_disable:true});
+  for (const revenue_micros of [0,1e12]) assert.equal(sanitizeEvent({event:'ad_revenue',properties:{revenue_micros,currency:'USD',precision:'precise'}}).properties.revenue_micros,revenue_micros);
+  for (const revenue_micros of [-1,0.1,1e12 + 1,Infinity,'12500']) assert.equal(sanitizeEvent({event:'ad_revenue',properties:{revenue_micros,currency:'USD',precision:'precise'}}),null);
   assert.deepEqual(sanitizeEvent({event:'ad_outcome',properties:{ad_opportunity_id:'private',placement:'private',ad_mode:'private',outcome:'private',currency:'usd',precision:'private'}}).properties,{$geoip_disable:true});
 });
 
@@ -74,5 +74,48 @@ test('banner impressions and paid callbacks retain their own opportunity without
   const properties = {ad_opportunity_id:'a13b1b56-4be8-4e72-b0ef-a19c72e0cafa',placement:'banner',ad_mode:'live'};
   for (const [event,values] of [['ad_outcome',{outcome:'impression'}],['ad_revenue',{revenue_micros:1500,currency:'USD',precision:'estimated'}]]) {
     assert.deepEqual(sanitizeEvent({event,properties:{...properties,...values,banner_context_id:'private',response_id:'private',ad_unit_id:'private'}}).properties,{...properties,...values,$geoip_disable:true});
+  }
+});
+
+test('missing or unknown paid values cannot become reported revenue', () => {
+  const properties = {ad_opportunity_id:'a13b1b56-4be8-4e72-b0ef-a19c72e0cafa',placement:'completion',ad_mode:'live',revenue_micros:125,currency:'USD',precision:'estimated'};
+  for (const key of ['revenue_micros','currency','precision']) {
+    const incomplete = {...properties};
+    delete incomplete[key];
+    assert.equal(sanitizeEvent({event:'ad_revenue',properties:incomplete}),null);
+  }
+  for (const changed of [{revenue_micros:-1},{revenue_micros:0.1},{currency:'usd'},{precision:'unknown'}]) {
+    assert.equal(sanitizeEvent({event:'ad_revenue',properties:{...properties,...changed}}),null);
+  }
+  assert.equal(sanitizeEvent({event:'ad_revenue',properties:{...properties,revenue_micros:0,precision:'precise'}}).properties.revenue_micros,0);
+});
+
+test('paid callback diagnostics explain unavailable revenue without inventing an amount', () => {
+  for (const revenue_status of ['reported','unavailable','invalid']) {
+    assert.deepEqual(sanitizeEvent({event:'ad_outcome',properties:{outcome:'paid_callback',revenue_status,ad_unit_id:'private'}}).properties,{outcome:'paid_callback',revenue_status,$geoip_disable:true});
+  }
+  assert.equal('revenue_status' in sanitizeEvent({event:'ad_outcome',properties:{revenue_status:'private'}}).properties,false);
+});
+
+test('bounded acquisition and tutorial funnel labels survive without arbitrary campaign data', () => {
+  for (const utm_content of ['gameplay_hook','daily_hook']) {
+    assert.deepEqual(sanitizeEvent({event:'app_entry',properties:{utm_source:'reddit',utm_medium:'paid_social',utm_campaign:'cac_test2',utm_content,ct:'private',advertising_id:'private'}}).properties,{utm_source:'reddit',utm_medium:'paid_social',utm_campaign:'cac_test2',utm_content,$geoip_disable:true});
+  }
+  for (const event of ['tutorial_entry','tutorial_continue']) {
+    assert.deepEqual(sanitizeEvent({event,properties:{control:'home_tutorial',result:'resumed',utm_campaign:'arbitrary_private'}}).properties,{control:'home_tutorial',result:'resumed',$geoip_disable:true});
+  }
+});
+
+test('purchase value is gross verified purchase data; restoring or missing money cannot become revenue', () => {
+  const properties = {product:'ad_free',result:'purchased',revenue_basis:'gross',revenue_micros:2990000,currency:'USD'};
+  assert.deepEqual(sanitizeEvent({event:'purchase_revenue',properties:{...properties,transaction_id:'private',app_account_token:'private',displayPrice:'$2.99'}}).properties,{...properties,$geoip_disable:true});
+  for (const result of ['restored','already_owned','pending','cancelled','nothing_to_restore','error','unavailable']) {
+    assert.equal(sanitizeEvent({event:'purchase_revenue',properties:{...properties,result}}),null);
+    assert.deepEqual(sanitizeEvent({event:'purchase_outcome',properties:{product:'ad_free',result,receipt:'private'}}).properties,{product:'ad_free',result,$geoip_disable:true});
+  }
+  assert.equal(sanitizeEvent({event:'purchase_outcome',properties:{product:'ad_free',result:'arbitrary_private'}}),null);
+  for (const key of ['revenue_micros','currency','revenue_basis','product']) {
+    const missing = {...properties}; delete missing[key];
+    assert.equal(sanitizeEvent({event:'purchase_revenue',properties:missing}),null);
   }
 });

@@ -1,0 +1,47 @@
+# NookGrid acquisition and payback
+
+Paid acquisition is a bounded experiment until verified cohort revenue covers its acquisition cost with a margin. A passing test suite, cheap click or successful puzzle completion is not a profitable campaign. The reporting helper is read-only and never changes campaigns or spends money.
+
+## Measurement contract
+
+Use `scripts/acquisition-economics.mjs` with a private aggregate JSON file. Keep provider reports, campaign account details, cohort queries, transaction records and filled inputs outside source control. Use net purchase proceeds after fees and refunds; avoid counting a StoreKit transaction and Apple's proceeds report as two purchases. Convert earnings to USD using a recorded rate before combining currencies. Deduplicate paid callbacks and purchases, exclude development/simulator/TestFlight/test mode, and respect Play analytics consent.
+
+`spendWindow`, `installWindow` and `revenueCohort` each contain `cohortId`, `start` and exclusive `end`. These describe the **same acquisition cohort selection interval**, with explicit ISO timestamps and timezone offsets. The ID must identify the campaign/creative, platform, geography and first-time acquisition definition. Do not join organic installs, redownloads, owner devices or all-app revenue to paid campaign spend merely because dates match. Missing or mismatched attribution keeps paid ratios unavailable.
+
+Revenue arrives after acquisition. `revenueCohort.observedThrough` is the separate, actual revenue cutoff. It may be weeks after the acquisition interval; it must be no earlier than the cohort end and no later than the report's current time. Supply `revenueCohort.latestFirstTimeInstallAt` from the verified cohort's latest first-time download, including downloads attributed after campaign delivery ends. Minimum observation age is derived conservatively from the later of this timestamp and the acquisition interval's end, so the youngest cohort member must have completed the chosen `paybackDays`. Missing install-date coverage keeps qualification unavailable. An input `observationDays` cannot override this calculation.
+
+For payback qualification, `revenueCohort.includedInstallAgeDays` must equal `paybackDays` and `fixedInstallAgeRevenueVerified` must be true. That attestation means each install contributes only earnings within the chosen number of days after its installation. An old install's later earnings cannot inflate a D30 comparison. Mixed-age observed revenue can be reported, but cannot establish a payback ceiling or scaling qualification. Use complete, mature D7 and D30 cohorts before making retention comparisons. Missing identities, privacy thresholds and opt-outs must stay visible limitations, not become zero activity.
+
+The report returns cost per **attributed first-time install** (CPI), observed net revenue per install and the observed revenue/spend multiple. It deliberately leaves lifetime value unavailable. Paying-customer CAC requires a separately verified payer cohort; this helper does not derive it from install counts. The target CPI ceiling is observed fixed-age net revenue per install divided by a chosen revenue-to-cost target greater than one. A target of 1.5 is an experiment policy, not an inferred market benchmark.
+
+To run:
+
+```sh
+node scripts/acquisition-economics.mjs path/to/private-cohort.json
+```
+
+The input also needs nonnegative `spendUSD`, `adRevenueUSD`, `netPurchaseRevenueUSD`, `variableCostsUSD`, `additionalSpendLimitUSD`, a whole `attributedFirstTimeInstalls`, positive `paybackDays`, and verification booleans: `acquisitionAttributionVerified`, `revenueAttributionVerified`, `instrumentationVerified`, `releaseVerified`, `campaignLinksVerified`. The default revenue-to-cost target is 1.5; an optional `revenueToCostTarget` must exceed one.
+
+`keep_paused` means instrumentation, release, campaign links or an explicit additional budget is missing. `capped_research_only` permits consideration of a bounded experiment only; it never asserts profitability. `eligible_for_review` requires all those prerequisites plus a verified, mature fixed-age cohort meeting the margin. None of the outputs authorizes a new charge. No additional spend is authorized by a sample input, and a returned budget is not an implemented Reddit cap.
+
+## Campaign links and attribution limits
+
+Obtain the app's real provider token from App Store Connect and supply it to `appStoreCampaignLink({appId, providerToken, campaign})`. Never invent a provider token or call a plain App Store URL an attributed campaign link. Keep one campaign token per creative and separate tokens for organic destinations. When evaluating the measurement label `cac_test2`, keep paid creative labels `gameplay_hook` and `daily_hook` distinct in the provider reports.
+
+Apple counts a first-time download within 24 hours of a campaign link and credits the latest clicked link. Attribute delayed downloads to the corresponding acquisition selection cohort; do not discard them solely because the installation occurred after a spend interval. Apple may withhold low-volume campaign data: campaigns appear after at least 24 hours and metrics need the stated visibility threshold. Missing campaign rows cannot establish zero installs or a revenue denominator. Apple aggregate campaign reporting does not by itself establish a privacy-safe per-install join to PostHog. Do not manufacture one or silently introduce an MMP, fingerprinting, IDFA or an ATT flow. [Apple campaign links](https://developer.apple.com/help/app-store-connect-analytics/acquisition/campaign-links).
+
+## Creative and experiment plan
+
+Use actual gameplay captured from isolated `?test=1` previews, with external requests blocked. Name the brain game, show the board and a meaningful move immediately, and keep the headline concise. Hypotheses: (1) placing the neighborhood attracts players who enjoy deduction, (2) a daily puzzle attracts returning players. Keep placement, geography, destination, price messaging and approved total budget comparable when evaluating creative. A campaign budget optimizer may deliver unequally, so it is not a balanced randomized comparison. Do not split a small budget into many audiences or declare a winner from a few clicks. [Reddit creative guidance](https://www.business.reddit.com/copy-creative-best-practices).
+
+Before any paid restart, verify the published source, callback-derived ad revenue, localized purchase information, genuine campaign links, approved total research budget, a provider-enforced lifetime campaign cap and an end date. Record actual existing spend before setting any cap; a new cap is not a retroactive refund. A daily budget renews and cannot substitute for a lifetime ceiling. The live account must be inspected for the applicable campaign objective and supported measurement before using App Promotion. Do not install a paid attribution service merely to enable a draft experiment.
+
+Review spending at the chosen checkpoints; stop delivery if tracking fails or the cap is reached. Evaluate first-time downloads, first-puzzle completion, eligible D1/D7/D30 return rates, fixed-age net earnings and CPI with their data coverage. CTR and CPC diagnose creative and traffic, not payback. After delivery ends, wait for revenue and the youngest installs to mature before deciding on a restart or larger budget.
+
+## Organic distribution and the store page
+
+Keep the free core game clear and disclose being the creator in organic promotional posts. Lead with the playable mechanic, then an App Store link and a specific question about play. Use a spoiler-free result share instead of publishing today's solved board. No cognitive, medical or health claims. Price an optional ad-free upgrade only after the product is approved, shipped and its localized price verified; a planned price is not an available offer.
+
+Check the destination's current rules and the account's posting eligibility before any post. `r/puzzles` permits app self-promotion in its current Promo Weekly thread, not ordinary puzzle submissions; its rules also restrict active daily puzzles and require spoiler tags for answers. `r/iosgaming` permits developer promotion only in the current Saturday megathread, using its stated US Eastern time window, with account age/karma requirements. `r/IndieGaming` requires account age, posting history, submission frequency and its linked wiki guidance to be checked. An allowed category is not proof this account may post there. Never mass-post or send mod messages without owner authorization. Rules were consulted October 5, 2026 and must be checked again before posting. [r/puzzles rules](https://www.reddit.com/r/puzzles/about/rules.json), [r/iosgaming rules](https://www.reddit.com/r/iosgaming/about/rules.json), [r/IndieGaming rules](https://www.reddit.com/r/IndieGaming/about/rules.json).
+
+App Store drafts should show the puzzle before supporting Home/result screens, with real gameplay and concise copy. A phone-size browser capture with the native development bridge is a review draft, not physical-device verification. Re-capture the exact signed release on the intended Apple devices before upload; confirm Apple's current required screenshot dimensions, accessibility and actual feature availability. [Apple screenshot requirements](https://developer.apple.com/help/app-store-connect/manage-app-information/upload-app-previews-and-screenshots).

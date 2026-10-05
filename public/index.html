@@ -49,7 +49,7 @@
     <div id="load-error" class="empty-state" role="alert" hidden><h2>Couldn't load the puzzle</h2><p>Please try again.</p><a class="primary inline-button" href="" data-track="index-a-5">Try again</a></div>
     <noscript><p class="notice">NookGrid needs JavaScript to play. Enable it, then reload this page.</p></noscript>
     <section class="home-screen" id="home" aria-label="NookGrid home" hidden>
-      <div class="home-intro"><h2 class="home-title">Your daily brain game</h2><p id="home-date"></p></div>
+      <div class="home-intro"><h2 class="home-title">Your daily brain game</h2><p id="home-date"></p><p id="home-return" class="return-note" hidden></p></div>
       <div class="home-progress">
         <div class="home-streak"><svg class="ui-icon" width="64" height="64" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-streak#lightning"/></svg><strong class="streak-number" id="home-streak-count">0</strong><span class="streak-label">day streak</span></div>
         <p id="home-streak-status" class="settings-note" role="status" hidden></p>
@@ -83,9 +83,10 @@
             <div><h2 id="completion-title">Neighborhood complete</h2><div class="completion-meta"><p id="daily-streak" class="streak-summary" hidden><svg class="ui-icon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-streak#lightning"/></svg><span id="daily-streak-label"></span></p><p id="completion-time" hidden></p><p id="completion-detail">Plan complete.</p></div></div>
             <div class="result-history"><div class="week-heading"><span>This week</span></div><div class="week-strip" id="result-week" aria-label="This week's puzzles"></div></div>
             <div id="next-puzzle" hidden><span>Next puzzle in</span><strong id="next-puzzle-time" role="timer" aria-live="off">00:00:00</strong></div>
+            <p id="result-return" class="return-note" hidden></p>
             <div class="completion-actions screen-actions">
               <button class="primary" id="share"><svg class="ui-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-results#share"/></svg><span>Share result</span></button>
-              <a class="primary inline-button" id="play-today" href="./" hidden><svg class="ui-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-results#play-circle"/></svg><span>Play today's puzzle</span></a>
+              <a class="primary inline-button" id="play-today" href="./" hidden><svg class="ui-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-results#play-circle"/></svg><span id="play-today-label">Play today's puzzle</span></a>
               <button class="secondary" id="view-solved"><svg class="ui-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-results#eye"/></svg><span>View solved puzzle</span></button>
               <button id="result-calendar-open" class="secondary calendar-button" aria-haspopup="dialog" aria-controls="calendar-dialog"><svg class="ui-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260924-calendar2#calendar-blank"/></svg><span>All puzzles</span></button>
             </div>
@@ -156,6 +157,14 @@
       <p id="analytics-description">Help improve the puzzles by measuring visits, moves and results without saving a tracking ID.</p>
       <p id="privacy-signal" role="status"></p>
     </div>
+    <section id="ad-free-settings" class="settings-section" aria-labelledby="ad-free-title" hidden>
+      <h3 id="ad-free-title">Ad-free play</h3>
+      <p id="ad-free-status" role="status">Ad-free play is unavailable right now. Daily puzzles are still free.</p>
+      <div class="settings-purchase-actions">
+        <button id="ad-free-purchase" class="secondary" type="button" disabled>Ad-free play unavailable</button>
+        <button id="ad-free-restore" class="secondary" type="button" disabled>Restore purchases</button>
+      </div>
+    </section>
     <button id="ad-privacy-open" class="secondary" hidden>Ad privacy choices</button>
     <p id="ad-privacy-status" role="status" hidden></p>
     <p id="streak-protection-status" class="settings-note" role="status" hidden></p>

@@ -55,6 +55,7 @@ class GameViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(AnalyticsMetadataPlugin())
         bridge?.registerPluginInstance(StreakProtectionPlugin())
         bridge?.registerPluginInstance(CompletionAdsPlugin())
+        bridge?.registerPluginInstance(AdFreePurchasesPlugin())
         guard let content = webView?.configuration.userContentController else { preconditionFailure("Missing game web view") }
         let launch = WKUserScript(source: "Object.defineProperty(window, 'nookgridLaunchId', {value:'\(UUID().uuidString)'})", injectionTime: .atDocumentStart, forMainFrameOnly: true)
         content.addUserScript(launch)

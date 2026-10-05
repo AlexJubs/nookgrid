@@ -1,0 +1,25 @@
+{
+  "identifier": "73A63674-64D1-4420-A545-D849A6D63F21",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "9.99",
+      "familyShareable": false,
+      "internalID": "1000000001",
+      "localizations": [
+        {"description": "Remove ads with one purchase. Daily puzzles stay free.", "displayName": "Ad-free play", "locale": "en_US"}
+      ],
+      "productID": "com.nookgrid.app.adfree",
+      "referenceName": "NookGrid Ad-free",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {
+    "_askToBuyEnabled": false,
+    "_failTransactionsEnabled": false,
+    "_locale": "en_US",
+    "_storefront": "USA"
+  },
+  "subscriptionGroups": [],
+  "version": {"major": 3, "minor": 0}
+}

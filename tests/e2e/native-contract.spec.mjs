@@ -447,6 +447,39 @@ test('ad callbacks keep completion context and cannot cross an analytics opt-out
   expect(await page.evaluate(() => window.captured.filter(item => item.event === 'ad_revenue').length)).toBe(1);
 });
 
+test('paid callback telemetry distinguishes unknown values and deduplicates revenue per banner impression',async ({page}) => {
+  await page.clock.install({time:new Date('2026-09-17T12:00:00Z')});
+  await page.addInitScript(() => {
+    window.nookgridNative.ads = {
+      mode:'demo',initialize:async () => ({enabled:true}),onEvent:async listener => { window.adEvent = listener; },
+      setBanner:async options => { if (options.visible) window.bannerContext = options.context; return {visible:options.visible}; },
+      cancel:async () => ({presenting:false}),present:async () => ({presented:false})
+    };
+  });
+  await page.goto('/');
+  await enterGame(page);
+  await expect.poll(() => page.evaluate(() => typeof window.bannerContext)).toBe('string');
+  await page.evaluate(() => {
+    const base = {placement:'banner',ad_mode:'demo',banner_context_id:window.bannerContext,ad_measurement_version:1};
+    for (const [revenue_status,amount,precision] of [['unavailable',0,'unknown'],['invalid',-1,'estimated'],['reported',125,'estimated'],['reported',0,'precise']]) {
+      const properties = {...base,ad_opportunity_id:crypto.randomUUID()};
+      window.adEvent({event:'ad_outcome',outcome:'paid_callback',revenue_status,...properties});
+      for (let count = 0; count < 2; count++) {
+        window.adEvent({event:'ad_revenue',revenue_micros:amount,currency:'USD',precision,response_id:'private',...properties});
+      }
+    }
+    window.adEvent({event:'ad_revenue',currency:'USD',precision:'precise',...base,ad_opportunity_id:crypto.randomUUID()});
+  });
+  const events = await page.evaluate(() => window.captured.filter(item => ['ad_revenue','ad_outcome'].includes(item.event)));
+  expect(events.filter(item => item.event === 'ad_outcome').map(item => item.properties.revenue_status)).toEqual(['unavailable','invalid','reported','reported']);
+  expect(events.filter(item => item.event === 'ad_revenue').map(item => item.properties.revenue_micros)).toEqual([125,0]);
+  expect(events.every(item => item.properties.ad_measurement_version === 1)).toBe(true);
+  expect(events.every(item => !Object.hasOwn(item.properties,'response_id'))).toBe(true);
+  await setAnalytics(page,false);
+  await page.evaluate(() => window.adEvent({event:'ad_outcome',outcome:'paid_callback',revenue_status:'reported',placement:'banner',banner_context_id:window.bannerContext,ad_opportunity_id:crypto.randomUUID()}));
+  expect(await page.evaluate(() => window.captured.filter(item => ['ad_revenue','ad_outcome'].includes(item.event)).length)).toBe(events.length);
+});
+
 test('a cancelled opportunity records visible results only after the covering dialog closes',async ({page}) => {
   await page.clock.install({time:new Date('2026-09-17T12:00:00Z')});
   await page.addInitScript(solution => {

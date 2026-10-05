@@ -1,9 +1,9 @@
 import { native, savedValue, saveValue } from './platform.mjs';
 
-const EVENTS = new Set(['app_entry','$pageview','engagement','puzzle_view','puzzle_start','puzzle_complete','hint_used','board_move','board_undo','board_reset','share_result','feedback_result','app_error','ui_click','control_change','drag_result','ad_outcome','ad_revenue']);
+const EVENTS = new Set(['app_entry','$pageview','engagement','puzzle_view','puzzle_start','puzzle_complete','tutorial_entry','tutorial_continue','hint_used','board_move','board_undo','board_reset','share_result','feedback_result','app_error','ui_click','control_change','drag_result','ad_outcome','ad_revenue','purchase_outcome','purchase_revenue']);
 const LABELS = new Set(['action','control','result']);
 const DISTRIBUTION_REASONS = new Set(['verified_production','verified_sandbox','verified_xcode','debug','unverified','bundle_mismatch','unsupported_environment','storekit_network_error','storekit_system_error','storekit_error','metadata_timeout','metadata_unavailable','bridge_error']);
-const CAMPAIGNS = {utm_source:['listdle','playlin','itch','share','playtest','dlelist','goldles','slowden','reddit','twitter','dledirectory','dailydles','dailydle','puzzled','twelvegames','wordfinder','dles','puzzlerzone','bontegames','puzzleprime','freegameplanet'],utm_medium:['directory','community','result','usability','paid_social','editorial'],utm_campaign:['launch14','daily','paid_test1'],utm_content:['clarity','puzzles','playmygame','aigamedev','devlog','park_hook','game_page','get_feedback','jam_request','embed_feedback','wpg_trial','result_card','listing']};
+const CAMPAIGNS = {utm_source:['listdle','playlin','itch','share','playtest','dlelist','goldles','slowden','reddit','twitter','dledirectory','dailydles','dailydle','puzzled','twelvegames','wordfinder','dles','puzzlerzone','bontegames','puzzleprime','freegameplanet'],utm_medium:['directory','community','result','usability','paid_social','editorial'],utm_campaign:['launch14','daily','paid_test1','cac_test2'],utm_content:['clarity','puzzles','playmygame','aigamedev','devlog','park_hook','game_page','get_feedback','jam_request','embed_feedback','wpg_trial','result_card','listing','gameplay_hook','daily_hook']};
 const COUNTS = new Set(['moves','hints','puzzle_version','active_ms','visible_ms','active_ms_this_page','elapsed_active_ms','analytics_version']);
 const SDK_STRINGS = new Set(['token','distinct_id','$device_id','$session_id','$window_id','$pageview_id','$lib','$lib_version']);
 const URLS = new Set(['$current_url','$session_entry_url','$initial_current_url']);
@@ -13,6 +13,7 @@ const label = value => typeof value === 'string' && /^[a-zA-Z0-9_.-]{1,80}$/.tes
 const host = value => typeof value === 'string' && /^(?:[a-z0-9-]+\.)*[a-z0-9-]+$/i.test(value) && value.length <= 253;
 const uuid = value => typeof value === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value);
 const ENTRY_KEY = 'nookgrid:analytics-entry';
+const PURCHASE_RESULTS = new Set(['purchased','restored','already_owned','pending','cancelled','nothing_to_restore','error','unavailable']);
 
 export function nextAppEntry(previous, launchId, at = Date.now()) {
   const sameLaunch = uuid(launchId) && previous?.launch_id === launchId;
@@ -43,7 +44,11 @@ function safeProperties(properties = {}) {
     else if (key === 'platform' && value === 'ios') clean[key] = value;
     else if (key === 'distribution_channel' && ['app_store','sandbox','development','unknown'].includes(value)) clean[key] = value;
     else if (key === 'distribution_reason' && DISTRIBUTION_REASONS.has(value)) clean[key] = value;
-    else if (key === 'outcome' && ['consent_unavailable','request','load','no_fill','load_failed','not_ready','expired','presentation_failed','impression','dismissal','result_visible'].includes(value)) clean[key] = value;
+    else if (key === 'outcome' && ['consent_unavailable','request','load','no_fill','load_failed','not_ready','expired','presentation_failed','impression','paid_callback','dismissal','result_visible'].includes(value)) clean[key] = value;
+    else if (key === 'revenue_status' && ['reported','unavailable','invalid'].includes(value)) clean[key] = value;
+    else if (key === 'ad_measurement_version' && value === 1) clean[key] = value;
+    else if (key === 'product' && value === 'ad_free') clean[key] = value;
+    else if (key === 'revenue_basis' && value === 'gross') clean[key] = value;
     else if (key === 'placement' && ['completion','banner'].includes(value)) clean[key] = value;
     else if (key === 'ad_mode' && ['demo','live'].includes(value)) clean[key] = value;
     else if (key === 'revenue_micros' && Number.isSafeInteger(value) && value >= 0 && value <= 1e12) clean[key] = value;
@@ -70,6 +75,9 @@ function safeProperties(properties = {}) {
 export function sanitizeEvent(event) {
   if (!event || !EVENTS.has(event.event)) return null;
   const clean = {event:event.event,properties:{...safeProperties(event.properties),$geoip_disable:true}};
+  if (event.event === 'ad_revenue' && !reportedRevenue(clean.properties)) return null;
+  if (event.event === 'purchase_revenue' && !reportedPurchaseRevenue(clean.properties)) return null;
+  if (event.event === 'purchase_outcome' && !reportedPurchaseOutcome(clean.properties)) return null;
   if (event.properties?.$cookieless_mode === true) {
     clean.properties.$cookieless_mode = true;
     clean.properties.distinct_id = '$posthog_cookieless';
@@ -82,6 +90,23 @@ export function sanitizeEvent(event) {
   if (event.timestamp instanceof Date && Number.isFinite(event.timestamp.getTime())) clean.timestamp = event.timestamp;
   else if (typeof event.timestamp === 'string' && /^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(event.timestamp)) clean.timestamp = event.timestamp;
   return clean;
+}
+
+function reportedRevenue(properties) {
+  return reportedMoney(properties) && ['estimated','publisher_provided','precise'].includes(properties.precision);
+}
+
+function reportedMoney(properties) {
+  return Number.isSafeInteger(properties.revenue_micros) && properties.revenue_micros >= 0 && properties.revenue_micros <= 1e12 &&
+    typeof properties.currency === 'string' && /^[A-Z]{3}$/.test(properties.currency);
+}
+
+function reportedPurchaseRevenue(properties) {
+  return reportedMoney(properties) && properties.product === 'ad_free' && properties.revenue_basis === 'gross' && properties.result === 'purchased';
+}
+
+function reportedPurchaseOutcome(properties) {
+  return properties.product === 'ad_free' && PURCHASE_RESULTS.has(properties.result);
 }
 
 export function sessionSource(href, referrer, previous, at, pageEntry = true) {
@@ -133,6 +158,7 @@ export function createAnalytics({testMode = false} = {}) {
   let available = false;
   let appMetadata = native ? {distribution_channel:'unknown'} : {};
   let entry = null, shouldReportEntry = false, hasEntryListener = false;
+  const reportedAdRevenue = new Set();
   const permitted = () => available && choice !== 'no' && !testMode && !privacy();
   const sample = () => clock.sample(performance.now());
 
@@ -205,6 +231,14 @@ export function createAnalytics({testMode = false} = {}) {
 
   function track(name,properties = {},instant = false) {
     if (!permitted() || !EVENTS.has(name)) return;
+    if (name === 'purchase_revenue' && (!native || !reportedPurchaseRevenue(properties))) return;
+    if (name === 'purchase_outcome' && (!native || !reportedPurchaseOutcome(properties))) return;
+    if (name === 'ad_revenue') {
+      if (!reportedRevenue(properties) || !uuid(properties.ad_opportunity_id) || !['completion','banner'].includes(properties.placement)) return;
+      const key = `${properties.placement}:${properties.ad_opportunity_id}`;
+      if (reportedAdRevenue.has(key)) return;
+      reportedAdRevenue.add(key);
+    }
     if (name !== 'app_entry') entryId();
     const event = {name,properties:{...safeProperties(context),...(uuid(properties.event_id) && Number.isSafeInteger(properties.event_index) ? {} : snapshot()),...safeProperties(properties),...attribution(),measurement_mode:native ? 'installation' : 'cookieless',...(native ? {platform:'ios'} : {}),device_type:window.innerWidth < 768 ? 'mobile' : 'desktop',active_ms_this_page:ready ? Math.max(0,sample().active - activeOrigin) : 0}};
     if (native && event.properties.entry_id === entry?.entry_id) event.properties.entry_source = entry.entry_source;

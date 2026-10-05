@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+        AF1000000000000000000001 /* AdFreePurchasesPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1000000000000000000002 /* AdFreePurchasesPlugin.swift */; };
+        AF1000000000000000000003 /* AdFreeEntitlementState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1000000000000000000004 /* AdFreeEntitlementState.swift */; };
+        AF1000000000000000000005 /* AdFreeEntitlementState.swift in Test Sources */ = {isa = PBXBuildFile; fileRef = AF1000000000000000000004 /* AdFreeEntitlementState.swift */; };
+        AF1000000000000000000006 /* AdFreePurchaseUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1000000000000000000007 /* AdFreePurchaseUITests.swift */; };
+        AF1000000000000000000008 /* AdFreeTest.storekit in Test Resources */ = {isa = PBXBuildFile; fileRef = AF1000000000000000000009 /* AdFreeTest.storekit */; };
         B21000000000000000000001 /* StreakProtectionPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = B21000000000000000000002 /* StreakProtectionPlugin.swift */; };
         AD0000000000000000000006 /* CompletionAdState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD0000000000000000000007 /* CompletionAdState.swift */; };
         AD0000000000000000000001 /* CompletionAdsPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD0000000000000000000002 /* CompletionAdsPlugin.swift */; };
@@ -33,6 +38,10 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXFileReference section */
+        AF1000000000000000000002 /* AdFreePurchasesPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdFreePurchasesPlugin.swift; sourceTree = "<group>"; };
+        AF1000000000000000000004 /* AdFreeEntitlementState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdFreeEntitlementState.swift; sourceTree = "<group>"; };
+        AF1000000000000000000007 /* AdFreePurchaseUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdFreePurchaseUITests.swift; sourceTree = "<group>"; };
+        AF1000000000000000000009 /* AdFreeTest.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = AdFreeTest.storekit; sourceTree = "<group>"; };
         B21000000000000000000002 /* StreakProtectionPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakProtectionPlugin.swift; sourceTree = "<group>"; };
         AD0000000000000000000007 /* CompletionAdState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompletionAdState.swift; sourceTree = "<group>"; };
         AD0000000000000000000002 /* CompletionAdsPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompletionAdsPlugin.swift; sourceTree = "<group>"; };
@@ -89,6 +98,8 @@
 			isa = PBXGroup;
 			children = (
 				9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,
+                AF1000000000000000000002 /* AdFreePurchasesPlugin.swift */,
+                AF1000000000000000000004 /* AdFreeEntitlementState.swift */,
                 B21000000000000000000002 /* StreakProtectionPlugin.swift */,
                 AD0000000000000000000002 /* CompletionAdsPlugin.swift */,
                 AD0000000000000000000007 /* CompletionAdState.swift */,
@@ -105,7 +116,7 @@
 			path = App;
 			sourceTree = "<group>";
 		};
-		A11000000000000000000005 /* AppUITests */ = {isa = PBXGroup; children = (A11000000000000000000002 /* NookGridUITests.swift */,); path = AppUITests; sourceTree = "<group>"; };
+		A11000000000000000000005 /* AppUITests */ = {isa = PBXGroup; children = (A11000000000000000000002 /* NookGridUITests.swift */, AF1000000000000000000007 /* AdFreePurchaseUITests.swift */, AF1000000000000000000009 /* AdFreeTest.storekit */,); path = AppUITests; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -195,7 +206,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A11000000000000000000009 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A11000000000000000000009 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (AF1000000000000000000008 /* AdFreeTest.storekit in Test Resources */,); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -205,13 +216,15 @@
 			files = (
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
+                AF1000000000000000000001 /* AdFreePurchasesPlugin.swift in Sources */,
+                AF1000000000000000000003 /* AdFreeEntitlementState.swift in Sources */,
                 B21000000000000000000001 /* StreakProtectionPlugin.swift in Sources */,
                 AD0000000000000000000001 /* CompletionAdsPlugin.swift in Sources */,
                 AD0000000000000000000006 /* CompletionAdState.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A11000000000000000000008 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A11000000000000000000001 /* NookGridUITests.swift in Sources */,); runOnlyForDeploymentPostprocessing = 0; };
+		A11000000000000000000008 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A11000000000000000000001 /* NookGridUITests.swift in Sources */, AF1000000000000000000006 /* AdFreePurchaseUITests.swift in Sources */, AF1000000000000000000005 /* AdFreeEntitlementState.swift in Test Sources */,); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */

@@ -129,6 +129,10 @@ button,.inline-button{-webkit-user-select:none;user-select:none}
 .game-page #share-text{display:block;border:0;background:var(--surface);resize:none;font-size:13px;line-height:1.5}
 .game-page #settings-dialog{width:min(360px,calc(100% - 32px))}
 .settings-section{padding:0;background:transparent;margin-bottom:12px}
+#ad-free-settings{margin-top:24px}
+#ad-free-title{font-size:14px;line-height:1.5;font-weight:600;margin:0 0 4px}
+.settings-purchase-actions{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.settings-purchase-actions>.secondary{width:100%;min-height:48px}
 .setting-row{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;font-size:var(--font-body);font-weight:400}
 .game-page #settings-dialog .settings-note{font-size:13px;line-height:1.5;color:var(--muted);margin:16px 0 0}
 .game-page .settings-section p{font-size:13px;color:var(--muted);margin:0}
@@ -162,6 +166,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .home-screen{display:flex;flex-direction:column;justify-content:space-between;flex:1;gap:32px;width:100%;max-width:380px;margin:24px auto 0;padding:0}
 .home-title{font-size:20px;line-height:1.35;letter-spacing:-.3px;font-weight:650;margin:0 0 8px}
 #home-date{font-size:14px;color:var(--muted);margin:0}
+.return-note,.game-page .completion .return-note{font-size:13px;line-height:1.5;color:var(--muted);margin:4px 0 0}
 .home-progress{margin-top:40px}
 .home-streak{display:flex;align-items:baseline;flex-wrap:wrap;gap:10px;margin:0 0 12px;font-size:64px}
 .home-streak>.ui-icon{width:.75em;height:.75em;align-self:center;color:var(--blue)}
