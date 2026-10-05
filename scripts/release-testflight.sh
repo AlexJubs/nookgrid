@@ -28,7 +28,7 @@ if [[ "$team" != "$EXPECTED_APPLE_TEAM_ID" ]]; then
 fi
 secret_names=$(gh api "$environment/secrets?per_page=100" --paginate --jq '.secrets[].name')
 for name in IOS_CERTIFICATE_BASE64 IOS_CERTIFICATE_PASSWORD IOS_PROFILE_BASE64 KEYCHAIN_PASSWORD ASC_KEY_ID ASC_ISSUER_ID ASC_PRIVATE_KEY; do
-  if ! printf '%s\n' "$secret_names" | grep -Fxq "$name"; then
+  if ! grep -Fx "$name" <<< "$secret_names" >/dev/null; then
     printf 'Missing ios-testflight secret: %s\n' "$name" >&2
     exit 1
   fi

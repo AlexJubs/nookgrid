@@ -27,7 +27,7 @@ fs.appendFileSync(process.env.REQUESTS, JSON.stringify(args) + '\\n');
 if (args[0] === 'workflow') process.exit(Number(process.env.DISPATCH_STATUS || 0));
 if (process.env.ACCESS_STATUS) process.exit(Number(process.env.ACCESS_STATUS));
 if (args[1].endsWith('/APPLE_TEAM_ID')) console.log(process.env.RELEASE_TEAM || 'ABC1234567');
-if (args[1].includes('/secrets?')) console.log(['IOS_CERTIFICATE_BASE64','IOS_CERTIFICATE_PASSWORD','IOS_PROFILE_BASE64','KEYCHAIN_PASSWORD','ASC_KEY_ID','ASC_ISSUER_ID','ASC_PRIVATE_KEY'].filter(name => name !== process.env.MISSING_SECRET).join('\\n'));
+if (args[1].includes('/secrets?')) console.log(['IOS_CERTIFICATE_BASE64','IOS_CERTIFICATE_PASSWORD','IOS_PROFILE_BASE64','KEYCHAIN_PASSWORD','ASC_KEY_ID','ASC_ISSUER_ID','ASC_PRIVATE_KEY'].filter(name => name !== process.env.MISSING_SECRET).concat(process.env.EXTRA_SECRETS ? Array.from({length:4096}, (_,i) => 'TEST_ONLY_UNUSED_SECRET_' + i) : []).join('\\n'));
 `, {mode: 0o755});
     const requests = join(directory, 'requests.jsonl');
     const result = spawnSync('bash', [join(directory, 'scripts/release-testflight.sh'), action, ...values], {
@@ -48,6 +48,15 @@ test('TestFlight check is read-only and upload passes the reviewed identity once
     'workflow', 'run', 'release-testflight.yml', '--repo', 'AlexJubs/nookgrid', '--ref', 'main',
     '-f', 'version=1.1.2', '-f', 'build_number=31', '-f', `expected_commit=${commit}`, '-f', 'expected_team_id=ABC1234567', '-f', 'ad_mode=off',
   ]]);
+});
+
+test('TestFlight secret checks consume the full API result without pipefail races', () => {
+  const result = runLauncher('check', {EXTRA_SECRETS:'1'});
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.requests.filter(args => args[0] === 'workflow').length, 0);
+  const missing = runLauncher('check', {EXTRA_SECRETS:'1', MISSING_SECRET:'ASC_ISSUER_ID'});
+  assert.notEqual(missing.status, 0);
+  assert.match(missing.stderr, /Missing ios-testflight secret: ASC_ISSUER_ID/);
 });
 
 test('TestFlight dispatch uses the explicit ad mode and ignores ambient ad settings', () => {
