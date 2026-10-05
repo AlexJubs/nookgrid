@@ -750,9 +750,9 @@ function render() {
     $('selection-status').textContent = 'The neighborhood plan is complete.';
     const earnedDays = native ? addDailyCompletion(streakDays,puzzle.date,puzzleDay()) : streakDays;
     const hasEarnedDay = earnedDays !== streakDays;
-    if (hasEarnedDay) streakProtection?.prepareCompletion(puzzle.date,progress.board);
-    streakDays = earnedDays;
     const shouldReport = !progress.reported;
+    if ((hasEarnedDay || shouldReport) && mode === 'daily' && puzzle.date === puzzleDay()) streakProtection?.prepareCompletion(puzzle.date,progress.board);
+    streakDays = earnedDays;
     if (shouldReport) {
       const snapshot = wasSolved ? null : analytics.snapshot();
       if (snapshot) completionEvent = {properties:{...snapshot,puzzle_date:puzzle.date,puzzle_mode:mode,puzzle_version:bank.version,puzzle_state:puzzleState,moves:progress.moves,hints:progress.hints,active_ms_this_page:analytics.activeMilliseconds()},epoch:analytics.epoch(),sent:false};

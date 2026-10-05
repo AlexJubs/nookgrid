@@ -108,7 +108,7 @@ export async function createStreakProtection({storage,bridge,enabled = false,onC
     verifiedDays:() => verified?.facts.map(fact => fact.puzzleDate) || [],
     historyDates:() => merge(state.recoveredDates || [],verified?.facts.map(fact => fact.puzzleDate) || []),
     prepareCompletion(puzzleDate,board) {
-      if (allDays().includes(puzzleDate)) return;
+      if (state.pending.some(event => event.puzzleDate === puzzleDate) || verified?.facts.some(fact => fact.puzzleDate === puzzleDate)) return;
       state.pending.push({id:eventId(),puzzleDate,board:[...board]});
       dirty = true;
       // Preserve a full queue's earned dates without claiming online verification.

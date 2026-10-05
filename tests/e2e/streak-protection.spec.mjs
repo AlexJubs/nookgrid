@@ -48,3 +48,13 @@ test('late cloud history updates native Home and calendar without replacing an u
   await choose(page.locator('#home-play'));
   await expectBoard(page,board);
 });
+
+test('a fresh same-day solve queues verification when its local day was already retained as history',async ({page}) => {
+  await protection(page);
+  await seedProgress(page,[today],'streak');
+  await seedProgress(page,{board:[...daily.solution.slice(0,8),null],moves:8});
+  await openGame(page);
+  await place(page,daily.solution[8],8);
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('nookgrid:test:v1:protection') || '[]'))).toEqual([{puzzleDate:today,board:daily.solution}]);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('nookgrid:test:v1:streak')))).toEqual([today]);
+});

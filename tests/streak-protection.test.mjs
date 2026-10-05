@@ -121,3 +121,14 @@ test('a replayed signed response cannot refresh verification and the verified da
   assert.equal(f.changes.at(-1).status,'pending');
   assert.deepEqual(controller.verifiedDays(),['2026-10-03']);
 });
+
+test('a real same-day solve can verify an existing legacy day without duplicating local history',async () => {
+  const f = fixture([['nookgrid:v1:streak','["2026-10-03"]']]);
+  const controller = await f.controller();
+  controller.prepareCompletion('2026-10-03',Array(9).fill('place'));
+  const state = JSON.parse(controller.entry()[1]);
+  assert.equal(state.pending.length,1);
+  controller.prepareCompletion('2026-10-03',Array(9).fill('place'));
+  assert.equal(JSON.parse(controller.entry()[1]).pending.length,1);
+  assert.deepEqual(controller.days(),['2026-10-03']);
+});
