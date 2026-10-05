@@ -1,0 +1,128 @@
+import {restoreStreakDays} from '../public/state.mjs';
+
+const stateKey = 'nookgrid:v1:protection', streakKey = 'nookgrid:v1:streak';
+const days = values => restoreStreakDays(JSON.stringify(values));
+const merge = (...sets) => days(sets.flat());
+function restore(raw,legacy) {
+  try {
+    const value = JSON.parse(raw);
+    if (value.version !== 1) throw Error();
+    return {...value,legacyDates:merge(value.legacyDates || [],legacy),unverifiedDates:days(value.unverifiedDates),pending:Array.isArray(value.pending) ? value.pending.filter(event => typeof event?.id === 'string' && days([event.puzzleDate]).length && Array.isArray(event.board) && event.board.length === 9).slice(0,64) : []};
+  } catch { return {version:1,playerId:null,legacyDates:legacy,unverifiedDates:[],pending:[],snapshot:null}; }
+}
+export async function checkedSnapshot(snapshot,verify,playerId = null) {
+  try {
+    if (!snapshot || typeof snapshot.payload !== 'string' || snapshot.payload.length > 200_000 || typeof snapshot.signature !== 'string' || !await verify(snapshot)) return null;
+    const value = JSON.parse(snapshot.payload);
+    if (value.version !== 1 || typeof value.playerId !== 'string' || playerId && value.playerId !== playerId || !Number.isSafeInteger(value.revision) || value.revision < 0 || !Number.isSafeInteger(value.issuedAt) || !Array.isArray(value.facts) || value.facts.length > 3660 || value.facts.some(fact => days([fact?.puzzleDate]).length !== 1 || !Number.isSafeInteger(fact.receivedAt) || fact.receivedAt > value.issuedAt || fact.receivedAt < 0) || new Set(value.facts.map(fact => fact.puzzleDate)).size !== value.facts.length) return null;
+    return value;
+  } catch { return null; }
+}
+
+// All network/Keychain/iCloud work is supplied by the native bridge. Never fetch
+// verification endpoints from browser QA or share the optional analytics identity.
+export async function createStreakProtection({storage,bridge,enabled = false,onChange = () => {}}) {
+  let state = restore(storage.getItem(stateKey),restoreStreakDays(storage.getItem(streakKey)));
+  let verified = await checkedSnapshot(state.snapshot,snapshot => bridge.verifySnapshot(snapshot),state.playerId);
+  if (!verified) state.snapshot = null;
+  let status = enabled ? 'pending' : 'local', cloudStatus = 'unavailable', running = null, listener = null, stopped = false, dirty = false, lastAttempt = 0, timer = null;
+  let remote = null;
+  const allDays = () => merge(state.legacyDates,state.unverifiedDates,state.pending.map(event => event.puzzleDate),verified?.facts.map(fact => fact.puzzleDate) || []);
+  const notify = () => onChange({days:allDays(),verifiedDays:verified?.facts.map(fact => fact.puzzleDate) || [],status,cloudStatus});
+  async function persist() {
+    await storage.setItems([[stateKey,JSON.stringify(state)],[streakKey,JSON.stringify(allDays())]]);
+    notify();
+  }
+  async function accept(snapshot,expectedId) {
+    const next = await checkedSnapshot(snapshot,item => bridge.verifySnapshot(item),expectedId);
+    if (!next || verified && (next.playerId !== verified.playerId || next.revision < verified.revision || next.revision === verified.revision && next.issuedAt < verified.issuedAt)) throw Error('Invalid or stale verified history');
+    state.playerId = next.playerId; state.snapshot = snapshot; verified = next;
+  }
+  async function recover() {
+    const cloud = await bridge.readCloud();
+    cloudStatus = cloud.accountChanged ? 'account_changed' : cloud.available ? cloud.ready ? 'ready' : 'waiting' : 'unavailable';
+    remote = null;
+    try { remote = JSON.parse(cloud.value); } catch {}
+    if (remote?.version === 1 && typeof remote.playerId === 'string') {
+      if (cloud.accountChanged) { notify(); return; }
+      if (state.playerId && remote.playerId !== state.playerId) {
+        if (state.cloudBound) { cloudStatus = 'account_changed'; notify(); return; }
+        // A provisional identity may be created before iCloud/Keychain arrive.
+        // Preserve its facts and current-day events while adopting recovered identity.
+        await bridge.identity({preferredId:remote.playerId});
+        await storage.setItems([[`${stateKey}:prior:${state.playerId}`,JSON.stringify(state)]]);
+        state.unverifiedDates = merge(state.unverifiedDates,verified?.facts.map(fact => fact.puzzleDate) || []);
+        state.pending = [...new Map([...state.pending,...(state.recentEvents || [])].map(event => [event.id,event])).values()].slice(-64);
+        state.playerId = remote.playerId; state.snapshot = null; verified = null;
+      }
+      if (remote.snapshot) {
+        try { await accept(remote.snapshot,remote.playerId); } catch { /* forged/cloud rollback never becomes verified */ }
+      }
+      // Unverified dates stay explicitly unverified, including unsigned cloud edits.
+      state.legacyDates = merge(state.legacyDates,remote.legacyDates || []);
+      state.unverifiedDates = merge(state.unverifiedDates,remote.unverifiedDates || []);
+      state.recoveredDates = merge(state.recoveredDates || [],remote.legacyDates || [],remote.unverifiedDates || []);
+      if (cloud.ready) state.cloudBound = true;
+      await persist();
+    }
+    notify();
+  }
+  async function uploadCloud() {
+    if (!['ready','waiting'].includes(cloudStatus) || !state.playerId || allDays().length === 0) return;
+    await bridge.writeCloud({value:JSON.stringify({version:1,playerId:state.playerId,legacyDates:state.legacyDates,unverifiedDates:merge(state.unverifiedDates,state.pending.map(event => event.puzzleDate)),snapshot:state.snapshot})});
+  }
+  async function synchronize() {
+    if (!enabled || stopped) return;
+    try {
+      await recover();
+      const identity = await bridge.identity({preferredId:state.playerId || remote?.playerId || null});
+      if (state.playerId && identity.playerId !== state.playerId) throw Error('Recovery identity mismatch');
+      state.playerId = identity.playerId;
+      await persist();
+      try { await uploadCloud(); } catch { cloudStatus = 'pending'; }
+      const events = state.pending.slice(0,64);
+      const result = await bridge.sync({events});
+      await accept(result.snapshot,identity.playerId);
+      // Never discard an offline event merely because the service was unavailable.
+      const terminal = new Map((result.outcomes || []).filter(item => ['accepted','unverified','invalid'].includes(item.status)).map(item => [item.id,item.status]));
+      state.recentEvents = state.pending.filter(event => terminal.get(event.id) === 'accepted').slice(-64);
+      state.unverifiedDates = merge(state.unverifiedDates,state.pending.filter(event => terminal.has(event.id) && terminal.get(event.id) !== 'accepted').map(event => event.puzzleDate));
+      state.pending = state.pending.filter(event => !terminal.has(event.id));
+      status = 'verified';
+      await persist();
+      await uploadCloud();
+    } catch { status = 'pending'; notify(); }
+  }
+  const api = {
+    key:stateKey,
+    entry:() => [stateKey,JSON.stringify(state)],
+    days:allDays,
+    verifiedDays:() => verified?.facts.map(fact => fact.puzzleDate) || [],
+    historyDates:() => merge(state.recoveredDates || [],verified?.facts.map(fact => fact.puzzleDate) || []),
+    prepareCompletion(puzzleDate,board) {
+      if (allDays().includes(puzzleDate)) return;
+      state.pending.push({id:crypto.randomUUID(),puzzleDate,board:[...board]});
+      dirty = true;
+      // Preserve a full queue's earned dates without claiming online verification.
+      if (state.pending.length > 64) state.unverifiedDates = merge(state.unverifiedDates,state.pending.splice(0,state.pending.length-64).map(event => event.puzzleDate));
+      notify();
+    },
+    sync({force = false} = {}) {
+      if (!running && (force || dirty || Date.now()-lastAttempt > 60_000)) {
+        dirty = false; lastAttempt = Date.now();
+        running = synchronize().finally(() => { running = null; if (dirty) api.sync(); });
+      }
+      return running;
+    },
+    async start() {
+      notify();
+      if (!enabled) return;
+      listener = await bridge.onCloudChange(() => api.sync({force:true}));
+      timer = setInterval(() => api.sync(),60_000);
+      timer.unref?.();
+      await api.sync();
+    },
+    async stop() { stopped = true; clearInterval(timer); await listener?.remove(); }
+  };
+  return api;
+}

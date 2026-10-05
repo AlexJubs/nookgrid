@@ -52,6 +52,7 @@
       <div class="home-intro"><h2 class="home-title">Your daily brain game</h2><p id="home-date"></p></div>
       <div class="home-progress">
         <div class="home-streak"><svg class="ui-icon" width="64" height="64" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><use href="./icons.svg?v=20260925-streak#lightning"/></svg><strong class="streak-number" id="home-streak-count">0</strong><span class="streak-label">day streak</span></div>
+        <p id="home-streak-status" class="settings-note" role="status" hidden></p>
         <div class="week-heading"><span>This week</span></div>
         <div class="week-strip" id="home-week" aria-label="This week's puzzles"></div>
       </div>
@@ -157,7 +158,8 @@
     </div>
     <button id="ad-privacy-open" class="secondary" hidden>Ad privacy choices</button>
     <p id="ad-privacy-status" role="status" hidden></p>
-    <p class="settings-note">Your progress and streak stay in this browser. Clearing browser data removes them.</p>
+    <p id="streak-protection-status" class="settings-note" role="status" hidden></p>
+    <p id="progress-save-description" class="settings-note">Your progress and streak stay in this browser. Clearing browser data removes them.</p>
   </dialog>
   </template>
 </body>

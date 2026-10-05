@@ -14,7 +14,9 @@ Simulator checks do not replace a physical iPhone pass for gestures, sharing and
 
 ## Current coverage
 
-The suite now contains fourteen scenarios, including Home press behavior, calendar/continue, saved streaks, fresh Tutorial replay and native background timing. The September 24 source passed all fourteen in CI without retries. Verify the run for each new release commit; that result does not establish delivery or a physical-device pass.
+The suite adds `testAtomicJournalRecoversHintAndBoardWhenPreferencesAreLost` to verify atomic-file recovery after clearing only Preferences. Cloud/Keychain/App Attest traffic is disabled in simulator QA and requires the separate physical checks in [streak protection](STREAK-PROTECTION.md).
+
+The earlier suite contained fourteen scenarios, including Home press behavior, calendar/continue, saved streaks, fresh Tutorial replay and native background timing. The September 24 source passed all fourteen in CI without retries. Verify the run for each new release commit; that result does not establish delivery or a physical-device pass.
 
 ## Historical measurements, September 17, 2026
 

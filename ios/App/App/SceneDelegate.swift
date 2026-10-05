@@ -27,8 +27,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         }
         if ProcessInfo.processInfo.arguments.contains("nookgrid-reset-test-state") {
             if let identifier = Bundle.main.bundleIdentifier { UserDefaults.standard.removePersistentDomain(forName: identifier) }
+            try? FileManager.default.removeItem(at: StreakProtectionPlugin.journalDirectory)
             WKWebsiteDataStore.default().removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast) { prepareGame() }
-        } else { prepareGame() }
+        } else {
+            if ProcessInfo.processInfo.arguments.contains("nookgrid-clear-test-preferences"), let identifier = Bundle.main.bundleIdentifier { UserDefaults.standard.removePersistentDomain(forName: identifier) }
+            prepareGame()
+        }
         #else
         openGame()
         #endif
@@ -49,6 +53,7 @@ class GameViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
         bridge?.registerPluginInstance(AnalyticsMetadataPlugin())
+        bridge?.registerPluginInstance(StreakProtectionPlugin())
         bridge?.registerPluginInstance(CompletionAdsPlugin())
         guard let content = webView?.configuration.userContentController else { preconditionFailure("Missing game web view") }
         let launch = WKUserScript(source: "Object.defineProperty(window, 'nookgridLaunchId', {value:'\(UUID().uuidString)'})", injectionTime: .atDocumentStart, forMainFrameOnly: true)

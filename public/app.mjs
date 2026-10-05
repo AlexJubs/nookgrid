@@ -2,7 +2,7 @@ import { PLACES, clueText, clueStatus, isSolved } from './engine.mjs?v=20260915-
 import { movePlace, selectPuzzle, restoreProgress, hasPuzzleCompletion, shareText, nextPuzzleCountdown, advanceSolveTimer, formatSolveTime, restoreHintedPlaces, puzzleDay, restoreStreakDays, addDailyCompletion, streakLength } from './state.mjs?v=20260925-streak';
 import { placeArt } from './art.mjs?v=20260915-teaser1';
 import { testMode, analytics } from './session.mjs?v=20260929-banner';
-import { native, savedValue, saveValue } from './platform.mjs';
+import { native, savedValue, saveValue, saveValues } from './platform.mjs';
 import { updatePuzzleLinks } from './navigation.mjs?v=20260924-calendar2';
 import { getWeekDates, getCalendarMonths, renderCalendar } from './calendar.mjs?v=20260924-calendar3';
 import { createCompletionAds } from './completion-ads.mjs?v=20260928-ad-delay';
@@ -17,6 +17,7 @@ const params = new URLSearchParams(location.search);
 const progressPrefix = testMode ? 'nookgrid:test:v1:' : 'nookgrid:v1:';
 const streakKey = `${progressPrefix}streak`;
 let streakDays = native ? restoreStreakDays(read(streakKey)) : [];
+let streakProtection = null;
 let config = {feedbackEnabled:false};
 let puzzle, mode, bank, progress, selected = null, history = [], started = false;
 let wasSolved = false, shouldCelebrate = false, feedbackKey = null, feedbackPayload = null;
@@ -140,7 +141,11 @@ function showAppStoreLink(identifier) {
   });
 }
 
-$('retry-save').addEventListener('click', () => save());
+$('retry-save').addEventListener('click', async () => {
+  if (native && !native.storage && native.retryStorage) {
+    try { await native.retryStorage(); location.reload(); } catch { $('save-warning').hidden = false; }
+  } else save();
+});
 
 async function navigateTo(url) {
   dialogRequest++;
@@ -187,11 +192,12 @@ $('menu-tutorial').hidden = Boolean(native);
 if (!native) {
   $('home-open').setAttribute('aria-label', "Back to today's puzzle");
   document.querySelector('.brand').setAttribute('aria-label', "NookGrid, today's puzzle");
-  document.querySelector('.settings-note').textContent = 'Your progress stays in this browser. Clearing browser data removes it.';
+  $('progress-save-description').textContent = 'Your progress stays in this browser. Clearing browser data removes it.';
 }
 
 function getCompletedDates() {
   return bank.puzzles.filter(item => item.date <= today && (
+    streakProtection?.historyDates().includes(item.date) ||
     item.date === puzzle.date && (progress.reported || isSolved(puzzle,progress.board)) ||
     hasPuzzleCompletion(read(`${progressPrefix}${item.date}`),ids,item.solution)
   )).map(item => item.date);
@@ -415,9 +421,11 @@ async function save(shouldRun = !document.hidden) {
   progress.reported ||= restoreProgress(read(`${progressPrefix}${puzzle.date}`),ids,puzzle.solution).reported;
   if (native) streakDays = [...new Set([...restoreStreakDays(read(streakKey)),...streakDays])].sort();
   try {
-    const writes = [saveValue(`${progressPrefix}${puzzle.date}`, JSON.stringify(progress))];
-    if (native && streakDays.length) writes.push(saveValue(streakKey, JSON.stringify(streakDays)));
-    await Promise.all(writes);
+    const writes = [[`${progressPrefix}${puzzle.date}`, JSON.stringify(progress)]];
+    if (native && streakDays.length) writes.push([streakKey, JSON.stringify(streakDays)]);
+    if (streakProtection) writes.push(streakProtection.entry());
+    await saveValues(writes);
+    streakProtection?.sync();
     reportCompletion();
     $('save-warning').hidden = !native || Boolean(native.storage);
     return true;
@@ -742,6 +750,7 @@ function render() {
     $('selection-status').textContent = 'The neighborhood plan is complete.';
     const earnedDays = native ? addDailyCompletion(streakDays,puzzle.date,puzzleDay()) : streakDays;
     const hasEarnedDay = earnedDays !== streakDays;
+    if (hasEarnedDay) streakProtection?.prepareCompletion(puzzle.date,progress.board);
     streakDays = earnedDays;
     const shouldReport = !progress.reported;
     if (shouldReport) {
@@ -851,6 +860,19 @@ async function init() {
     config = {feedbackEnabled:settings.feedbackEnabled === true};
     showAppStoreLink(settings.appStoreId);
     today = puzzleDay();
+    if (!streakProtection && native?.createStreakProtection) {
+      streakProtection = await native.createStreakProtection(state => {
+        streakDays = state.days;
+        const verifiedCount = streakLength(state.verifiedDays,puzzleDay());
+        const localCount = streakLength(state.days,puzzleDay());
+        const description = state.status === 'verified' ? `${verifiedCount} day verified streak${localCount !== verifiedCount ? ' · local history kept' : ''}` : state.status === 'local' ? 'Streak saved on this device' : 'Local streak · verification pending';
+        for (const id of ['home-streak-status','streak-protection-status']) {
+          const label = $(id); if (label) { label.hidden = state.status === 'local'; label.textContent = description; }
+        }
+        if (puzzle) { renderHistory(); updateReturnPrompt(); if ($('calendar-dialog').open) prepareCalendar(false); }
+      });
+      if (streakProtection) { streakDays = streakProtection.days(); streakProtection.start(); }
+    }
     ({puzzle,mode} = selectPuzzle(bank,today,params.get('date')));
     updatePuzzleLinks(mode === 'practice' ? 'practice' : puzzle.date);
     progress = restoreProgress(mode === 'practice' ? null : read(`${progressPrefix}${puzzle.date}`),ids,puzzle.solution);
@@ -911,6 +933,7 @@ async function init() {
     });
     document.addEventListener('visibilitychange',() => { if (document.hidden) cancelCompletionAd(); });
     if (native) native.onStateChange(({isActive}) => {
+      if (isActive) streakProtection?.sync({force:true});
       isNativeActive = isActive;
       updateBanner();
       if (!isActive) cancelCompletionAd();

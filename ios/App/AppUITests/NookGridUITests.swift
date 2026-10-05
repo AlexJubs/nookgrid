@@ -259,6 +259,23 @@ final class NookGridUITests: XCTestCase {
         XCTAssertTrue(button("Hint, 1 hint used").exists)
     }
 
+    func testAtomicJournalRecoversHintAndBoardWhenPreferencesAreLost() {
+        place("Bakery", at: "A1")
+        reveal(0)
+        let fixed = app.webViews.firstMatch.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH 'Lot ' AND label ENDSWITH 'fixed by a hint'")).firstMatch
+        XCTAssertTrue(fixed.waitForExistence(timeout: 5))
+        let label = fixed.label
+        // Navigation waits for the native save queue and journal before restarting.
+        tap(button("Back to home"))
+        tap(button("Continue today's puzzle"))
+        app.terminate()
+        app.launchArguments = ["nookgrid-offline", "nookgrid-clear-test-preferences"]
+        app.launch()
+        XCTAssertTrue(button(label).waitForExistence(timeout: 15), app.debugDescription)
+        XCTAssertTrue(button("Hint, 1 hint used").exists)
+        XCTAssertFalse(button(label).isEnabled)
+    }
+
     func testDailyStreakSurvivesSolvedReviewAndRestart() throws {
         for count in 0..<8 { reveal(count) }
         tap(button("Reset"))

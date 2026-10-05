@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { buildIos } from './build-ios.mjs';
+import {generateKeyPairSync} from 'node:crypto';
 
 test('iOS bundle is offline, isolated in development, and declares native privacy',async () => {
   await buildIos({directory:'dist/ios-test'});
@@ -9,6 +10,7 @@ test('iOS bundle is offline, isolated in development, and declares native privac
   assert.equal(config.analytics.enabled,false);
   assert.equal(config.feedbackEnabled,false);
   assert.deepEqual(JSON.parse(await readFile('dist/ios-test/ad-config.json','utf8')),{mode:'off'});
+  assert.deepEqual(JSON.parse(await readFile('dist/ios-test/protection-config.json','utf8')),{enabled:false});
   const html = await readFile('dist/ios-test/index.html','utf8');
   assert.match(html,/native\.js/);
   assert.match(html,/viewport-fit=cover/);
@@ -21,6 +23,19 @@ test('iOS bundle is offline, isolated in development, and declares native privac
   for (const file of ['icons.svg','phosphor-LICENSE.txt']) {
     assert.equal(await readFile(`dist/ios-test/${file}`,'utf8'),await readFile(`public/${file}`,'utf8'));
   }
+});
+
+test('streak protection requires explicit production configuration; QA never inherits a service',async () => {
+  const publicKey = generateKeyPairSync('ed25519').publicKey.export({type:'spki',format:'der'}).toString('base64');
+  const protection = {endpoint:'https://verification.example/',publicKey};
+  await assert.rejects(buildIos({directory:'dist/ios-protection-test',protection}),/Production/);
+  await assert.rejects(buildIos({directory:'dist/ios-protection-test',production:true,protection:{...protection,endpoint:'http://localhost/'}}),/Production/);
+  await assert.rejects(buildIos({directory:'dist/ios-protection-test',production:true,protection:{...protection,publicKey:'fake'}}),/public key/);
+  await buildIos({directory:'dist/ios-protection-test',production:true,protection});
+  assert.deepEqual(JSON.parse(await readFile('dist/ios-protection-test/protection-config.json','utf8')),{enabled:true,...protection});
+  assert.match(await readFile('dist/ios-protection-test/index.html','utf8'),/existing iCloud account/);
+  const plugin = await readFile('ios/App/App/StreakProtectionPlugin.swift','utf8');
+  assert.match(plugin,/#if DEBUG \|\| targetEnvironment\(simulator\)/);
 });
 
 test('ads require an explicit build mode and demo builds never collect analytics',async () => {

@@ -9,6 +9,7 @@
 !/capacitor.config.ts
 !/playwright.config.mjs
 !/native/
+!/server/
 !/ios/
 !/docs/
 !/.github/
