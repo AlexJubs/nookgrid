@@ -20,9 +20,11 @@ test('a solve cancels today’s daily and streak reminders and schedules only to
   const before=planReminders({settings,calendar:state,now,zone});
   assert.equal(before.requests.filter(r=>r.kind==='streak').length,1);
   assert.equal(before.requests.find(r=>r.kind==='streak').at,Date.parse('2026-10-03T23:00:00Z'));
+  assert.equal(before.requests.find(r=>r.kind==='streak').body,'Your 1 day streak ends in 1 hour. Solve a puzzle to keep it going.');
   const earned=creditCalendar(state,now,zone), after=planReminders({settings,calendar:earned,now,zone});
   assert.equal(after.requests.filter(r=>r.kind==='streak').length,1);
   assert.equal(after.requests.find(r=>r.kind==='streak').at,Date.parse('2026-10-04T23:00:00Z'));
+  assert.equal(after.requests.find(r=>r.kind==='streak').body,'Your 2 day streak ends in 1 hour. Solve a puzzle to keep it going.');
   assert.ok(after.requests.every(r=>r.at>=earned.end));
   const expired=advanceCalendar(earned,Date.parse('2026-10-05T00:00:00Z'),zone);
   assert.equal(planReminders({settings,calendar:expired,now:expired.observedAt,zone}).requests.filter(r=>r.kind==='streak').length,0);

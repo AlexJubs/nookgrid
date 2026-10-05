@@ -30,14 +30,14 @@ export function planReminders({settings,calendar,now = Date.now(),zone = deviceT
     }
     if (i === 0 && settings.streak && state.count > 0 && !state.played && state.end-hour > now) {
       requests.push({id:`nookgrid.streak.${state.start}`,at:state.end-hour,title:'Keep your streak going',
-        body:`Your ${state.count}-day streak ends in 1 hour. Solve a puzzle to keep it going.`,kind:'streak'});
+        body:`Your ${state.count} day streak ends in 1 hour. Solve a puzzle to keep it going.`,kind:'streak'});
     }
     // If today was credited, tomorrow is the only endangered day. Without a new
     // solve, later days must never advertise a streak that would have expired.
     if (i === 0 && state.played && settings.streak && state.count > 0) {
       const tomorrow = advanceCalendar(state,state.end,zone);
       requests.push({id:`nookgrid.streak.${tomorrow.start}`,at:tomorrow.end-hour,title:'Keep your streak going',
-        body:`Your ${state.count}-day streak ends in 1 hour. Solve a puzzle to keep it going.`,kind:'streak'});
+        body:`Your ${state.count} day streak ends in 1 hour. Solve a puzzle to keep it going.`,kind:'streak'});
     }
     state = advanceCalendar(state,state.end,zone);
   }
