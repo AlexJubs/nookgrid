@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+        BB1000000000000000000001 /* RemindersPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000002 /* RemindersPlugin.swift */; };
         AF1000000000000000000001 /* AdFreePurchasesPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1000000000000000000002 /* AdFreePurchasesPlugin.swift */; };
         AF1000000000000000000003 /* AdFreeEntitlementState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1000000000000000000004 /* AdFreeEntitlementState.swift */; };
         AF1000000000000000000005 /* AdFreeEntitlementState.swift in Test Sources */ = {isa = PBXBuildFile; fileRef = AF1000000000000000000004 /* AdFreeEntitlementState.swift */; };
@@ -38,6 +39,7 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXFileReference section */
+        BB1000000000000000000002 /* RemindersPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersPlugin.swift; sourceTree = "<group>"; };
         AF1000000000000000000002 /* AdFreePurchasesPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdFreePurchasesPlugin.swift; sourceTree = "<group>"; };
         AF1000000000000000000004 /* AdFreeEntitlementState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdFreeEntitlementState.swift; sourceTree = "<group>"; };
         AF1000000000000000000007 /* AdFreePurchaseUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdFreePurchaseUITests.swift; sourceTree = "<group>"; };
@@ -101,6 +103,7 @@
                 AF1000000000000000000002 /* AdFreePurchasesPlugin.swift */,
                 AF1000000000000000000004 /* AdFreeEntitlementState.swift */,
                 B21000000000000000000002 /* StreakProtectionPlugin.swift */,
+                BB1000000000000000000002 /* RemindersPlugin.swift */,
                 AD0000000000000000000002 /* CompletionAdsPlugin.swift */,
                 AD0000000000000000000007 /* CompletionAdState.swift */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
@@ -219,6 +222,7 @@
                 AF1000000000000000000001 /* AdFreePurchasesPlugin.swift in Sources */,
                 AF1000000000000000000003 /* AdFreeEntitlementState.swift in Sources */,
                 B21000000000000000000001 /* StreakProtectionPlugin.swift in Sources */,
+                BB1000000000000000000001 /* RemindersPlugin.swift in Sources */,
                 AD0000000000000000000001 /* CompletionAdsPlugin.swift in Sources */,
                 AD0000000000000000000006 /* CompletionAdState.swift in Sources */,
 			);

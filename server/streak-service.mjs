@@ -1,6 +1,7 @@
 import {DatabaseSync} from 'node:sqlite';
 import {createHash,createPrivateKey,createPublicKey,randomBytes,sign,timingSafeEqual} from 'node:crypto';
 import {puzzleDay} from '../public/state.mjs';
+import {newCalendar,advanceCalendar,creditCalendar,validTimeZone} from '../public/streak-policy.mjs';
 
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 const hash = value => createHash('sha256').update(value).digest();
@@ -23,6 +24,8 @@ export function createStreakService({database = ':memory:',signingKey,verifier,b
     CREATE TABLE IF NOT EXISTS devices(key TEXT PRIMARY KEY,player TEXT NOT NULL REFERENCES players(id),public_key TEXT NOT NULL,counter INTEGER NOT NULL DEFAULT 0);
     CREATE TABLE IF NOT EXISTS challenges(id TEXT PRIMARY KEY,player TEXT NOT NULL,key TEXT NOT NULL,purpose TEXT NOT NULL,nonce TEXT NOT NULL,expires INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS completions(player TEXT NOT NULL REFERENCES players(id),event TEXT NOT NULL,date TEXT NOT NULL,received INTEGER NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(player,event),UNIQUE(player,date));`);
+  if (!db.prepare('PRAGMA table_info(players)').all().some(column => column.name === 'calendar')) db.exec('ALTER TABLE players ADD COLUMN calendar TEXT');
+  db.exec('CREATE TABLE IF NOT EXISTS play_days(player TEXT NOT NULL REFERENCES players(id),event TEXT NOT NULL,puzzle TEXT NOT NULL,start INTEGER NOT NULL,day TEXT NOT NULL,received INTEGER NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(player,event),UNIQUE(player,puzzle))');
   const puzzleMap = new Map(bank.puzzles.map(puzzle => [puzzle.date,puzzle]));
   function transaction(action) {
     db.exec('BEGIN IMMEDIATE');
@@ -42,9 +45,13 @@ export function createStreakService({database = ':memory:',signingKey,verifier,b
     return challenge;
   }
   function snapshot(playerId,requestNonce) {
-    const player = db.prepare('SELECT revision FROM players WHERE id=?').get(playerId);
+    const player = db.prepare('SELECT revision,calendar FROM players WHERE id=?').get(playerId);
     const facts = db.prepare('SELECT date,received FROM completions WHERE player=? ORDER BY date').all(playerId);
-    const payload = JSON.stringify({version:1,playerId,requestNonce,revision:player.revision,issuedAt:clock(),facts:facts.map(fact => ({puzzleDate:fact.date,receivedAt:fact.received}))});
+    const calendar = player.calendar ? JSON.parse(player.calendar) : null;
+    const newer = db.prepare('SELECT puzzle,day,start,received FROM play_days WHERE player=? ORDER BY received').all(playerId);
+    const payload = JSON.stringify({version:calendar ? 2 : 1,playerId,requestNonce,revision:player.revision,issuedAt:clock(),
+      ...(calendar ? {calendar} : {}),facts:[...facts.map(fact => ({puzzleDate:fact.date,receivedAt:fact.received,...(calendar ? {streakDay:fact.date} : {})})),
+        ...newer.map(fact => ({puzzleDate:fact.puzzle,streakDay:fact.day,periodStart:fact.start,receivedAt:fact.received}))]});
     return {payload,signature:sign(null,Buffer.from(payload),key).toString('base64')};
   }
   return {
@@ -84,7 +91,7 @@ export function createStreakService({database = ':memory:',signingKey,verifier,b
       requireValue(authenticate(playerId,token),'unauthorized',401);
       requireValue(typeof payload === 'string' && Buffer.byteLength(payload) <= 40_000,'invalid_payload');
       let data; try { data = JSON.parse(payload); } catch { throw new ServiceError('invalid_payload'); }
-      requireValue(data?.version === 1 && data.playerId === playerId && Array.isArray(data.events) && data.events.length <= 64,'invalid_payload');
+      requireValue([1,2].includes(data?.version) && (data.version !== 2 || validTimeZone(data.timezone)) && data.playerId === playerId && Array.isArray(data.events) && data.events.length <= 64,'invalid_payload');
       const challenge = takeChallenge(data.challengeId,playerId,keyId,'sync');
       requireValue(data.nonce === challenge.nonce,'invalid_challenge',401);
       return transaction(() => {
@@ -96,6 +103,12 @@ export function createStreakService({database = ':memory:',signingKey,verifier,b
         requireValue(Number.isSafeInteger(verified.signCount) && verified.signCount > device.counter,'invalid_assertion',401);
         db.prepare('UPDATE devices SET counter=? WHERE key=?').run(verified.signCount,keyId);
         const outcomes = [], receivedAt = clock();
+        const stored = db.prepare('SELECT calendar FROM players WHERE id=?').get(playerId).calendar;
+        const localMode = data.version === 2;
+        // Never accept a legacy request after migration: it must not add unsigned
+        // UTC credit behind the canonical local-day ledger.
+        requireValue(localMode || !stored,'calendar_upgrade_required',409);
+        let calendar = localMode ? advanceCalendar(stored ? JSON.parse(stored) : newCalendar(receivedAt,data.timezone,db.prepare('SELECT date FROM completions WHERE player=?').all(playerId).map(row => row.date)),receivedAt,data.timezone) : null;
         for (const event of data.events) {
           const puzzle = puzzleMap.get(event?.puzzleDate);
           if (!uuid.test(event?.id || '') || !puzzle || !Array.isArray(event.board) || event.board.length !== 9 || event.board.some((id,index) => id !== puzzle.solution[index])) {
@@ -104,10 +117,25 @@ export function createStreakService({database = ':memory:',signingKey,verifier,b
           const digest = hash(JSON.stringify({puzzleDate:event.puzzleDate,board:event.board})).toString('hex');
           const existing = db.prepare('SELECT digest FROM completions WHERE player=? AND event=?').get(playerId,event.id);
           if (existing) { outcomes.push({id:event.id,status:existing.digest === digest ? 'accepted' : 'invalid'}); continue; }
+          if (localMode) {
+            const known = db.prepare('SELECT digest FROM play_days WHERE player=? AND event=?').get(playerId,event.id);
+            if (known) { outcomes.push({id:event.id,status:known.digest === digest ? 'accepted' : 'invalid'}); continue; }
+            if (puzzle.date > puzzleDay(new Date(receivedAt)) || event.streakDay !== calendar.day) { outcomes.push({id:event.id,status:'unverified'}); continue; }
+            const used = db.prepare('SELECT event FROM completions WHERE player=? AND date=?').get(playerId,puzzle.date) || db.prepare('SELECT event FROM play_days WHERE player=? AND puzzle=?').get(playerId,puzzle.date);
+            if (used) { outcomes.push({id:event.id,status:'accepted'}); continue; }
+            db.prepare('INSERT INTO play_days VALUES(?,?,?,?,?,?,?)').run(playerId,event.id,puzzle.date,calendar.start,calendar.day,receivedAt,digest);
+            calendar = creditCalendar(calendar,receivedAt,data.timezone);
+            db.prepare('UPDATE players SET revision=revision+1 WHERE id=?').run(playerId);
+            outcomes.push({id:event.id,status:'accepted'}); continue;
+          }
           if (!qualifies(puzzle,receivedAt)) { outcomes.push({id:event.id,status:'unverified'}); continue; }
           const result = db.prepare('INSERT OR IGNORE INTO completions VALUES(?,?,?,?,?)').run(playerId,event.id,event.puzzleDate,receivedAt,digest);
           if (result.changes) db.prepare('UPDATE players SET revision=revision+1 WHERE id=?').run(playerId);
           outcomes.push({id:event.id,status:'accepted'});
+        }
+        if (localMode) {
+          const serialized = JSON.stringify(calendar);
+          if (serialized !== stored) db.prepare('UPDATE players SET calendar=?,revision=revision+1 WHERE id=?').run(serialized,playerId);
         }
         return {snapshot:snapshot(playerId,challenge.nonce),outcomes};
       });

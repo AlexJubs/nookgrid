@@ -54,6 +54,7 @@ class GameViewController: CAPBridgeViewController {
         super.capacitorDidLoad()
         bridge?.registerPluginInstance(AnalyticsMetadataPlugin())
         bridge?.registerPluginInstance(StreakProtectionPlugin())
+        bridge?.registerPluginInstance(RemindersPlugin())
         bridge?.registerPluginInstance(CompletionAdsPlugin())
         bridge?.registerPluginInstance(AdFreePurchasesPlugin())
         guard let content = webView?.configuration.userContentController else { preconditionFailure("Missing game web view") }

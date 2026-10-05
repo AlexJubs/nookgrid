@@ -10,6 +10,7 @@ import { createAdFreePurchases } from '../public/ad-free-purchases.mjs';
 const AnalyticsMetadata = registerPlugin('AnalyticsMetadata');
 const CompletionAds = registerPlugin('CompletionAds');
 const Protection = registerPlugin('StreakProtection');
+const Reminders = registerPlugin('Reminders');
 const AdFreePurchases = registerPlugin('AdFreePurchases');
 
 window.nookgridReady = (async () => {
@@ -34,6 +35,12 @@ window.nookgridReady = (async () => {
         sync:options => Protection.sync(options),
         onCloudChange:listener => Protection.addListener('cloudChanged',listener)
       }});
+    },
+    reminders:{
+      getPermission:() => Reminders.getPermission(), requestPermission:() => Reminders.requestPermission(),
+      pending:() => Reminders.pending(), replace:options => Reminders.replace(options),
+      sendTest:options => Reminders.sendTest(options),
+      onOpen:listener => Reminders.addListener('reminderOpened',listener)
     },
     launchId:globalThis.nookgridLaunchId,
     launchSource:async () => (await App.getLaunchUrl())?.url ? 'deep_link' : 'direct',

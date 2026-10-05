@@ -500,6 +500,21 @@ final class NookGridUITests: XCTestCase {
         assertLot("A1", "empty")
     }
 
+    func testReminderSettingsStayOfflineAndDoNotRequestNotificationPermissionInQA() {
+        tap(button("Menu"))
+        let menu = app.webViews.firstMatch.descendants(matching: .other)
+            .matching(NSPredicate(format: "label == 'Menu, web dialog'")).firstMatch
+        tap(menu.descendants(matching: .any).matching(NSPredicate(format: "label == 'Settings'")).firstMatch)
+        XCTAssertTrue(button("Close settings").waitForExistence(timeout: 5))
+        let preview = button("Send test notification")
+        XCTAssertTrue(preview.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertFalse(preview.isEnabled, "Debug QA must not schedule real reminders")
+        XCTAssertTrue(app.webViews.firstMatch.staticTexts["Notifications are unavailable in this build."].waitForExistence(timeout: 5), app.debugDescription)
+        captureScreenshot("Reminder settings in offline QA")
+        tap(button("Close settings"))
+        XCTAssertTrue(button("Lot A1, empty").waitForExistence(timeout: 5))
+    }
+
     func testDialogsDismiss() {
         let dateFormat = DateFormatter()
         dateFormat.locale = Locale(identifier: "en_US_POSIX")

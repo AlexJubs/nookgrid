@@ -132,3 +132,24 @@ test('a real same-day solve can verify an existing legacy day without duplicatin
   assert.equal(JSON.parse(controller.entry()[1]).pending.length,1);
   assert.deepEqual(controller.days(),['2026-10-03']);
 });
+
+test('signed personal-day recovery retains offline prediction separately and rejects edited calendar counts',async()=>{
+  const {newCalendar,creditCalendar}=await import('../public/streak-policy.mjs');
+  const at=Date.parse('2026-10-03T18:00:00Z');
+  const calendar=creditCalendar(newCalendar(at,'UTC'),at,'UTC');
+  const payload=JSON.stringify({version:2,playerId,requestNonce:'test-nonce',revision:2,issuedAt:at,calendar,
+    facts:[{puzzleDate:'2026-10-02',streakDay:'2026-10-03',receivedAt:at,periodStart:calendar.start}]});
+  const record={payload,signature:sign(null,Buffer.from(payload),key.privateKey).toString('base64')};
+  const cloud={canQueue:true,ready:true,value:JSON.stringify({version:1,playerId,legacyDates:[],unverifiedDates:[],snapshot:record,calendar})};
+  const f=fixture([],cloud); f.response(record);
+  const controller=await f.controller(); await controller.start();
+  assert.equal(f.changes.at(-1).verifiedCalendar.count,1);
+  assert.equal(JSON.parse(f.disk.get('nookgrid:v1:play-days')).count,1);
+  const edited={...record,payload:payload.replace('"count":1','"count":999')};
+  assert.equal(await checkedSnapshot(edited,f.bridge.verifySnapshot,playerId),null);
+  // A cloud local count is retained only as local data, never as server proof.
+  f.cloud.value=JSON.stringify({version:1,playerId,snapshot:record,calendar:{...calendar,count:999,observedAt:at+1}});
+  await controller.sync({force:true});
+  assert.equal(f.changes.at(-1).verifiedCalendar.count,1);
+  await controller.stop();
+});

@@ -8,6 +8,7 @@ async function protection(page) {
     window.nookgridNative.createStreakProtection = async onChange => {
       let history = JSON.parse(localStorage.getItem('nookgrid:test:v1:streak') || '[]'), recovered = [], verified = [];
       const publish = status => onChange({days:history,verifiedDays:verified,verifiedDay:'2026-09-17',status,cloudStatus:'ready'});
+      window.recoverCalendar = calendar => onChange({days:history,verifiedDays:verified,verifiedDay:'2026-09-17',calendar,verifiedCalendar:calendar,status:'verified',cloudStatus:'ready'});
       window.recoverStreak = dates => { recovered = dates; history = [...new Set([...history,...dates])].sort(); verified = dates; publish('verified'); };
       return {
         days:() => history,historyDates:() => recovered,
@@ -57,4 +58,18 @@ test('a fresh same-day solve queues verification when its local day was already 
   await place(page,daily.solution[8],8);
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('nookgrid:test:v1:protection') || '[]'))).toEqual([{puzzleDate:today,board:daily.solution}]);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('nookgrid:test:v1:streak')))).toEqual([today]);
+});
+
+
+test('an older recovered calendar replaces an empty first-launch prediction without changing the unfinished board',async({page})=>{
+  await protection(page);
+  const board=['park',...Array(8).fill(null)];
+  await seedProgress(page,{board,moves:1}); await openGame(page);
+  await page.evaluate(async()=>{
+    const {newCalendar}=await import('./streak-policy.mjs');
+    window.recoverCalendar(newCalendar(Date.parse('2026-09-16T12:00:00Z'),'America/New_York',['2026-09-15','2026-09-16']));
+  });
+  await expectBoard(page,board); await choose(page.locator('#home-open'));
+  await expect(page.locator('#home-streak-count')).toHaveText('2');
+  await expect(page.locator('#home-streak-status')).toHaveText('2 day verified streak');
 });

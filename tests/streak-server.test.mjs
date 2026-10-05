@@ -35,9 +35,9 @@ function fixture(options = {}) {
     const challenge = service.challenge({...identity,purpose:'enroll'});
     return service.enroll({...identity,challengeId:challenge.id,attestation:Buffer.from('test-enrollment').toString('base64')});
   };
-  function request(events = []) {
+  function request(events = [],extra = {}) {
     const challenge = service.challenge({...identity,purpose:'sync'});
-    const payload = JSON.stringify({version:1,playerId:identity.playerId,challengeId:challenge.id,nonce:challenge.nonce,events});
+    const payload = JSON.stringify({version:1,playerId:identity.playerId,challengeId:challenge.id,nonce:challenge.nonce,events,...extra});
     return {...identity,payload,assertion:proof(payload,++counter)};
   }
   const event = date => ({id:randomUUID(),puzzleDate:date,board:bank.puzzles.find(puzzle => puzzle.date === date).solution});
@@ -128,4 +128,53 @@ test('HTTP service bounds bodies, enforces JSON and exposes no credentials or in
     const bad = await fetch(url+'/v1/challenge',{method:'POST',headers:{'Content-Type':'application/json'},body:'bad'});
     assert.deepEqual(await bad.json(),{error:'invalid_json'});
   } finally { await new Promise(resolve => server.close(resolve)); f.service.close(); }
+});
+
+
+test('canonical local days accept a fresh archive solve, keep one credit per day and reject fabricated/backdated or reused credit',() => {
+  const f=fixture();
+  const zone='America/New_York', data={version:2,timezone:zone};
+  try {
+    f.enroll();
+    const first={...f.event('2026-10-02'),streakDay:'2026-10-03'};
+    let result=f.service.sync(f.request([first],data));
+    assert.equal(result.outcomes[0].status,'accepted');
+    let signed=JSON.parse(result.snapshot.payload);
+    assert.equal(signed.version,2); assert.equal(signed.calendar.count,1);
+    assert.equal(signed.facts[0].streakDay,'2026-10-03');
+    const another={...f.event('2026-10-01'),streakDay:'2026-10-03'};
+    assert.equal(JSON.parse(f.service.sync(f.request([another],data)).snapshot.payload).calendar.count,1);
+    f.time('2026-10-04T03:59:59Z');
+    assert.equal(JSON.parse(f.service.sync(f.request([],data)).snapshot.payload).calendar.count,1);
+    f.time('2026-10-04T04:00:00Z');
+    const reused={...f.event('2026-10-01'),streakDay:'2026-10-04'};
+    signed=JSON.parse(f.service.sync(f.request([reused],data)).snapshot.payload);
+    assert.equal(signed.calendar.played,false); assert.equal(signed.calendar.count,1);
+    const late={...f.event('2026-09-30'),streakDay:'2026-10-03',completedAt:Date.parse('2026-10-03T12:00:00Z')};
+    assert.equal(f.service.sync(f.request([late],data)).outcomes[0].status,'unverified');
+    const next={...f.event('2026-10-03'),streakDay:'2026-10-04'};
+    signed=JSON.parse(f.service.sync(f.request([next],data)).snapshot.payload);
+    assert.equal(signed.calendar.count,2);
+    assert.ok(verify(null,Buffer.from(result.snapshot.payload),signing.publicKey,Buffer.from(result.snapshot.signature,'base64')));
+    f.time('2026-10-06T04:00:00Z');
+    assert.equal(JSON.parse(f.service.sync(f.request([],data)).snapshot.payload).calendar.count,0);
+    assert.throws(()=>f.service.sync(f.request([])),/calendar_upgrade_required/);
+    assert.throws(()=>f.service.sync(f.request([],{version:2,timezone:'fake-zone'})),/invalid_payload/);
+  } finally {f.service.close();}
+});
+
+test('server travel transitions retain the deadline and timezone hopping cannot add extra credits',()=>{
+  const f=fixture();
+  try {
+    f.time('2026-10-03T22:00:00Z'); f.enroll();
+    const first={...f.event('2026-10-01'),streakDay:'2026-10-03'};
+    const base=JSON.parse(f.service.sync(f.request([first],{version:2,timezone:'Pacific/Honolulu'})).snapshot.payload);
+    const second={...f.event('2026-10-02'),streakDay:'2026-10-03'};
+    const moved=JSON.parse(f.service.sync(f.request([second],{version:2,timezone:'Pacific/Auckland'})).snapshot.payload);
+    assert.equal(moved.calendar.count,1); assert.equal(moved.calendar.end,base.calendar.end);
+    f.time('2026-10-04T10:00:00Z');
+    const boundary=JSON.parse(f.service.sync(f.request([],{version:2,timezone:'Pacific/Auckland'})).snapshot.payload);
+    assert.ok(boundary.calendar.end-boundary.calendar.start>=20*3600000);
+    assert.equal(boundary.calendar.count,1); assert.equal(boundary.calendar.played,false);
+  } finally {f.service.close();}
 });

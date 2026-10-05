@@ -157,6 +157,17 @@
       <p id="analytics-description">Help improve the puzzles by measuring visits, moves and results without saving a tracking ID.</p>
       <p id="privacy-signal" role="status"></p>
     </div>
+    <section id="reminder-settings" class="settings-section" aria-labelledby="reminder-title" hidden>
+      <h3 id="reminder-title">Reminders</h3>
+      <label class="setting-row" for="reminder-daily"><span>Daily puzzle reminder</span><input id="reminder-daily" class="setting-toggle" type="checkbox" role="switch" aria-describedby="reminder-status"></label>
+      <label class="setting-row" for="reminder-streak"><span>Streak reminder</span><input id="reminder-streak" class="setting-toggle" type="checkbox" role="switch" aria-describedby="reminder-rule reminder-status"></label>
+      <label class="setting-row" for="reminder-time"><span>Daily reminder time</span><select id="reminder-time">
+        <option value="720">12:00 PM</option><option value="900">3:00 PM</option><option value="1080">6:00 PM</option><option value="1200" selected>8:00 PM</option><option value="1260">9:00 PM</option><option value="1320">10:00 PM</option>
+      </select></label>
+      <p id="reminder-rule">Solve a new puzzle each day to keep your streak. Streak reminders arrive an hour before your day ends.</p>
+      <button id="reminder-test" class="secondary" type="button">Send test notification</button>
+      <p id="reminder-status" role="status" aria-live="polite"></p>
+    </section>
     <section id="ad-free-settings" class="settings-section" aria-labelledby="ad-free-title" hidden>
       <h3 id="ad-free-title">Ad-free play</h3>
       <p id="ad-free-status" role="status">Ad-free play is unavailable right now. Daily puzzles are still free.</p>

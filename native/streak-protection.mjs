@@ -1,4 +1,5 @@
 import {restoreStreakDays,puzzleDay} from '../public/state.mjs';
+import {validCalendar,deviceTimeZone,advanceCalendar,creditCalendar} from '../public/streak-policy.mjs';
 
 const stateKey = 'nookgrid:v1:protection', streakKey = 'nookgrid:v1:streak';
 const days = values => restoreStreakDays(JSON.stringify(values));
@@ -21,7 +22,7 @@ export async function checkedSnapshot(snapshot,verify,playerId = null) {
   try {
     if (!snapshot || typeof snapshot.payload !== 'string' || snapshot.payload.length > 400_000 || typeof snapshot.signature !== 'string' || !await verify(snapshot)) return null;
     const value = JSON.parse(snapshot.payload);
-    if (value.version !== 1 || typeof value.playerId !== 'string' || playerId && value.playerId !== playerId || !Number.isSafeInteger(value.revision) || value.revision < 0 || !Number.isSafeInteger(value.issuedAt) || !Array.isArray(value.facts) || value.facts.length > 3660 || value.facts.some(fact => days([fact?.puzzleDate]).length !== 1 || !Number.isSafeInteger(fact.receivedAt) || fact.receivedAt > value.issuedAt || fact.receivedAt < 0) || new Set(value.facts.map(fact => fact.puzzleDate)).size !== value.facts.length) return null;
+    if (![1,2].includes(value.version) || value.version === 2 && (!validCalendar(value.calendar) || value.calendar.observedAt > value.issuedAt || value.facts?.some(fact => days([fact.streakDay]).length !== 1)) || typeof value.playerId !== 'string' || playerId && value.playerId !== playerId || !Number.isSafeInteger(value.revision) || value.revision < 0 || !Number.isSafeInteger(value.issuedAt) || !Array.isArray(value.facts) || value.facts.length > 3660 || value.facts.some(fact => days([fact?.puzzleDate]).length !== 1 || !Number.isSafeInteger(fact.receivedAt) || fact.receivedAt > value.issuedAt || fact.receivedAt < 0) || new Set(value.facts.map(fact => fact.puzzleDate)).size !== value.facts.length) return null;
     return value;
   } catch { return null; }
 }
@@ -35,9 +36,11 @@ export async function createStreakProtection({storage,bridge,enabled = false,onC
   let status = enabled ? 'pending' : 'local', cloudStatus = 'unavailable', running = null, listener = null, stopped = false, dirty = false, lastAttempt = 0, timer = null;
   let remote = null;
   const allDays = () => merge(state.legacyDates,state.unverifiedDates,state.pending.map(event => event.puzzleDate),verified?.facts.map(fact => fact.puzzleDate) || []);
-  const notify = () => onChange({days:allDays(),verifiedDays:verified?.facts.map(fact => fact.puzzleDate) || [],verifiedDay:verified ? puzzleDay(new Date(verified.issuedAt)) : null,status,cloudStatus});
+  const notify = () => onChange({days:allDays(),verifiedDays:verified?.facts.map(fact => fact.puzzleDate) || [],verifiedDay:verified ? puzzleDay(new Date(verified.issuedAt)) : null,calendar:state.calendar,verifiedCalendar:verified?.calendar || null,status,cloudStatus});
   async function persist() {
-    await storage.setItems([[stateKey,JSON.stringify(state)],[streakKey,JSON.stringify(allDays())]]);
+    const entries = [[stateKey,JSON.stringify(state)],[streakKey,JSON.stringify(allDays())]];
+    if (validCalendar(state.calendar)) entries.push(['nookgrid:v1:play-days',JSON.stringify(state.calendar)]);
+    await storage.setItems(entries);
     notify();
   }
   async function accept(snapshot,expectedId,expectedNonce = null) {
@@ -65,6 +68,15 @@ export async function createStreakProtection({storage,bridge,enabled = false,onC
       if (remote.snapshot) {
         try { await accept(remote.snapshot,remote.playerId); } catch { /* forged/cloud rollback never becomes verified */ }
       }
+      const recoveredCalendar = validCalendar(remote.calendar) ? remote.calendar : verified?.calendar;
+      if (validCalendar(recoveredCalendar)) {
+        let recovered = advanceCalendar(recoveredCalendar);
+        const local = validCalendar(state.calendar) ? advanceCalendar(state.calendar) : null;
+        if (!local || local.count === 0 || recovered.count > local.count) {
+          if (state.pending.some(event => event.streakDay === recovered.day)) recovered = creditCalendar(recovered);
+          state.calendar = recovered;
+        }
+      }
       // Unverified dates stay explicitly unverified, including unsigned cloud edits.
       state.legacyDates = merge(state.legacyDates,remote.legacyDates || []);
       state.unverifiedDates = merge(state.unverifiedDates,remote.unverifiedDates || []);
@@ -76,7 +88,7 @@ export async function createStreakProtection({storage,bridge,enabled = false,onC
   }
   async function uploadCloud() {
     if (!['ready','waiting'].includes(cloudStatus) || !state.playerId || allDays().length === 0) return;
-    await bridge.writeCloud({value:JSON.stringify({version:1,playerId:state.playerId,legacyDates:state.legacyDates,unverifiedDates:merge(state.unverifiedDates,state.pending.map(event => event.puzzleDate)),snapshot:state.snapshot})});
+    await bridge.writeCloud({value:JSON.stringify({version:1,playerId:state.playerId,legacyDates:state.legacyDates,unverifiedDates:merge(state.unverifiedDates,state.pending.map(event => event.puzzleDate)),snapshot:state.snapshot,calendar:state.calendar})});
   }
   async function synchronize() {
     if (!enabled || stopped) return;
@@ -88,7 +100,7 @@ export async function createStreakProtection({storage,bridge,enabled = false,onC
       await persist();
       try { await uploadCloud(); } catch { cloudStatus = 'pending'; }
       const events = state.pending.slice(0,64);
-      const result = await bridge.sync({events});
+      const result = await bridge.sync({events,timezone:deviceTimeZone()});
       if (typeof result.expectedNonce !== 'string' || !result.expectedNonce) throw Error('Unbound verification response');
       await accept(result.snapshot,identity.playerId,result.expectedNonce);
       // Never discard an offline event merely because the service was unavailable.
@@ -96,6 +108,7 @@ export async function createStreakProtection({storage,bridge,enabled = false,onC
       state.recentEvents = [...new Map([...(state.recentEvents || []),...state.pending.filter(event => terminal.get(event.id) === 'accepted')].map(event => [event.id,event])).values()].slice(-64);
       state.unverifiedDates = merge(state.unverifiedDates,state.pending.filter(event => terminal.has(event.id) && terminal.get(event.id) !== 'accepted').map(event => event.puzzleDate));
       state.pending = state.pending.filter(event => !terminal.has(event.id));
+      if (verified?.calendar && !state.pending.length && !state.unverifiedDates.length && !state.legacyDates.length) state.calendar = verified.calendar;
       status = 'verified';
       await persist();
       await uploadCloud();
@@ -107,9 +120,11 @@ export async function createStreakProtection({storage,bridge,enabled = false,onC
     days:allDays,
     verifiedDays:() => verified?.facts.map(fact => fact.puzzleDate) || [],
     historyDates:() => merge(state.recoveredDates || [],verified?.facts.map(fact => fact.puzzleDate) || []),
-    prepareCompletion(puzzleDate,board) {
+    setCalendar(calendar) { if (validCalendar(calendar)) state.calendar = {...calendar}; },
+    prepareCompletion(puzzleDate,board,metadata = {}) {
+      if (validCalendar(metadata.calendar)) state.calendar = {...metadata.calendar};
       if (state.pending.some(event => event.puzzleDate === puzzleDate) || verified?.facts.some(fact => fact.puzzleDate === puzzleDate)) return;
-      state.pending.push({id:eventId(),puzzleDate,board:[...board]});
+      state.pending.push({id:eventId(),puzzleDate,board:[...board],...(metadata.streakDay ? {streakDay:metadata.streakDay,completedAt:metadata.completedAt} : {})});
       dirty = true;
       // Preserve a full queue's earned dates without claiming online verification.
       if (state.pending.length > 64) state.unverifiedDates = merge(state.unverifiedDates,state.pending.splice(0,state.pending.length-64).map(event => event.puzzleDate));

@@ -112,6 +112,8 @@ class StreakProtectionPlugin: CAPPlugin, CAPBridgedPlugin {
         // Merge one identity's dates and retain its newest authentic snapshot.
         var merged = document
         if let old = NSUbiquitousKeyValueStore.default.string(forKey: key), let data = old.data(using: .utf8), let previous = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            if let previousCalendar = previous["calendar"] as? [String: Any],
+               (previousCalendar["observedAt"] as? Double ?? 0) > ((document["calendar"] as? [String: Any])?["observedAt"] as? Double ?? 0) { merged["calendar"] = previousCalendar }
             for field in ["legacyDates", "unverifiedDates"] { merged[field] = Array(Set((previous[field] as? [String] ?? []) + (document[field] as? [String] ?? []))).sorted() }
             if let oldSnapshot = previous["snapshot"] as? [String: String], let payload = oldSnapshot["payload"], validSnapshot(payload, oldSnapshot["signature"] ?? ""), let data = payload.data(using: .utf8), let facts = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                 let newSnapshot = document["snapshot"] as? [String: String]
@@ -211,7 +213,7 @@ class StreakProtectionPlugin: CAPPlugin, CAPBridgedPlugin {
                 var input = identity; input["purpose"] = "sync"
                 let challenge = try await post("/v1/challenge", input)
                 guard let nonce = challenge["nonce"] as? String, let challengeId = challenge["id"] as? String else { throw ProtectionError.invalid }
-                let payload: [String: Any] = ["version": 1, "playerId": credentials["playerId"]!, "challengeId": challengeId, "nonce": nonce, "events": events]
+                let payload: [String: Any] = ["version": 2, "timezone": TimeZone.current.identifier, "playerId": credentials["playerId"]!, "challengeId": challengeId, "nonce": nonce, "events": events]
                 let bytes = try JSONSerialization.data(withJSONObject: payload, options: [.sortedKeys])
                 let assertion = try await attest.generateAssertion(key, clientDataHash: Data(SHA256.hash(data: bytes)))
                 input = identity; input["payload"] = String(data: bytes, encoding: .utf8)!; input["assertion"] = assertion.base64EncodedString()

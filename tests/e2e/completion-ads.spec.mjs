@@ -116,7 +116,8 @@ test('archive completion is eligible while completed history and Tutorial are ex
   await openGame(page,'date=2026-09-16');
   await place(page,archive.solution[8],8);
   await expect.poll(() => page.evaluate(() => window.adCalls.length)).toBe(1);
-  expect(await page.evaluate(() => localStorage.getItem('nookgrid:test:v1:streak'))).toBeNull();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('nookgrid:test:v1:streak')))).toEqual(['2026-09-16']);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('nookgrid:test:v1:play-days')).count)).toBe(1);
   await page.evaluate(() => window.dismissAd());
   await page.addInitScript(solution => localStorage.setItem('nookgrid:test:v1:2026-09-17',JSON.stringify({board:[...solution.slice(0,8),null],moves:8,reported:true})),daily.solution);
   await openGame(page,'date=2026-09-17');
