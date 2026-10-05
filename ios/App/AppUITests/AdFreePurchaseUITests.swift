@@ -32,6 +32,7 @@ final class AdFreePurchaseUITests: XCTestCase {
         try await clearPurchaseError()
         XCTAssertFalse(session.askToBuyEnabled, "Every scenario must start without Ask to Buy.")
         XCTAssertFalse(session.failTransactionsEnabled, "Every scenario must start without forced transaction failures.")
+        XCTAssertFalse(session.interruptedPurchasesEnabled, "Every scenario must start without interrupted purchases.")
         XCTAssertTrue(session.allTransactions().isEmpty, "Every scenario must start with cleared test history.")
         openSettings()
         XCTAssertTrue(purchaseButton.waitForExistence(timeout: 15), app.debugDescription)
@@ -95,9 +96,15 @@ final class AdFreePurchaseUITests: XCTestCase {
         tap(purchaseButton)
         let becameActive = element("Ad-free play is active.").waitForExistence(timeout: 15)
         let configuredErrorPresent = try await hasPurchaseError()
-        let states = session.allTransactions().map { $0.state.rawValue }
+        let transactions = session.allTransactions()
+        let states = transactions.map { $0.state.rawValue }
+        let purchaseIssues = transactions.map { $0.hasPurchaseIssue }
+        let pendingApprovals = transactions.map { $0.pendingAskToBuyConfirmation }
         XCTAssertTrue(becameActive,
-                      "Direct local purchase must activate ad-free play. State codes: \(states); simulated error present: \(configuredErrorPresent). \(app.debugDescription)")
+                      "Direct local purchase must activate ad-free play. State codes: \(states); purchase issues: \(purchaseIssues); pending approvals: \(pendingApprovals); simulated error present: \(configuredErrorPresent). \(app.debugDescription)")
+        // Async XCTest assertions can continue despite continueAfterFailure=false.
+        // Preserve the failure, then stop scenarios that require a successful purchase.
+        guard becameActive else { return }
         XCTAssertFalse(element("Ad-free play is active").isEnabled)
         XCTAssertEqual(session.allTransactions().filter { $0.productIdentifier == AdFreeEntitlementState.productID }.count, 1)
 

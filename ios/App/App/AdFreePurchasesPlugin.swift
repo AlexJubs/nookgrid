@@ -20,7 +20,72 @@ final class AdFreePurchaseStore {
 
     var allowsAds: Bool { entitlement.allowsAds(operation: operation) }
 
-    private init() {}
+    private init() {
+        #if DEBUG
+        // Preserve a failure across relaunch and subsequent offline gameplay tests.
+        // Only an explicit fresh local StoreKit scenario clears its diagnostic.
+        if Self.localTestingEnabled && ProcessInfo.processInfo.arguments.contains("nookgrid-reset-test-state") {
+            try? FileManager.default.removeItem(at: Self.localDiagnosticURL)
+        }
+        #endif
+    }
+
+    #if DEBUG
+    private static var localDiagnosticURL: URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent("NookGrid-StoreKit-Diagnostic.json")
+    }
+
+    private struct LocalDiagnostic: Encodable {
+        struct ErrorSummary: Encodable {
+            let family: String
+            let domain: String
+            let code: Int
+
+            init(_ error: Error) {
+                if error is StoreKitError { family = "storekit" }
+                else if error is Product.PurchaseError { family = "purchase" }
+                else if error is SKError { family = "legacy" }
+                else if error is URLError { family = "url" }
+                else { family = "other" }
+                let native = error as NSError
+                let allowedDomains: Set<String> = ["StoreKit.StoreKitError", "StoreKit.Product.PurchaseError",
+                    "SKErrorDomain", "NSURLErrorDomain", "SKInternalErrorDomain", "ASDErrorDomain", "AMSErrorDomain"]
+                domain = allowedDomains.contains(native.domain) ? native.domain : "other"
+                code = native.code
+            }
+        }
+
+        let schemaVersion = 1
+        let event: String
+        let policyRejected: Bool
+        let errors: [ErrorSummary]
+
+        init(error: Error?, policyRejected: Bool) {
+            self.policyRejected = policyRejected
+            event = policyRejected ? "policy_rejected" : "purchase_error"
+            var summaries = [ErrorSummary]()
+            var current = error
+            // Read only this one userInfo key and at most two underlying errors.
+            // Never encode descriptions, userInfo, receipts or transaction identifiers.
+            for _ in 0..<3 {
+                guard let failure = current else { break }
+                summaries.append(ErrorSummary(failure))
+                current = (failure as NSError).userInfo[NSUnderlyingErrorKey] as? Error
+            }
+            errors = summaries
+        }
+    }
+    #endif
+
+    private func recordLocalDiagnostic(error: Error? = nil, policyRejected: Bool = false) {
+        #if DEBUG
+        guard Self.localTestingEnabled else { return }
+        let summary = LocalDiagnostic(error: error, policyRejected: policyRejected)
+        if let data = try? JSONEncoder().encode(summary) {
+            try? data.write(to: Self.localDiagnosticURL, options: .atomic)
+        }
+        #endif
+    }
 
     // Debug StoreKit access requires an explicit local-test launch. Ordinary QA stays offline.
     static var localTestingEnabled: Bool {
@@ -190,6 +255,7 @@ final class AdFreePurchaseStore {
                 switch result {
                 case .verified(let transaction):
                     guard facts(transaction, verified: true).grantsAdFree else {
+                        recordLocalDiagnostic(policyRejected: true)
                         outcome = "error"; errorCode = "transaction_not_entitled"; return state()
                     }
                     entitlement = .adFree
@@ -212,6 +278,7 @@ final class AdFreePurchaseStore {
         } catch StoreKitError.userCancelled {
             outcome = "cancelled"
         } catch {
+            recordLocalDiagnostic(error: error)
             outcome = "error"
             errorCode = "purchase_failed"
         }

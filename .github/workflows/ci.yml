@@ -72,6 +72,16 @@ jobs:
       - run: npm ci
       - run: npm run build:ios
       - run: npm run test:ios
+      - name: Preserve local StoreKit diagnostic
+        if: always()
+        run: |
+          if [ -n "${NOOKGRID_SIMULATOR_ID:-}" ]; then
+            container="$(xcrun simctl get_app_container "$NOOKGRID_SIMULATOR_ID" com.nookgrid.app data 2>/dev/null || true)"
+            if [ -n "$container" ] && [ -f "$container/tmp/NookGrid-StoreKit-Diagnostic.json" ]; then
+              mkdir -p artifacts/ios
+              cp "$container/tmp/NookGrid-StoreKit-Diagnostic.json" artifacts/ios/storekit-diagnostic.json
+            fi
+          fi
       - name: Package simulator app
         if: always()
         run: |
@@ -86,6 +96,7 @@ jobs:
           path: |
             artifacts/ios/NookGrid.xcresult
             artifacts/ios/NookGrid-simulator.zip
+            artifacts/ios/storekit-diagnostic.json
             artifacts/ios/*.log
           if-no-files-found: ignore
           retention-days: 7
