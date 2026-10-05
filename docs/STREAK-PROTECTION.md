@@ -32,7 +32,7 @@ Start with `npm run streak:server`. Restrict key/database file permissions and b
 
 The owner must enable iCloud Key-Value Storage and App Attest for the existing personal `com.nookgrid.app` identifier and regenerate the matching profiles. `App.entitlements` contains identifier-prefix placeholders, no team selection. App Attest development certificates are rejected by the production service. A signed physical Release/TestFlight build is required for the real integration check.
 
-Build a configured app only after the service and public key are ready:
+Build a configured app only after the service and public key are ready. Production builds also require the command-scoped analytics capture configuration described in [RELEASING.md](RELEASING.md#private-analytics-configuration); keep its value in private release configuration.
 
 ```sh
 NOOKGRID_PRODUCTION=1 \
