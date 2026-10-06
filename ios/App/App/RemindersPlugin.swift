@@ -37,7 +37,7 @@ class RemindersPlugin: CAPPlugin, CAPBridgedPlugin, UNUserNotificationCenterDele
         guard available else { call.resolve(["permission": "unavailable"]); return }
         center.requestAuthorization(options: [.alert, .sound]) { _, error in
             if error != nil { call.reject("Notification permission unavailable"); return }
-            self.getPermission(call)
+            ReminderPermissionFlow.refreshAfterAuthorization { self.getPermission(call) }
         }
     }
     @objc func pending(_ call: CAPPluginCall) {
