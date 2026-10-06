@@ -51,6 +51,8 @@ The following require complementary native or manual verification: cold launch w
 
 `AdFreePurchaseDiagnosticCheck.swift` verifies bounded local StoreKit error history, exact error enum cases, removal of descriptions/receipts/arbitrary domains, the three-error nesting limit and recovery from damaged diagnostic data. Debug StoreKit failures survive later fresh scenarios so CI can retain the cause of an earlier cancellation failure. This diagnostic is limited to explicitly launched local StoreKit tests and is absent from Release builds.
 
+UIKit purchases use Apple's `purchase(confirmIn:options:)` with the calling bridge's active window scene on iOS 17 and later; earlier systems retain `purchase(options:)`. Missing/inactive confirmation scenes remain recoverable purchase failures, never cancellations or entitlements. The pure error/diagnostic checks distinguish those conditions. `testVerifiedPurchaseRelaunchRestoreAndRefund`, `testPendingApprovalNeverGrantsUntilVerifiedUpdate` and `testCancelledAndFailedPurchaseKeepFreePlayAndCanRetry` exercise the real bridge purchase flow. This API correction is a compatibility candidate for the observed cancellation failure; only native CI and signed physical checks can establish its outcome.
+
 `ios-project.test.mjs` checks that Xcode build objects have unique IDs. It reproduces the duplicate build-file/file-reference IDs that prevented Xcode from opening the project when the cancellation helper was added. Full native CI still validates actual project loading and compilation.
 
 Screenshots provide review evidence, not automatically accepted pixel baselines. Inspect the empty, solved and narrow solved images before a release. Automated geometry and accessible-name assertions are not a complete accessibility audit.

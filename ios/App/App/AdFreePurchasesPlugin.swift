@@ -1,6 +1,7 @@
 import Capacitor
 import Foundation
 import StoreKit
+import UIKit
 
 @MainActor
 final class AdFreePurchaseStore {
@@ -183,7 +184,7 @@ final class AdFreePurchaseStore {
         return state()
     }
 
-    func purchase() async -> [String: Any] {
+    func purchase(in scene: UIWindowScene?) async -> [String: Any] {
         guard Self.storeKitAllowed else { return unavailable() }
         guard operation == "idle", !pending else { return state() }
         guard entitlement != .adFree else { outcome = "already_owned"; notify(); return state() }
@@ -200,7 +201,17 @@ final class AdFreePurchaseStore {
         defer { operation = "idle"; notify() }
         var purchaseRevenue = [String: Any]()
         do {
-            switch try await product.purchase() {
+            let result: Product.PurchaseResult
+            if #available(iOS 17.0, *) {
+                guard let scene else { throw AdFreePurchaseError.ConfirmationError.missingScene }
+                guard scene.activationState == .foregroundActive else {
+                    throw AdFreePurchaseError.ConfirmationError.inactiveScene
+                }
+                result = try await product.purchase(confirmIn: scene)
+            } else {
+                result = try await product.purchase()
+            }
+            switch result {
             case .success(let result):
                 switch result {
                 case .verified(let transaction):
@@ -323,7 +334,8 @@ class AdFreePurchasesPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func purchase(_ call: CAPPluginCall) {
         Task { @MainActor in
             guard allowed(isTest: call.getBool("isTest") == true) else { call.resolve(disabled()); return }
-            let result = await AdFreePurchaseStore.shared.purchase()
+            let scene = bridge?.viewController?.viewIfLoaded?.window?.windowScene
+            let result = await AdFreePurchaseStore.shared.purchase(in: scene)
             var response = AdFreePurchaseStore.shared.state()
             for key in ["purchaseRevenueMicros", "purchaseCurrency"] { if let value = result[key] { response[key] = value } }
             call.resolve(response)

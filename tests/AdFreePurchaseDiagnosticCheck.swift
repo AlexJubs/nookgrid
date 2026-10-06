@@ -16,6 +16,8 @@ struct AdFreePurchaseDiagnosticCheck {
         precondition(history.records.count == 2)
         precondition(history.records[0].errors[0].kind == "user_cancelled")
         precondition(history.records[1].errors[0].kind == "unknown")
+        precondition(AdFreePurchaseDiagnostics.Record(error: AdFreePurchaseError.ConfirmationError.missingScene, policyRejected: false).errors[0].kind == "missing_scene")
+        precondition(AdFreePurchaseDiagnostics.Record(error: AdFreePurchaseError.ConfirmationError.inactiveScene, policyRejected: false).errors[0].kind == "inactive_scene")
         for _ in 0..<25 { try AdFreePurchaseDiagnostics.append(failed, to: url) }
         history = try JSONDecoder().decode(AdFreePurchaseDiagnostics.History.self, from: Data(contentsOf: url))
         precondition(history.records.count == 20)

@@ -2,6 +2,11 @@ import Foundation
 import StoreKit
 
 enum AdFreePurchaseError {
+    enum ConfirmationError: Error {
+        case missingScene
+        case inactiveScene
+    }
+
     static func isCancellation(_ error: Error) -> Bool {
         var current: Error? = error
         for _ in 0..<3 {
@@ -32,7 +37,13 @@ enum AdFreePurchaseDiagnostics {
         let code: Int
 
         init(_ error: Error) {
-            if let store = error as? StoreKitError {
+            if let confirmation = error as? AdFreePurchaseError.ConfirmationError {
+                family = "confirmation"
+                switch confirmation {
+                case .missingScene: kind = "missing_scene"
+                case .inactiveScene: kind = "inactive_scene"
+                }
+            } else if let store = error as? StoreKitError {
                 family = "storekit"
                 switch store {
                 case .userCancelled: kind = "user_cancelled"

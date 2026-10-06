@@ -13,6 +13,8 @@ struct AdFreePurchaseErrorCheck {
         precondition(AdFreePurchaseError.isCancellation(StoreKitError.systemError(cancelled)))
         precondition(AdFreePurchaseError.isCancellation(NSError(domain: "ASDErrorDomain", code: 1, userInfo: [NSUnderlyingErrorKey: cancelled])))
         precondition(!AdFreePurchaseError.isCancellation(StoreKitError.unknown))
+        precondition(!AdFreePurchaseError.isCancellation(AdFreePurchaseError.ConfirmationError.missingScene))
+        precondition(!AdFreePurchaseError.isCancellation(AdFreePurchaseError.ConfirmationError.inactiveScene))
         precondition(!AdFreePurchaseError.isCancellation(URLError(.notConnectedToInternet)))
         precondition(!AdFreePurchaseError.isCancellation(StoreKitError.systemError(URLError(.notConnectedToInternet))))
         precondition(!AdFreePurchaseError.isCancellation(NSError(domain: "OtherDomain", code: cancelled.code)))
