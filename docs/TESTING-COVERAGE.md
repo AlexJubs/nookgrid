@@ -49,6 +49,8 @@ The following require complementary native or manual verification: cold launch w
 
 `AdFreePurchaseErrorCheck.swift` covers modern, legacy and wrapped StoreKit cancellations, while network failures, unknown errors and unrelated error domains remain failures. The native runner compiles and runs it before the simulator suite. Cancellation classification does not grant an entitlement; the full purchase UI tests still require verified purchase, refund, pending approval and retry behavior.
 
+`ios-project.test.mjs` checks that Xcode build objects have unique IDs. It reproduces the duplicate build-file/file-reference IDs that prevented Xcode from opening the project when the cancellation helper was added. Full native CI still validates actual project loading and compilation.
+
 Screenshots provide review evidence, not automatically accepted pixel baselines. Inspect the empty, solved and narrow solved images before a release. Automated geometry and accessible-name assertions are not a complete accessibility audit.
 
 The current phone layout stacks the plan, a centered board, two rows of places and the action row. Native completion has a separate recap with a borderless arrangement and one bottom action group. Web keeps its completed board with a compact result and Share underneath, without Home or streaks. Solved boards are read-only with no gameplay controls, and Feedback stays in Menu. Calendar is the only archive destination. Short screens and enlarged text may scroll vertically without horizontal clipping. Review current light/dark renders against `DESIGN.md` before release; historical screenshots do not verify a newer candidate.

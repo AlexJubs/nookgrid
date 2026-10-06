@@ -11,7 +11,7 @@
         BB1000000000000000000003 /* ReminderPermissionFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000004 /* ReminderPermissionFlow.swift */; };
         AF1000000000000000000001 /* AdFreePurchasesPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1000000000000000000002 /* AdFreePurchasesPlugin.swift */; };
         AF1000000000000000000003 /* AdFreeEntitlementState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1000000000000000000004 /* AdFreeEntitlementState.swift */; };
-        AF1000000000000000000007 /* AdFreePurchaseError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1000000000000000000008 /* AdFreePurchaseError.swift */; };
+        AF100000000000000000000A /* AdFreePurchaseError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF100000000000000000000B /* AdFreePurchaseError.swift */; };
         AF1000000000000000000005 /* AdFreeEntitlementState.swift in Test Sources */ = {isa = PBXBuildFile; fileRef = AF1000000000000000000004 /* AdFreeEntitlementState.swift */; };
         AF1000000000000000000006 /* AdFreePurchaseUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1000000000000000000007 /* AdFreePurchaseUITests.swift */; };
         AF1000000000000000000008 /* AdFreeTest.storekit in Test Resources */ = {isa = PBXBuildFile; fileRef = AF1000000000000000000009 /* AdFreeTest.storekit */; };
@@ -45,7 +45,7 @@
         BB1000000000000000000004 /* ReminderPermissionFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderPermissionFlow.swift; sourceTree = "<group>"; };
         AF1000000000000000000002 /* AdFreePurchasesPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdFreePurchasesPlugin.swift; sourceTree = "<group>"; };
         AF1000000000000000000004 /* AdFreeEntitlementState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdFreeEntitlementState.swift; sourceTree = "<group>"; };
-        AF1000000000000000000008 /* AdFreePurchaseError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdFreePurchaseError.swift; sourceTree = "<group>"; };
+        AF100000000000000000000B /* AdFreePurchaseError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdFreePurchaseError.swift; sourceTree = "<group>"; };
         AF1000000000000000000007 /* AdFreePurchaseUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdFreePurchaseUITests.swift; sourceTree = "<group>"; };
         AF1000000000000000000009 /* AdFreeTest.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = AdFreeTest.storekit; sourceTree = "<group>"; };
         B21000000000000000000002 /* StreakProtectionPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakProtectionPlugin.swift; sourceTree = "<group>"; };
@@ -106,7 +106,7 @@
 				9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,
                 AF1000000000000000000002 /* AdFreePurchasesPlugin.swift */,
                 AF1000000000000000000004 /* AdFreeEntitlementState.swift */,
-                AF1000000000000000000008 /* AdFreePurchaseError.swift */,
+                AF100000000000000000000B /* AdFreePurchaseError.swift */,
                 B21000000000000000000002 /* StreakProtectionPlugin.swift */,
                 BB1000000000000000000002 /* RemindersPlugin.swift */,
                 BB1000000000000000000004 /* ReminderPermissionFlow.swift */,
@@ -227,7 +227,7 @@
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
                 AF1000000000000000000001 /* AdFreePurchasesPlugin.swift in Sources */,
                 AF1000000000000000000003 /* AdFreeEntitlementState.swift in Sources */,
-                AF1000000000000000000007 /* AdFreePurchaseError.swift in Sources */,
+                AF100000000000000000000A /* AdFreePurchaseError.swift in Sources */,
                 B21000000000000000000001 /* StreakProtectionPlugin.swift in Sources */,
                 BB1000000000000000000001 /* RemindersPlugin.swift in Sources */,
                 BB1000000000000000000003 /* ReminderPermissionFlow.swift in Sources */,
