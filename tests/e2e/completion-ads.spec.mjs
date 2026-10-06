@@ -146,7 +146,9 @@ test('ad privacy and reporting stay available independently of play analytics',a
 test('backgrounding an already presented ad waits for dismissal without another opportunity',async ({page}) => {
   await page.emulateMedia({reducedMotion:'no-preference'});
   await openGame(page);
+  await page.clock.pauseAt(new Date('2026-09-17T12:10:00Z'));
   await place(page,daily.solution[8],8);
+  await page.clock.runFor(3000);
   await expect.poll(() => page.evaluate(() => window.adCalls.length)).toBe(1);
   await page.evaluate(() => window.nativeStateListeners.forEach(listener => listener({isActive:false})));
   await page.evaluate(() => window.nativeStateListeners.forEach(listener => listener({isActive:true})));
