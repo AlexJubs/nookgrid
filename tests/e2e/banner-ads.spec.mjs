@@ -20,6 +20,61 @@ test.beforeEach(async ({page}) => {
 
 const lastBanner = page => page.evaluate(() => window.bannerCalls.at(-1));
 
+for (const phone of [{width:393,height:852,top:59,bottom:34},{width:402,height:874,top:62,bottom:34},{width:440,height:956,top:62,bottom:34}]) {
+  test(`the full banner game fits without scrolling at ${phone.width} by ${phone.height}`,async ({page},testInfo) => {
+    await page.setViewportSize(phone);
+    await page.clock.setFixedTime(new Date('2027-05-14T12:00:00Z'));
+    await page.addInitScript(({top,bottom}) => document.addEventListener('DOMContentLoaded',() => {
+      document.documentElement.style.setProperty('--safe-top',`${top}px`);
+      document.documentElement.style.setProperty('--safe-bottom',`${bottom}px`);
+    },{once:true}),phone);
+    for (const date of ['2026-09-18','2026-10-05','2027-05-14']) {
+      await openGame(page,`date=${date}`);
+      await expect.poll(() => lastBanner(page)).toMatchObject({visible:true});
+      await expect(page.locator('.clue:visible')).toHaveCount(bank.puzzles.find(puzzle => puzzle.date === date).clues.length);
+      await expect(page.locator('#tray .place:visible')).toHaveCount(9);
+      const expectFit = async () => {
+        const geometry = await page.evaluate(() => {
+          const main = document.querySelector('main');
+          return {overflow:main.scrollHeight-main.clientHeight,documentOverflow:document.documentElement.scrollHeight-innerHeight,
+            targets:[...document.querySelectorAll('.site-header,.clues-header,.clue,.lot,.place,.board-actions button,#gameplay-banner-frame')]
+              .filter(element => element.checkVisibility()).map(element => {
+                const rect=element.getBoundingClientRect();
+                return {name:element.id||element.textContent.trim(),x:rect.x,y:rect.y,width:rect.width,height:rect.height,
+                  interactive:element.matches('button')};
+              })};
+        });
+        expect(geometry.overflow,'The complete puzzle fits below the reserved ad strip').toBeLessThanOrEqual(1);
+        expect(geometry.documentOverflow,'The native screen fits its viewport').toBeLessThanOrEqual(1);
+        for (const target of geometry.targets) {
+          expect(target.y,`${target.name} top`).toBeGreaterThanOrEqual(phone.top);
+          expect(target.y+target.height,`${target.name} bottom`).toBeLessThanOrEqual(phone.height-phone.bottom+1);
+          expect(target.x,`${target.name} left`).toBeGreaterThanOrEqual(0);
+          expect(target.x+target.width,`${target.name} right`).toBeLessThanOrEqual(phone.width+1);
+          if (target.interactive) {
+            expect(target.width,`${target.name} touch width`).toBeGreaterThanOrEqual(44);
+            expect(target.height,`${target.name} touch height`).toBeGreaterThanOrEqual(44);
+          }
+        }
+      };
+      await expectFit();
+      await place(page,'bakery',0);
+      await page.locator('#hint').click();
+      await page.locator('#confirm-hint').click();
+      await expectFit();
+      await page.evaluate(() => { document.querySelector('main').scrollTo(0,1000); window.scrollTo(0,1000); });
+      expect(await page.evaluate(() => ({puzzle:document.querySelector('main').scrollTop,page:scrollY}))).toEqual({puzzle:0,page:0});
+      if (date==='2026-10-05') {
+        for (const colorScheme of ['light','dark']) {
+          await page.emulateMedia({colorScheme});
+          await expectFit();
+          await page.screenshot({path:testInfo.outputPath(`recorded-puzzle-${colorScheme}.png`)});
+        }
+      }
+    }
+  });
+}
+
 for (const phone of [{width:393,height:852,top:59,bottom:34},{width:375,height:667,top:20,bottom:0},{width:320,height:568,top:20,bottom:0}]) {
   test(`banner stays separated and pinned with reachable gameplay at ${phone.width} pixels`,async ({page},testInfo) => {
     await page.setViewportSize(phone);
@@ -37,8 +92,8 @@ for (const phone of [{width:393,height:852,top:59,bottom:34},{width:375,height:6
       const plan = await page.locator('#clue-list').boundingBox();
       expect(plan.y - frame.y - frame.height).toBeGreaterThanOrEqual(12);
       const board = await page.locator('#board').boundingBox();
-      expect(board.width).toBeGreaterThanOrEqual(214);
-      expect(board.height).toBeGreaterThanOrEqual(214);
+      expect(board.width).toBeGreaterThanOrEqual(140);
+      expect(board.height).toBeGreaterThanOrEqual(140);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(phone.width);
       const targets = await page.locator('.lot:visible,.place:visible,.board-actions button:visible,.icon-button:visible').evaluateAll(items => items.map(item => ({width:item.getBoundingClientRect().width,height:item.getBoundingClientRect().height})));
       for (const target of targets) { expect(target.width).toBeGreaterThanOrEqual(44); expect(target.height).toBeGreaterThanOrEqual(44); }
@@ -114,7 +169,7 @@ test('no fill and enlarged text preserve the banner slot and scroll access',asyn
   await page.locator('#hint').scrollIntoViewIfNeeded();
   await expect(page.locator('#hint')).toBeInViewport();
   expect((await page.locator('#gameplay-banner-frame').boundingBox()).y).toBe(frame.y);
-  expect((await page.locator('#board').boundingBox()).width).toBeGreaterThanOrEqual(214);
+  expect((await page.locator('#board').boundingBox()).width).toBeGreaterThanOrEqual(140);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   if (testInfo.project.name === 'phone-webkit') await page.screenshot({path:'artifacts/banner-layout-probe/implemented-dark-large-text.png'});
   await page.locator('#menu-open').click();
