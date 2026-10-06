@@ -7,23 +7,40 @@ import StoreKitTest
 final class AdFreePurchaseUITests: XCTestCase {
     private var app: XCUIApplication!
     private var session: SKTestSession!
+    private var fixtureReadyForCleanup = false
 
     override func setUp() async throws {
         continueAfterFailure = false
+        fixtureReadyForCleanup = false
         let file = try XCTUnwrap(Bundle(for: Self.self).url(forResource: "AdFreeTest", withExtension: "storekit"))
-        session = try SKTestSession(contentsOf: file)
-        session.resetToDefaultState()
-        session.clearTransactions()
-        session.disableDialogs = true
-        // Session setters can log a simulator service failure without throwing. Check
-        // a throwing API before launching the app so unavailable test infrastructure
-        // fails here, rather than masquerading as missing production product metadata.
         guard #available(iOS 17.0, *) else {
             throw NSError(domain: "NookGridStoreKitTest", code: 1,
                           userInfo: [NSLocalizedDescriptionKey: "The StoreKit test suite requires iOS 17 or later."])
         }
-        try await session.setSimulatedError(nil, forAPI: .purchase)
+        // Bootstrap the target before configuring a fresh CI test environment.
+        // Stay offline so this first launch cannot load StoreKit or live SDKs.
         app = XCUIApplication()
+        app.launchArguments = ["nookgrid-reset-test-state", "nookgrid-offline"]
+        app.launch()
+        let bootstrapReady = element("Play today's puzzle").waitForExistence(timeout: 60)
+        XCTAssertTrue(bootstrapReady, app.debugDescription)
+        guard bootstrapReady else {
+            throw fixtureFailure(2, "The offline target bootstrap did not reach free daily play.")
+        }
+        session = try SKTestSession(contentsOf: file)
+        session.resetToDefaultState()
+        session.clearTransactions()
+        session.disableDialogs = true
+        // Nil-to-nil is not evidence that a failed configuration was writable.
+        // Round-trip an explicit override once, then clear it before any purchase.
+        try await verifyPurchaseOverrideReadiness()
+        XCTAssertTrue(session.disableDialogs, "The local fixture must disable payment dialogs.")
+        XCTAssertEqual(session.storefront, "USA", "The local fixture must retain its configured storefront.")
+        guard session.disableDialogs, session.storefront == "USA" else {
+            throw fixtureFailure(3, "The local StoreKit fixture configuration could not be read back.")
+        }
+        fixtureReadyForCleanup = true
+        app.terminate()
         app.launchArguments = ["nookgrid-reset-test-state", "nookgrid-storekit-test"]
         app.launch()
         XCTAssertTrue(element("Play today's puzzle").waitForExistence(timeout: 60), app.debugDescription)
@@ -41,13 +58,34 @@ final class AdFreePurchaseUITests: XCTestCase {
 
     override func tearDown() async throws {
         defer {
-            if let app, app.state != .notRunning { app.terminate() }
             session?.clearTransactions()
             session?.resetToDefaultState()
+            if let app, app.state != .notRunning { app.terminate() }
         }
         // Method-body cleanup is bypassed when continueAfterFailure interrupts a
         // test. Await API-override cleanup here before terminating the target app.
-        if session != nil { try await clearPurchaseError() }
+        // A broken preflight must retain its fixture failure, rather than enter
+        // another asynchronous override call whose session was never verified.
+        if fixtureReadyForCleanup { try await clearPurchaseError() }
+    }
+
+    private func fixtureFailure(_ code: Int, _ message: String) -> NSError {
+        NSError(domain: "NookGridStoreKitTest", code: code,
+                userInfo: [NSLocalizedDescriptionKey: message])
+    }
+
+    private func verifyPurchaseOverrideReadiness() async throws {
+        guard #available(iOS 17.0, *) else {
+            throw fixtureFailure(1, "The StoreKit test suite requires iOS 17 or later.")
+        }
+        let expected = SKTestFailures.Purchase.generic(.userCancelled)
+        try await session.setSimulatedError(expected, forAPI: .purchase)
+        let configured = await session.simulatedError(forAPI: .purchase)
+        XCTAssertEqual(configured, expected, "The local purchase override must support exact write/read verification.")
+        guard configured == expected else {
+            throw fixtureFailure(4, "The local StoreKit purchase override could not be written and read back.")
+        }
+        try await clearPurchaseError()
     }
 
     private func clearPurchaseError() async throws {
@@ -58,6 +96,9 @@ final class AdFreePurchaseUITests: XCTestCase {
         try await session.setSimulatedError(nil, forAPI: .purchase)
         let configuredErrorPresent = try await hasPurchaseError()
         XCTAssertFalse(configuredErrorPresent, "The local purchase API must have no simulated error after cleanup.")
+        guard !configuredErrorPresent else {
+            throw fixtureFailure(5, "The local StoreKit purchase override could not be cleared.")
+        }
     }
 
     private func hasPurchaseError() async throws -> Bool {
