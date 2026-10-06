@@ -132,6 +132,21 @@ final class AdFreePurchaseUITests: XCTestCase {
         XCTAssertTrue(element("Close settings").waitForExistence(timeout: 10), app.debugDescription)
     }
 
+    private func cancelLocalPurchaseConfirmation() throws {
+        // Exercise the customer's cancellation gesture. A simulated generic
+        // cancellation can arrive as StoreKitError.unknown on the CI runtime;
+        // that error must continue to be treated as a failed purchase.
+        session.disableDialogs = false
+        defer { session.disableDialogs = true }
+        tap(purchaseButton)
+        let cancel = app.buttons.matching(identifier: "Cancel").firstMatch
+        guard cancel.waitForExistence(timeout: 15) else {
+            XCTFail("The local StoreKit confirmation must expose Cancel. \(app.debugDescription)")
+            throw fixtureFailure(6, "The local purchase confirmation did not appear.")
+        }
+        tap(cancel)
+    }
+
     func testVerifiedPurchaseRelaunchRestoreAndRefund() async throws {
         XCTAssertTrue(purchaseButton.label.contains("9.99"), "The local StoreKit test price must reach the UI.")
         tap(purchaseButton)
@@ -176,8 +191,7 @@ final class AdFreePurchaseUITests: XCTestCase {
 
     func testCancelledAndFailedPurchaseKeepFreePlayAndCanRetry() async throws {
         if #available(iOS 17.0, *) {
-            try await session.setSimulatedError(SKTestFailures.Purchase.generic(.userCancelled), forAPI: .purchase)
-            tap(purchaseButton)
+            try cancelLocalPurchaseConfirmation()
             XCTAssertTrue(element("Purchase cancelled. You can keep playing.").waitForExistence(timeout: 15), app.debugDescription)
             XCTAssertTrue(purchaseButton.isEnabled)
             XCTAssertFalse(element("Ad-free play is active.").exists)
