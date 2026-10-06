@@ -139,12 +139,14 @@ final class AdFreePurchaseUITests: XCTestCase {
         session.disableDialogs = false
         defer { session.disableDialogs = true }
         tap(purchaseButton)
-        let cancel = app.buttons.matching(identifier: "Cancel").firstMatch
+        let system = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let cancel = system.buttons.matching(identifier: "Cancel").firstMatch
         guard cancel.waitForExistence(timeout: 15) else {
-            XCTFail("The local StoreKit confirmation must expose Cancel. \(app.debugDescription)")
+            XCTFail("The local StoreKit confirmation must expose Cancel. App: \(app.debugDescription) System: \(system.debugDescription)")
             throw fixtureFailure(6, "The local purchase confirmation did not appear.")
         }
-        tap(cancel)
+        XCTAssertTrue(cancel.isHittable, system.debugDescription)
+        cancel.tap()
     }
 
     func testVerifiedPurchaseRelaunchRestoreAndRefund() async throws {
