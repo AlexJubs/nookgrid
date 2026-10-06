@@ -14,6 +14,8 @@ const analytics = JSON.parse(await readFile('ios/App/App/public/site-config.json
 const ads = JSON.parse(await readFile('ios/App/App/public/ad-config.json', 'utf8'));
 if (config.server?.url || analytics.analytics?.enabled !== false || ads.mode !== 'off') throw new Error('Run npm run build:ios with no production, ads or live-reload variables before native QA.');
 await mkdir('artifacts/ios', {recursive: true});
+command('xcrun', ['swiftc', '-Onone', 'ios/App/App/AdFreePurchaseError.swift', 'tests/AdFreePurchaseErrorCheck.swift', '-o', 'artifacts/ios/AdFreePurchaseErrorCheck']);
+console.log(command('artifacts/ios/AdFreePurchaseErrorCheck', []));
 command('xcrun', ['swiftc', '-Onone', 'ios/App/App/ReminderPermissionFlow.swift', 'tests/ReminderPermissionFlowCheck.swift', '-o', 'artifacts/ios/ReminderPermissionFlowCheck']);
 console.log(command('artifacts/ios/ReminderPermissionFlowCheck', []));
 command('xcrun', ['swiftc', '-Onone', 'ios/App/App/CompletionAdState.swift', 'tests/CompletionAdStateCheck.swift', '-o', 'artifacts/ios/AdStateCheck']);

@@ -275,12 +275,10 @@ final class AdFreePurchaseStore {
             case .userCancelled: outcome = "cancelled"
             @unknown default: outcome = "error"; errorCode = "purchase_failed"
             }
-        } catch StoreKitError.userCancelled {
-            outcome = "cancelled"
         } catch {
             recordLocalDiagnostic(error: error)
-            outcome = "error"
-            errorCode = "purchase_failed"
+            if AdFreePurchaseError.isCancellation(error) { outcome = "cancelled" }
+            else { outcome = "error"; errorCode = "purchase_failed" }
         }
         return state().merging(purchaseRevenue) { _, next in next }
     }
@@ -300,11 +298,9 @@ final class AdFreePurchaseStore {
             if entitlement == .adFree { pending = false; outcome = "restored" }
             else if entitlement == .unverified { outcome = "error"; errorCode = "verification_failed" }
             else { outcome = "nothing_to_restore" }
-        } catch StoreKitError.userCancelled {
-            outcome = "cancelled"
         } catch {
-            outcome = "error"
-            errorCode = "restore_failed"
+            if AdFreePurchaseError.isCancellation(error) { outcome = "cancelled" }
+            else { outcome = "error"; errorCode = "restore_failed" }
         }
         return state()
     }
