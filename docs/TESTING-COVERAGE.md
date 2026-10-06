@@ -49,6 +49,8 @@ The following require complementary native or manual verification: cold launch w
 
 `AdFreePurchaseErrorCheck.swift` covers modern, legacy and wrapped StoreKit cancellations, while network failures, unknown errors and unrelated error domains remain failures. The native runner compiles and runs it before the simulator suite. Cancellation classification does not grant an entitlement; the full purchase UI tests still require verified purchase, refund, pending approval and retry behavior.
 
+`AdFreePurchaseDiagnosticCheck.swift` verifies bounded local StoreKit error history, exact error enum cases, removal of descriptions/receipts/arbitrary domains, the three-error nesting limit and recovery from damaged diagnostic data. Debug StoreKit failures survive later fresh scenarios so CI can retain the cause of an earlier cancellation failure. This diagnostic is limited to explicitly launched local StoreKit tests and is absent from Release builds.
+
 `ios-project.test.mjs` checks that Xcode build objects have unique IDs. It reproduces the duplicate build-file/file-reference IDs that prevented Xcode from opening the project when the cancellation helper was added. Full native CI still validates actual project loading and compilation.
 
 Screenshots provide review evidence, not automatically accepted pixel baselines. Inspect the empty, solved and narrow solved images before a release. Automated geometry and accessible-name assertions are not a complete accessibility audit.

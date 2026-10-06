@@ -16,6 +16,8 @@ if (config.server?.url || analytics.analytics?.enabled !== false || ads.mode !==
 await mkdir('artifacts/ios', {recursive: true});
 command('xcrun', ['swiftc', '-Onone', 'ios/App/App/AdFreePurchaseError.swift', 'tests/AdFreePurchaseErrorCheck.swift', '-o', 'artifacts/ios/AdFreePurchaseErrorCheck']);
 console.log(command('artifacts/ios/AdFreePurchaseErrorCheck', []));
+command('xcrun', ['swiftc', '-D', 'DEBUG', '-Onone', 'ios/App/App/AdFreePurchaseError.swift', 'tests/AdFreePurchaseDiagnosticCheck.swift', '-o', 'artifacts/ios/AdFreePurchaseDiagnosticCheck']);
+console.log(command('artifacts/ios/AdFreePurchaseDiagnosticCheck', []));
 command('xcrun', ['swiftc', '-Onone', 'ios/App/App/ReminderPermissionFlow.swift', 'tests/ReminderPermissionFlowCheck.swift', '-o', 'artifacts/ios/ReminderPermissionFlowCheck']);
 console.log(command('artifacts/ios/ReminderPermissionFlowCheck', []));
 command('xcrun', ['swiftc', '-Onone', 'ios/App/App/CompletionAdState.swift', 'tests/CompletionAdStateCheck.swift', '-o', 'artifacts/ios/AdStateCheck']);
