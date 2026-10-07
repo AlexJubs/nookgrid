@@ -107,7 +107,8 @@ final class NookGridUITests: XCTestCase {
         options.iterationCount = 3
         measure(metrics: [XCTApplicationLaunchMetric(waitUntilResponsive: true)], options: options) {
             app.launch()
-            XCTAssertTrue(button("Play today's puzzle").waitForExistence(timeout: 10))
+            XCTAssertTrue(button("Play today's puzzle").waitForExistence(timeout: 10),
+                          "Offline cold launch did not reach Home within 10 seconds. \(app.debugDescription)")
             app.terminate()
         }
     }
