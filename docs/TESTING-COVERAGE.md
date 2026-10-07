@@ -45,6 +45,8 @@ The local StoreKit UI fixture first launches the target with offline/reset argum
 
 Simulator CI uses a newer SDK than the signed release workflow's Xcode 26.2. CI does not establish release-toolchain compilation/signing, physical payment-sheet behavior, sandbox purchase/restore or App Store product readiness; verify those separately.
 
+Each StoreKit scenario resets app saves and WebKit data in its offline bootstrap once. The second launch enables the configured StoreKit fixture without repeating that reset. This removes redundant startup work after a reproduced first-scenario relaunch failure; both launches still require Home within sixty seconds, and the full purchase assertions remain unchanged. A successful run does not establish the operating-system cause of the earlier stall.
+
 `testColdLaunchPerformance` retains the application accessibility tree when Home is absent after its existing ten-second readiness check. Its three measured iterations and deadline remain unchanged; the diagnostic distinguishes an incorrect screen from an unfinished launch without treating either as a pass.
 
 The browser scenario `backgrounding an already presented ad waits for dismissal without another opportunity` pauses the simulated clock and advances through the three-second result delay before checking its already-presented-ad precondition. It then preserves the background/foreground, dismissal, confetti and single-opportunity assertions. Pausing without that advancement reproduces the missing-ad precondition in both engines; the test does not depend on wall-clock polling advancing fake time.

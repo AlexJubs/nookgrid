@@ -41,7 +41,9 @@ final class AdFreePurchaseUITests: XCTestCase {
         }
         fixtureReadyForCleanup = true
         app.terminate()
-        app.launchArguments = ["nookgrid-reset-test-state", "nookgrid-storekit-test"]
+        // The offline bootstrap already reset Preferences, the journal and
+        // WebKit data. Relaunch only to enable the verified StoreKit fixture.
+        app.launchArguments = ["nookgrid-storekit-test"]
         app.launch()
         XCTAssertTrue(element("Play today's puzzle").waitForExistence(timeout: 60), app.debugDescription)
         // The test environment is shared. Clear and verify its purchase override
